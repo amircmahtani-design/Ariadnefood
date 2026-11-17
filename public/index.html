@@ -638,6 +638,7 @@ label.f>span,.lbl{font-weight:600}
 .av-list li{display:flex;align-items:center;gap:12px}
 .av-n{flex:1;font-weight:500}
 .av-list .link{padding:8px 0}
+.avt.sq{border-radius:28%;object-fit:cover;flex:none}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -792,7 +793,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.3";
+const APP_VERSION="3.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1184,6 +1185,8 @@ function avatar(name,size=32){
   if(!name)return `<span class="avt" style="width:${size}px;height:${size}px">${I.user}</span>`;
   const v=S.settings?.avatars?.[name];
   if(v)return `<img class="avt" src="/api/avatar/${encodeURIComponent(name)}?v=${v}" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px">`;
+  const st={amir:"amir",catherine:"catherine",lia:"lia"}[name.trim().toLowerCase()];
+  if(st)return `<img class="avt sq" src="/img/people/${st}.webp?v=1" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px">`;
   const [bg,fg]=AV_TONE[name]||["#EFE6D8","#5F6656"];
   return `<span class="avt" style="width:${size}px;height:${size}px;background:${bg};color:${fg};font-size:${Math.round(size*.44)}px">${esc(name.trim().charAt(0).toUpperCase())}</span>`;
 }
