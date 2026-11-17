@@ -23,7 +23,7 @@ function merge(target, patch) {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 const DEFAULT_SETTINGS = {
   people: ["Amir", "Catherine", "Lia"],
   milkDefault: 600,
@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS = {
   formula: { name: "Toddler formula", kcal: 64, protein: 1.78, calcium: 133, iron: 1.37, vitD: 1.0, vitA: 58, vitC: 8.2, zinc: 0.68 },
 };
 
-const ABOUT = `Ariadne is 16 months old and lives in Dubai. No food allergies seen so far. She loves chicken (wings, breast, thighs), beef meatballs, Greek youvarlakia soup, salmon, potatoes, carrots, spinach and fruit. She eats carrot cookies made with Greek yoghurt and eggs (that is how the family gets yoghurt and egg into her), and vegetables hidden in meatballs. She dislikes purées and mushy textures: she wants firm, crisp, finger-food shapes she can hold (fritters, bites, fingers, mini muffins, patties, bakes, soft meatballs). She drinks about 600 ml of toddler formula a day and gets daily vitamin D drops.
+const ABOUT = `Ariadne is 16 months old and lives in Dubai. No food allergies seen so far. She loves chicken in any form (wings, breast, thighs, roast chicken); with roast chicken the family also roasts potatoes and sweet potatoes, but it is not yet clear she eats those, so check the log. She loves oat pancakes, beef meatballs, Greek youvarlakia soup, salmon, potatoes, carrots, spinach and fruit. Her breakfast at the moment is always 3 spanakopita triangles and a homemade carrot cookie. She eats carrot cookies made with Greek yoghurt and eggs (that is how the family gets yoghurt and egg into her), and vegetables hidden in meatballs. She dislikes purées and mushy textures: she wants firm, crisp, finger-food shapes she can hold (fritters, bites, fingers, mini muffins, patties, bakes, soft meatballs). She drinks about 600 ml of toddler formula a day and gets daily vitamin D drops.
 Safety rules: no whole nuts, popcorn or whole roasted chickpeas; quarter round fruit and cherry tomatoes; no added salt, stock cubes or added sugar; rinse feta; cook egg through; take meat off the bone and check fish for bones. Ingredients must be easy to buy in Dubai. Greek and Mediterranean flavours welcome. Metric units, British spelling, concise.`;
 
 const RECIPE_SHAPE = `{"title":"","meals":["breakfast"|"lunch"|"snack"|"dinner"],"time":"25 min","serves":4,"ingredients":["200 g chicken thigh, diced", "..."],"method":["step", "..."],"tip":"how to serve it so she eats it","parts":[{"name":"what is on her plate, e.g. Chicken bites","items":[["food_key", grams_in_ONE_toddler_portion]]}]}
@@ -87,6 +87,22 @@ export default async (req) => {
         const cur = days[k];
         const used = cur && (cur.vitD || cur.milk != null || Object.values(cur.meals || {}).some((m) => m && ((m.log && Object.keys(m.log).length) || m.like || m.notes)));
         if (!used) days[k] = { ...(cur || {}), meals: v.meals };
+      }
+      settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: 2 };
+    }
+    // v3: 47 more recipes, her fixed breakfast (spanakopita triangles & carrot cookie), roast chicken on Sundays.
+    // Adds missing recipes only; changes the plan only from today on, and only where nothing has been logged.
+    if ((settings?.dataVersion || 0) < DATA_VERSION) {
+      const have = new Set((recipes || []).map((r) => r.id));
+      recipes = [...(recipes || []), ...SEED_RECIPES.filter((r) => !have.has(r.id))];
+      days = days || {};
+      const today = new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 10);
+      const untouched = (m) => !m || !((m.log && Object.keys(m.log).length) || m.like || m.notes);
+      for (let i = 0; i < 14; i++) {
+        const k = new Date(Date.parse(today) + i * 864e5).toISOString().slice(0, 10);
+        const d = (days[k] = days[k] || {}); d.meals = d.meals || {};
+        if (untouched(d.meals.breakfast)) d.meals.breakfast = { recipeId: "spanakbreakfast" };
+        if (new Date(k).getUTCDay() === 0 && untouched(d.meals.dinner)) d.meals.dinner = { recipeId: "roastchicken" };
       }
       settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: DATA_VERSION };
       await Promise.all([store.setJSON("recipes", recipes), store.setJSON("days", days), store.setJSON("settings", settings)]);
@@ -197,7 +213,7 @@ ${RECIPE_SHAPE.split("\n").slice(1).join("\n")}`;
     if (body.task === "plan") {
       const week = DATE_RE.test(body.weekStart || "") ? body.weekStart : today;
       const system = `You plan a week of toddler meals. ${ABOUT}
-Plan breakfast, lunch, snack and dinner for 7 days starting ${week}. Mostly use library recipes she has loved or eaten well; avoid ones she keeps rejecting (offer a rejected food again only in a different format). Add exactly 2 or 3 NEW recipes across the week that fill the nutrition gaps in the analysis. Reuse ingredients and leftovers across days (e.g. Sunday's roast chicken becomes Monday's chicken bites). Include oily fish twice, red meat or lentils most days for iron, and a vegetable at lunch and dinner. A "side" is a short extra such as "orange segments" or "cucumber sticks"; use it for fruit and visible veg. Put new foods at breakfast or lunch, not dinner.
+Plan breakfast, lunch, snack and dinner for 7 days starting ${week}. Breakfast is fixed: use recipe "spanakbreakfast" (3 spanakopita triangles and a carrot cookie) every day unless the parent's request says otherwise. Roast chicken with potatoes and sweet potatoes (id "roastchicken") is a family staple: include it once, usually Sunday, and use the leftovers the next day. For sides, prefer the names of side recipes in the library. Mostly use library recipes she has loved or eaten well; avoid ones she keeps rejecting (offer a rejected food again only in a different format). Add exactly 2 or 3 NEW recipes across the week that fill the nutrition gaps in the analysis. Reuse ingredients and leftovers across days (e.g. Sunday's roast chicken becomes Monday's chicken bites). Include oily fish twice, red meat or lentils most days for iron, and a vegetable at lunch and dinner. A "side" is a short extra such as "orange segments" or "cucumber sticks"; use it for fruit and visible veg. Put new foods at breakfast or lunch, not dinner.
 Reply with ONLY JSON, no markdown:
 {"note":"one sentence on the thinking behind the week","newRecipes":[{"ref":"new1", ...recipe fields}],"days":[{"date":"YYYY-MM-DD","breakfast":{"recipe":"library id or new1","side":""},"lunch":{...},"snack":{...},"dinner":{...}}]}
 Each new recipe has these fields: ${RECIPE_SHAPE}`;
