@@ -23,6 +23,7 @@ function merge(target, patch) {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DATA_VERSION = 2;
 const DEFAULT_SETTINGS = {
   people: ["Amir", "Catherine", "Lia"],
   milkDefault: 600,
@@ -75,9 +76,21 @@ export default async (req) => {
       store.get("settings", { type: "json" }),
       store.get("insight", { type: "json" }),
     ]);
-    if (!recipes) { recipes = SEED_RECIPES; await store.setJSON("recipes", recipes); }
-    if (!days) { days = seedDays(recipes); await store.setJSON("days", days); }
-    if (!settings) { settings = DEFAULT_SETTINGS; await store.setJSON("settings", settings); }
+    // One-off data upgrades. v2: recipes carry their plate parts; plan stores recipeId + side.
+    // Seed recipes are refreshed, family-added recipes kept, and any day with something logged is left alone.
+    if ((settings?.dataVersion || 0) < DATA_VERSION) {
+      const seedIds = new Set(SEED_RECIPES.map((r) => r.id));
+      recipes = [...SEED_RECIPES.map((r) => { const old = (recipes || []).find((x) => x.id === r.id); return old?.fav ? { ...r, fav: true } : r; }),
+        ...(recipes || []).filter((r) => !seedIds.has(r.id))];
+      days = days || {};
+      for (const [k, v] of Object.entries(seedDays(recipes))) {
+        const cur = days[k];
+        const used = cur && (cur.vitD || cur.milk != null || Object.values(cur.meals || {}).some((m) => m && ((m.log && Object.keys(m.log).length) || m.like || m.notes)));
+        if (!used) days[k] = { ...(cur || {}), meals: v.meals };
+      }
+      settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: DATA_VERSION };
+      await Promise.all([store.setJSON("recipes", recipes), store.setJSON("days", days), store.setJSON("settings", settings)]);
+    }
     return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight });
   }
 

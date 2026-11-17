@@ -5,7 +5,7 @@ const P = {
   carrotcookies: [["Carrot cookies",[["carrot",8],["egg",8],["greek_yoghurt",8],["banana",15],["oats",12],["olive_oil",2]]]],
   pancakes: [["Pancakes",[["banana",30],["egg",25],["greek_yoghurt",15],["oats",12]]]],
   oatfingers: [["Oat fingers",[["oats",20],["egg",8],["greek_yoghurt",10],["apple",15],["banana",15]]]],
-  frittata: [["Frittata",[["egg",50],["spinach",8],["courgette",12],["cheddar",8]]]],
+  frittata: [["Spanakopita squares",[["egg",50],["spinach",12],["courgette",12],["cheddar",5],["feta",4]]]],
   eggybread: [["Eggy bread",[["bread",25],["egg",25],["milk",8]]],["Avocado",[["avocado",30],["oats",3]]]],
   yoghurtbark: [["Yoghurt bark",[["greek_yoghurt",50],["strawberries",15],["blueberries",10]]]],
   youvarlakia: [["Meatballs",[["beef_mince",40],["rice",4],["onion",4],["egg",8]]],["Broth & carrots",[["carrot",15],["lemon",3]]]],
@@ -42,10 +42,10 @@ export const SEED_RECIPES = [
     ["120 g rolled oats", "1 egg", "4 tbsp plain Greek yoghurt", "1 apple or pear, grated", "1 ripe banana, mashed", "Cinnamon", "Optional: 2 tbsp ground almonds"],
     ["Mix everything together.", "Press 2 cm deep into a lined small tin.", "Bake at 180°C for 20–25 min until set and golden. Cool, then cut into fingers."],
     "All the goodness of porridge with none of the mush. Rotate the fruit: blueberries, grated pear, chopped dates.", ["oats", "egg", "dairy"]),
-  R("frittata", "Spinach & cheese frittata squares", ["breakfast", "lunch"], "25 min",
-    ["4 eggs", "Handful of spinach, finely chopped", "½ courgette, grated and squeezed", "30 g grated mild cheese", "Olive oil"],
-    ["Whisk the eggs, then stir in the veg and cheese.", "Pour into an oiled small tin.", "Bake at 180°C for 15–18 min until firm all the way through, then cut into squares."],
-    "Baked rather than pan-cooked, so it's firm and springy, not wet. Keeps 2 days in the fridge.", ["egg", "dairy"]),
+  R("frittata", "Spanakopita", ["breakfast", "lunch"], "25 min",
+    ["4 eggs", "Big handful of spinach, finely chopped", "½ courgette, grated and squeezed", "20 g grated mild cheese", "15 g feta, rinsed and crumbled", "1 spring onion, finely chopped", "Fresh dill", "Olive oil"],
+    ["Whisk the eggs, then stir in the spinach, courgette, spring onion, dill and both cheeses.", "Pour into an oiled small tin.", "Bake at 180°C for 15–18 min until firm all the way through, then cut into squares."],
+    "All the flavour of spanakopita without the pastry. Baked, so it's firm and springy, not wet. Keeps 2 days in the fridge.", ["egg", "dairy"]),
   R("eggybread", "Eggy bread fingers & avocado wedges", ["breakfast"], "10 min",
     ["1 slice wholemeal bread", "1 egg", "1 tbsp milk", "Pinch of cinnamon", "¼ ripe avocado", "2 tbsp ground oats or desiccated coconut, for coating"],
     ["Soak the bread in the whisked egg, milk and cinnamon.", "Cook in a little butter until golden and firm on both sides, then cut into fingers.", "Cut the avocado into wedges and roll them in ground oats so she can grip them."],
@@ -126,15 +126,15 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
 const PLAN = [
   ["Banana yoghurt pancakes", "Youvarlakia (meatball soup)", "Frozen yoghurt berry bark", "Salmon bites with potato wedges & peas", "", ""],
   ["Baked oat fingers", "Lentil & carrot fritters + orange segments", "Carrot & oat cookies + pear slices", "Lemon-oregano chicken thighs with potatoes", "Lentils", "lunch"],
-  ["Spinach & cheese frittata squares", "Spanakopita fingers + cucumber sticks", "Banana + cheese cubes", "Hidden-veg meatballs + rice", "Filo & ricotta", "lunch"],
+  ["Spanakopita", "Spanakopita fingers + cucumber sticks", "Banana + cheese cubes", "Hidden-veg meatballs + rice", "Filo & ricotta", "lunch"],
   ["Eggy bread fingers & avocado wedges", "Chicken & orzo with tomato (kritharaki)", "Courgette & cheese muffins", "Beef & lentil bolognese", "Avocado", "breakfast"],
   ["Banana yoghurt pancakes", "Chickpea & courgette fritters + tomato", "Carrot & oat cookies + halved blueberries", "Salmon bites with potato wedges & peas", "Chickpeas & tahini", "lunch"],
   ["Baked oat fingers", "Sardine & potato fishcakes", "Courgette & cheese muffins + strawberries", "Lemon-oregano chicken thighs with potatoes", "Sardines", "lunch"],
-  ["Spinach & cheese frittata squares", "Chicken & sweet potato bites + green beans", "Broccoli cheese bites", "Youvarlakia (meatball soup)", "Sweet potato", "lunch"],
+  ["Spanakopita", "Chicken & sweet potato bites + green beans", "Broccoli cheese bites", "Youvarlakia (meatball soup)", "Sweet potato", "lunch"],
   ["Baked oat fingers", "Yoghurt-marinated chicken strips + tzatziki", "Apple slices (thin) + cheese", "Hidden-veg meatballs + roast potatoes", "Tzatziki", "lunch"],
   ["Eggy bread fingers & avocado wedges", "Lemon cod bites with rice", "Courgette & cheese muffins + apple", "Lentil & carrot fritters", "Cod", "lunch"],
   ["Banana yoghurt pancakes + kiwi", "Beef & lentil bolognese", "Carrot & oat cookies", "Salmon bites with potato wedges & peas", "Kiwi", "breakfast"],
-  ["Spinach & cheese frittata squares", "Broccoli cheese bites + shredded chicken", "Chickpea & courgette fritters", "Spanakopita fingers", "Broccoli", "lunch"],
+  ["Spanakopita", "Broccoli cheese bites + shredded chicken", "Chickpea & courgette fritters", "Spanakopita fingers", "Broccoli", "lunch"],
   ["Baked oat fingers", "Chicken & orzo with tomato (kritharaki)", "Mango fingers", "Sardine & potato fishcakes", "Mango", "snack"],
   ["Eggy bread fingers & avocado wedges", "Chicken & sweet potato bites + roast veg fries", "Frozen yoghurt berry bark + peach", "Youvarlakia (meatball soup)", "Peach", "snack"],
   ["Banana yoghurt pancakes", "Lemon-oregano chicken thighs with potatoes + cherry tomatoes", "Carrot & oat cookies", "Roast veg fries with tzatziki + meatballs", "Cherry tomatoes (quartered)", "lunch"],
@@ -146,7 +146,7 @@ export function seedDays(recipes = SEED_RECIPES) {
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
   const find = (dish) => {
     const d = dish.toLowerCase();
-    const r = recipes.find((x) => d === x.title.toLowerCase()) || recipes.find((x) => d.startsWith(x.title.toLowerCase()));
+    const r = recipes.find((x) => d === x.title.toLowerCase()) || [...recipes].sort((a, b) => b.title.length - a.title.length).find((x) => d.startsWith(x.title.toLowerCase()));
     if (!r) return { custom: dish };
     const side = dish.slice(r.title.length).replace(/^\s*\+\s*/, "").trim();
     return side ? { recipeId: r.id, side } : { recipeId: r.id };
