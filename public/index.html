@@ -383,6 +383,7 @@ select.bare:focus{box-shadow:none}
 .loading{text-align:center;color:var(--ink-3);padding:var(--s8) 0}
 #print{display:none}
 
+
 /* decoration (from the asset pack): accents only, never interactive */
 .deco{pointer-events:none;user-select:none}
 .brand .mark{width:36px;height:36px;border-radius:10px;box-shadow:0 2px 6px -2px rgb(60 70 40 / .35)}
@@ -449,6 +450,50 @@ select.bare:focus{box-shadow:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}
 
+/* compact Today (v2.1): one row per food, controls in one right-hand column */
+.meal{padding:14px 16px 12px;margin-bottom:12px;border-radius:var(--r-lg)}
+.meal-top{margin:0 -6px 2px 0}
+.meal .media-btn{min-height:40px;padding:0 12px;font-size:13.5px}
+.meal-head{display:block}
+.dish{font-size:20px;line-height:1.2}
+.empty-t{font-size:var(--t-body)}
+.meal-body .parts{margin-top:10px}
+.part{display:grid;grid-template-columns:minmax(0,1fr) 216px;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.part:first-of-type{border-top:1px solid var(--line);padding-top:8px}
+.part .pn{margin:0;font-size:15.5px;font-weight:700;line-height:1.25}
+.seg{gap:2px;padding:3px;border-radius:12px}
+.seg button{min-height:38px;font-size:13.5px;border-radius:9px;padding:0}
+.took{margin-top:0;padding-top:8px}
+.took-l{font-size:13px!important;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;line-height:1.3!important}
+.seg.likes button{min-height:46px;font-size:12px;gap:2px}
+.seg.likes button svg{width:17px;height:17px}
+.addnote{margin-top:4px;min-height:40px}
+.meal .notes{margin-top:8px}
+.meal .meta{margin-top:4px}
+.meal .alert{margin-top:8px}
+@media (max-width:370px){.part{grid-template-columns:minmax(0,1fr) 196px}.seg button{font-size:12.5px}}
+
+/* v2.1 tightening */
+.part{grid-template-columns:minmax(0,1fr) 192px}
+.part .pn{hyphens:auto;-webkit-hyphens:auto}
+.seg.likes{display:grid;margin-top:0;flex-wrap:nowrap}
+.took{display:block;border-top:1px solid var(--line);padding-top:10px;margin-top:0}
+.took-l{display:block;margin-bottom:8px}
+.seg.likes{grid-template-columns:repeat(4,1fr)}
+.seg.likes button{flex-direction:row;min-height:40px;font-size:13.5px;gap:6px}
+.seg.likes button svg{width:16px;height:16px}
+.essentials{gap:10px;margin-bottom:16px}
+.tile{min-height:0;padding:12px 14px;gap:0}
+.tile-top{padding-bottom:6px}
+.tile-ic{width:34px;height:34px}
+.tile-ic svg{width:19px;height:19px}
+.tile strong{font-size:18px}
+.milk .ctl{margin-top:6px}
+.milk .ctl button{width:34px;height:34px}
+.pagehead{margin:6px 0 16px}
+:root{--t-h1:clamp(23px,6.3vw,34px)}
+@media (max-width:370px){.part{grid-template-columns:minmax(0,1fr) 188px}.seg.likes button svg{display:none}}
+@media (max-width:430px){.seg.likes button svg{display:none}}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -602,7 +647,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.0";
+const APP_VERSION="2.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -723,7 +768,7 @@ function viewDay(){
     const sel=r?r.id:(m.custom?"__custom":"");
     return `<article class="meal card" data-slot="${s}">
       <div class="meal-top"><span class="slot-l">${SLOT_ICON[s]}${label}</span><button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
-      <div class="meal-head">${pic(r,"mini",m.custom||"")}
+      <div class="meal-head">
         ${title?`<h2 class="dish">${r?`<button class="dishbtn" data-act="recipe" data-id="${esc(r.id)}">${esc(title)}</button>`:esc(title)}</h2>`:`<p class="empty-t">Nothing planned for ${label.toLowerCase()} yet.</p>`}</div>
       <div class="meal-body">
         <div class="change" hidden>
@@ -732,8 +777,8 @@ function viewDay(){
           <label class="f"><span>Side (optional)</span><input data-pickside value="${esc(m.side)}" placeholder="e.g. cucumber sticks, orange"></label>
           <div class="row"><button class="btn sm" data-act="doneChange">Done</button></div>
         </div>
-        ${parts.length?`<div class="parts"><p class="micro">How much she ate</p>${parts.map(p=>`<div class="part" data-part="${esc(p.name)}"><span class="pn">${esc(p.name.trim())}</span><span class="seg" role="group" aria-label="${esc(p.name.trim())}">${AMOUNTS.map(([v,l])=>`<button data-act="amt" data-val="${v}" aria-pressed="${log[p.name]===v}">${l}</button>`).join("")}</span></div>`).join("")}</div>`:""}
-        ${title?`<div class="took"><p class="micro">How she took it</p><div class="seg likes" role="group" aria-label="How she took it">${LIKES.map(([v,l])=>`<button class="${v==="rejected"||v==="reaction"?"bad":""}" data-act="like" data-val="${v}" aria-pressed="${m.like===v}">${LIKE_ICON[v]}<span>${v==="loved"?"Loved":l}</span></button>`).join("")}</div></div>`:""}
+        ${parts.length?`<div class="parts">${parts.map(p=>`<div class="part" data-part="${esc(p.name)}"><span class="pn">${esc(p.name.trim())}</span><span class="seg" role="group" aria-label="${esc(p.name.trim())}">${AMOUNTS.map(([v,l])=>`<button data-act="amt" data-val="${v}" aria-pressed="${log[p.name]===v}">${l}</button>`).join("")}</span></div>`).join("")}</div>`:""}
+        ${title?`<div class="took"><span class="took-l">How she took it</span><div class="seg likes" role="group" aria-label="How she took it">${LIKES.map(([v,l])=>`<button class="${v==="rejected"||v==="reaction"?"bad":""}" data-act="like" data-val="${v}" aria-pressed="${m.like===v}">${LIKE_ICON[v]}<span>${v==="loved"?"Loved":l}</span></button>`).join("")}</div></div>`:""}
         ${m.like==="reaction"?`<p class="alert">${I.alert}<span>Note what you saw (rash, swelling, vomiting) and when, and tell her paediatrician. If her lips or face swell or she has any trouble breathing, call 998 now.</span></p>`:""}
         ${title?(m.notes||m._n?`<label class="notes"><textarea data-notes rows="2" placeholder="Anything worth knowing">${esc(m.notes)}</textarea></label>`:`<button class="link addnote" data-act="addNote">${I.note}Add a note</button>`):""}
         ${m.by?`<p class="meta">Logged by ${esc(m.by)}${m.at?" · "+esc(m.at):""}</p>`:""}
