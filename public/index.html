@@ -639,6 +639,19 @@ label.f>span,.lbl{font-weight:600}
 .av-n{flex:1;font-weight:500}
 .av-list .link{padding:8px 0}
 .avt.sq{border-radius:28%;object-fit:cover;flex:none}
+
+/* self-feeding (v3.6) */
+.seg.fed{grid-template-columns:repeat(3,1fr)}
+.seg.fed button{min-height:40px;font-size:13.5px}
+.fed-card{padding:18px;margin-bottom:16px}
+.fed-h h2{font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:20px;letter-spacing:-.015em}
+.fed-bar{display:flex;gap:3px;height:12px;border-radius:999px;overflow:hidden;margin:14px 0 12px;background:var(--bg)}
+.fed-bar span{display:block;height:100%}
+.fb-self{background:var(--good)}.fb-help{background:#C9A44B}.fb-fed{background:var(--terra)}.fb-none{background:var(--bg)}
+.fed-legend{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:13.5px;color:var(--ink-2)}
+.fed-legend li{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:6px;row-gap:2px}
+.fed-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.fed-legend b{grid-column:2;font-weight:600;font-size:17px;color:var(--ink)}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -793,7 +806,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.5";
+const APP_VERSION="3.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -930,6 +943,7 @@ function viewDay(){
         </div>
         ${parts.length?`<div class="parts">${parts.map(p=>`<div class="part" data-part="${esc(p.name)}"><span class="pn">${esc(p.name.trim())}</span><span class="seg" role="group" aria-label="${esc(p.name.trim())}">${AMOUNTS.map(([v,l])=>`<button data-act="amt" data-val="${v}" aria-pressed="${log[p.name]===v}">${l}</button>`).join("")}</span></div>`).join("")}</div>`:""}
         ${title?`<div class="took"><span class="took-l">How she took it</span><div class="seg likes" role="group" aria-label="How she took it">${LIKES.map(([v,l])=>`<button class="${v==="rejected"||v==="reaction"?"bad":""}" data-act="like" data-val="${v}" aria-pressed="${m.like===v}">${LIKE_ICON[v]}<span>${v==="loved"?"Loved":l}</span></button>`).join("")}</div></div>`:""}
+        ${title?`<div class="took"><span class="took-l">Who fed her</span><div class="seg fed" role="group" aria-label="Who fed her">${FED.map(([v,l])=>`<button data-act="fed" data-val="${v}" aria-pressed="${m.fed===v}">${l}</button>`).join("")}</div></div>`:""}
         ${m.like==="reaction"?`<p class="alert">${I.alert}<span>Note what you saw (rash, swelling, vomiting) and when, and tell her paediatrician. If her lips or face swell or she has any trouble breathing, call 998 now.</span></p>`:""}
         ${title?(m.notes||m._n?`<label class="notes"><textarea data-notes rows="2" placeholder="Anything worth knowing">${esc(m.notes)}</textarea></label>`:`<button class="link addnote" data-act="addNote">${I.note}Add a note</button>`):""}
         ${m.by?`<p class="meta by">${avatar(m.by,22)}<span>Logged by ${esc(m.by)}${m.at?" · "+esc(m.at):""}</span></p>`:""}
@@ -1153,6 +1167,10 @@ function viewHer(){
   <section class="card score-card"><div class="score ${tone}"><b class="num">${has?sc:"–"}</b><span>/10</span></div>
     <div class="score-t"><h2>${!has?"Her score for the week":sc>=8?"Eating really well":sc>=6.5?"A good week":sc>=5?"Getting there":"Room to improve"}</h2><p class="muted small">${has?`${W.days} day${W.days>1?"s":""} logged · average per day`:"Fills in as you log meals on Today"}</p></div>
     ${has&&(good.length||low.length)?`<div class="score-notes">${good.length?`<p><span class="dotc ok"></span><b>Doing well</b> ${esc(good.join(", "))}</p>`:""}${low.length?`<p><span class="dotc low"></span><b>Needs more</b> ${esc(low.join(", "))}</p>`:""}</div>`:""}</section>`;
+  {const c={self:0,help:0,fed:0};let tot=0;for(let i=0;i<7;i++){const k=addDays(mon,i);if(k>W.end)break;SLOTS.forEach(([s])=>{const f=S.days[k]?.meals?.[s]?.fed;if(f&&c[f]!=null){c[f]++;tot++}})}
+   h+=`<section class="card fed-card"><div class="fed-h"><h2>Feeding herself</h2><p class="muted small">${tot?`${tot} meal${tot>1?"s":""} noted this week`:"Tap who fed her on each meal in Today"}</p></div>
+   <div class="fed-bar">${tot?FED.map(([v])=>c[v]?`<span class="fb-${v}" style="flex:${c[v]}"></span>`:"").join(""):`<span class="fb-none" style="flex:1"></span>`}</div>
+   <ul class="fed-legend">${FED.map(([v,l])=>`<li><i class="fb-${v}"></i>${l}<b class="num">${c[v]}</b></li>`).join("")}</ul></section>`;}
   h+=`<section class="nutri-card card"><div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>Vitamins & minerals</h2><p class="muted small">${A.used.length?`${A.used.length} day${A.used.length>1?"s":""} with 2 or more meals logged · with formula and drops`:"Fills in once a day has 2 or more meals logged"}</p></div></div>
     ${gauges(A.used.length?A.rows:TARGETS().map(x=>({...x,v:0,pct:0})))}
     ${picks.length?`<div class="picks-wrap"><p class="micro">From your recipes, these cover the gaps</p><ul class="picks">${picks.map(p=>`<li><button data-act="recipe" data-id="${esc(p.r.id)}">${pic(p.r,"pthumb")}<span class="pk-t"><strong>${esc(p.r.title)}</strong><small>${esc(p.hits.join(" · "))}</small></span>${I.right}</button></li>`).join("")}</ul></div>`:""}
@@ -1161,6 +1179,7 @@ function viewHer(){
 }
 
 
+const FED=[["self","By herself"],["help","With help"],["fed","We fed her"]];
 /* ---------- resting recipes: rejected ones step back for 3 weeks; a reaction rests until cleared ---------- */
 const REST_DAYS=21;
 function restingMap(){
@@ -1177,6 +1196,8 @@ function restingMap(){
   S.recipes.forEach(r=>{if(r.avoid&&!out[r.id])out[r.id]={reason:r.avoid,k:r.avoidSince||t,manual:true}});
   return out;
 }
+function fedText(){const c={self:0,help:0,fed:0};let n=0;for(let i=0;i<14;i++){const k=addDays(todayKey(),-i);SLOTS.forEach(([s])=>{const f=S.days[k]?.meals?.[s]?.fed;if(f&&c[f]!=null){c[f]++;n++}})}
+  return n?`\n\nSelf-feeding over the last 14 days (${n} meals noted): by herself ${c.self}, with help ${c.help}, fed by an adult ${c.fed}. Favour finger foods that help her feed herself.`:""}
 function restingText(){const R=restingMap();const ids=Object.keys(R);if(!ids.length)return "";
   return "\n\nResting recipes (she rejected them recently or had a reaction). Do NOT plan or suggest these: "+ids.map(id=>`${id} (${recipeById(id).title}; ${R[id].manual?R[id].reason:R[id].reaction?"physical reaction, check with paediatrician":"rejected "+R[id].k+", back after "+R[id].until})`).join("; ")+".";}
 
@@ -1206,7 +1227,7 @@ async function suggest(){
   const live=$("#live");live.innerHTML=`<p class="streaming"><span class="dot"></span>Reading her last 7 days…</p>`;
   const A=analyse(todayKey());const focus=ui._focus||"";
   try{
-    const ins=await streamAI({task:"suggest",today:todayKey(),analysis:analysisText(A)+restingText(),focus},()=>{const l=$("#live");if(l)l.innerHTML=`<p class="streaming"><span class="dot"></span>Writing a recipe for her…</p>`});
+    const ins=await streamAI({task:"suggest",today:todayKey(),analysis:analysisText(A)+restingText()+fedText(),focus},()=>{const l=$("#live");if(l)l.innerHTML=`<p class="streaming"><span class="dot"></span>Writing a recipe for her…</p>`});
     if(ins.recipe)ins.recipe=cleanRecipe(ins.recipe,"tmp");
     if(ins.when?.date&&!/^\d{4}-\d{2}-\d{2}$/.test(ins.when.date))delete ins.when;
     ins.at=`${dmy(todayKey())} at ${timeNow()}`;ins.by=me||"";S.insight=ins;post("insight",{insight:ins}).catch(()=>{});
@@ -1225,7 +1246,7 @@ async function aiPlan(){
   busy="plan";render();const live=$("#planlive");if(live)live.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Planning the week around what she's eaten…</p>`;
   try{
     const A=analyse(todayKey(),14);
-    const res=await streamAI({task:"plan",weekStart:mon,today:todayKey(),analysis:analysisText(A)+restingText()},t=>{const l=$("#planlive");if(l)l.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Writing the menu… ${Math.min(99,Math.round(t.length/45))}%</p>`});
+    const res=await streamAI({task:"plan",weekStart:mon,today:todayKey(),analysis:analysisText(A)+restingText()+fedText()},t=>{const l=$("#planlive");if(l)l.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Writing the menu… ${Math.min(99,Math.round(t.length/45))}%</p>`});
     const refMap={};const newR=(res.newRecipes||[]).map(r=>{const c=cleanRecipe(r,newId(r.title));refMap[r.ref||c.title]=c.id;return c});
     if(newR.length){const d=await post("recipes",{recipes:newR});S.recipes=d.recipes}
     (res.days||[]).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);if(i>6)return;
@@ -1313,6 +1334,7 @@ $("#view").addEventListener("click",async e=>{
   if(act==="toggleMeal"){const key=`${ui.date}|${slot}`;ui.openMeals=ui.openMeals||{};ui.openMeals[key]=!ui.openMeals[key];keepScroll(render);return}
   if(act==="amt"){const part=a.closest("[data-part]").dataset.part,v=a.dataset.val,cur=S.days[ui.date]?.meals?.[slot]?.log?.[part];
     patchDay(ui.date,{meals:{[slot]:{log:{[part]:cur===v?null:v},by:me||null,at:timeNow()}}});keepScroll(render)}
+  else if(act==="fed"){const cur=S.days[ui.date]?.meals?.[slot]?.fed;patchDay(ui.date,{meals:{[slot]:{fed:cur===a.dataset.val?null:a.dataset.val,by:me||null,at:timeNow()}}});keepScroll(render)}
   else if(act==="like"){const cur=S.days[ui.date]?.meals?.[slot]?.like;patchDay(ui.date,{meals:{[slot]:{like:cur===a.dataset.val?null:a.dataset.val,by:me||null,at:timeNow()}}});keepScroll(render)}
   else if(act==="addNote"){const m=S.days[ui.date]?.meals?.[slot]||{};m._n=1;(S.days[ui.date]??={meals:{}}).meals??={};S.days[ui.date].meals[slot]=m;keepScroll(render);const t=$(`[data-slot="${slot}"] [data-notes]`);t&&t.focus()}
   else if(act==="prevDay"){ui.date=addDays(ui.date,-1);render()}
