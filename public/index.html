@@ -494,6 +494,15 @@ select.bare:focus{box-shadow:none}
 :root{--t-h1:clamp(23px,6.3vw,34px)}
 @media (max-width:370px){.part{grid-template-columns:minmax(0,1fr) 188px}.seg.likes button svg{display:none}}
 @media (max-width:430px){.seg.likes button svg{display:none}}
+
+/* recipe sheet: recipe first (v2.2) */
+.r-head{text-align:left;padding-top:0}
+.r-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.r-head .eyebrow{margin-top:4px}
+.r-head h2{font-size:27px}
+.metas{justify-content:flex-start;margin-top:10px}
+.r-body h4{margin:22px 0 10px}
+.r-body>h4:first-child{margin-top:16px}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -647,7 +656,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.1";
+const APP_VERSION="2.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -867,11 +876,11 @@ function renderRList(){
 function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"],["calcium","Calcium","mg"],["protein","Protein","g"],["fibre","Fibre","g"],["vitA","Vitamin A","µg"],["vitC","Vitamin C","mg"]];
   if(!Object.keys(n).length)return "";return `<h4>Per portion, estimated</h4><div class="nutri">${show.map(([k,l,u])=>`<div><b class="num">${r1(n[k]||0)}<small> ${u}</small></b><span>${l}</span></div>`).join("")}</div>`}
 function recipeBody(r,withNutri=true){
-  return `${withNutri?nutriGrid(r):""}
-  ${r.parts?.length>1?`<h4>On her plate</h4><div class="plate-list">${r.parts.map(p=>`<span>${esc(p.name)}</span>`).join("")}</div>`:""}
-  ${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">about ${r.serves} toddler portions</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  return `${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
   ${r.method?.length?`<h4>Method</h4><ol class="method">${r.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}
-  ${r.tip?`<p class="tip">${I.leaf}<span>${esc(r.tip)}</span></p>`:""}`;
+  ${r.tip?`<p class="tip">${I.leaf}<span>${esc(r.tip)}</span></p>`:""}
+  ${r.parts?.length>1?`<h4>On her plate</h4><div class="plate-list">${r.parts.map(p=>`<span>${esc(p.name)}</span>`).join("")}</div>`:""}
+  ${withNutri?nutriGrid(r):""}`;
 }
 function insightCard(ins){
   if(!ins)return "";const r=ins.recipe;
@@ -892,9 +901,8 @@ const MEAL_LABEL={...SLOT_LABEL,side:"Side"};
 function openRecipe(id){
   const r=recipeById(id);if(!r)return;
   const dayOpts=[...Array(14)].map((_,i)=>addDays(todayKey(),i)).map(k=>`<option value="${k}">${shortDay(k)}</option>`).join("");
-  openSheet(`<div class="r-top"><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <div class="r-head">${pic(r,"plate-lg")}<p class="eyebrow">${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}</p><h2 class="display">${esc(r.title)}</h2>
-    <div class="metas">${r.time?`<span>${I.clock}${esc(r.time)}</span>`:""}${r.serves?`<span>${I.people}${r.serves} portions</span>`:""}${r.ai?`<span>${I.spark}By AI</span>`:""}</div></div>
+  openSheet(`<div class="r-head"><div class="r-title"><div><p class="eyebrow">${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+    <div class="metas">${r.time?`<span>${I.clock}${esc(r.time)}</span>`:""}${r.serves?`<span>${I.people}${r.serves} ${r.serves==1?"portion":"portions"}</span>`:""}${r.ai?`<span>${I.spark}By AI</span>`:""}</div></div>
   <div class="r-body">${recipeBody(r)}</div>
   <div class="addplan card-soft"><p class="micro">Put it in the plan</p><div class="ap-row"><label class="f"><span>Day</span><select id="apDay">${dayOpts}</select></label><label class="f"><span>Meal</span><select id="apSlot">${SLOTS.map(([k,l])=>`<option value="${k}"${(r.meals||[])[0]===k?" selected":""}>${l}</option>`).join("")}</select></label></div><button class="btn wide" data-sact="addplan" data-id="${esc(r.id)}">Add to plan</button></div>
   <div class="sh-acts"><button class="btn ghost" data-sact="fav" data-id="${esc(r.id)}">${r.fav?"★ Favourite":"☆ Add to favourites"}</button><button class="btn ghost" data-sact="edit" data-id="${esc(r.id)}">${I.pencil}Edit</button><button class="btn ghost" data-sact="print1" data-id="${esc(r.id)}">${I.print}Print</button></div>`);
@@ -1029,7 +1037,7 @@ function printWeek(){
 }
 function printRecipes(ids){
   const rs=ids.map(recipeById).filter(Boolean);if(!rs.length)return;
-  doPrint(`${pHead("Recipes")}<div class="pr">${rs.map(r=>`<article><h2>${esc(r.title)}</h2><p class="m">${[r.time,r.serves?`about ${r.serves} toddler portions`:""].filter(Boolean).map(esc).join(" · ")}</p>
+  doPrint(`${pHead("Recipes")}<div class="pr">${rs.map(r=>`<article><h2>${esc(r.title)}</h2><p class="m">${[r.time,r.serves?`makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}`:""].filter(Boolean).map(esc).join(" · ")}</p>
   <h3>Ingredients</h3><ul>${(r.ingredients||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul><h3>Method</h3><ol>${(r.method||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${r.tip?`<p>${esc(r.tip)}</p>`:""}</article>`).join("")}</div>`);
 }
 function printShopping(){
