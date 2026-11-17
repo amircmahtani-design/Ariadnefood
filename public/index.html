@@ -507,6 +507,54 @@ select.bare:focus{box-shadow:none}
 /* every day framed (v2.3) */
 .wday{box-shadow:0 0 0 2px var(--sage-2),var(--sh-2)}
 .wday.today{box-shadow:0 0 0 2.5px var(--sage),var(--sh-2)}
+
+/* artwork (v2.4) */
+.flourish{display:block;width:min(180px,52%);height:auto;margin:8px auto 0;pointer-events:none;user-select:none}
+.bunny{display:block;width:96px;height:auto;margin:0 auto 10px;pointer-events:none;user-select:none}
+.who-sheet .bunny{width:112px}
+.empty-state{text-align:center;padding:4px 0 8px}
+.nores .bunny{width:84px}
+/* calmer weights (v2.4): strength only on dish names; selection shown by colour */
+.part .pn{font-weight:500;color:var(--ink)}
+.seg button{font-weight:500;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{font-weight:600}
+.seg.likes button{font-weight:500}
+.slot-l{font-weight:600;letter-spacing:.07em;color:var(--sage-ink)}
+.took-l{font-weight:600!important;color:var(--ink-3)}
+.meal .media-btn{font-weight:500}
+.dish{font-weight:520}
+.link{font-weight:600}
+.tile strong{font-weight:520}
+.tile-tag{font-weight:600}
+.milk .ctl output{font-weight:600}
+.eyebrow,.micro{font-weight:600}
+.btn{font-weight:600}
+.btn.ghost,.chip,.checks span{font-weight:500}
+.tab{font-weight:500}
+.tab[aria-current="page"]{font-weight:600}
+.who-btn{font-weight:500}
+.pill,.gchip,.wl,.dchip span{font-weight:600}
+.wd-date{font-weight:500}
+.rc-tx strong,.pk-t strong,.opt-t strong,.gaps strong,.gauge strong,.gring b{font-weight:600}
+.pk-t small,.covers,.missed b{font-weight:600}
+label.f>span,.lbl{font-weight:600}
+
+/* collapsible meals (v2.4) */
+.meal{padding:0;overflow:hidden}
+.meal-toggle{width:100%;border:0;background:none;text-align:left;padding:14px 16px;display:block;min-height:64px}
+.mt-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.mt-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.mt-row .dish{font-family:var(--serif);font-variation-settings:"SOFT" 100;font-size:19px;line-height:1.25;letter-spacing:-.01em;color:var(--ink)}
+.mt-row .empty-t{font-size:16px;color:var(--ink-3)}
+.chev{flex:none;width:30px;height:30px;border-radius:50%;background:var(--bg);display:grid;place-items:center;color:var(--ink-3);transition:transform var(--med) var(--ease)}
+.chev svg{width:17px;height:17px}
+.meal.open .chev{transform:rotate(180deg)}
+.meal .meal-body{padding:0 16px 12px;border-top:1px solid var(--line)}
+.meal-acts{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0 2px}
+.meal-acts .link{padding-left:0}
+.meal .parts{margin-top:4px}
+.meal .part:first-of-type{border-top:0}
+.meal.open{box-shadow:0 0 0 1.5px var(--sage-2),var(--sh-2)}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -660,7 +708,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.3";
+const APP_VERSION="2.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -762,7 +810,7 @@ function viewDay(){
   const ml=day.milk!=null?+day.milk:+S.settings.milkDefault||0;
   let h=`<header class="pagehead">
     <div class="ph-row"><button class="iconbtn" data-act="prevDay" aria-label="Previous day">${I.left}</button>
-    <div class="ph-t"><p class="eyebrow">${rel}</p><h1 class="display">${dayTitle(k)}</h1></div>
+    <div class="ph-t"><p class="eyebrow">${rel}</p><h1 class="display">${dayTitle(k)}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
     <button class="iconbtn" data-act="nextDay" aria-label="Next day">${I.right}</button></div>
     
     ${k!==t?`<button class="link center-link" data-act="today">Back to today</button>`:""}
@@ -779,11 +827,15 @@ function viewDay(){
   h+=SLOTS.map(([s,label])=>{
     const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),parts=partsFor(m),log=m.log||{},title=mealTitle(m);
     const sel=r?r.id:(m.custom?"__custom":"");
-    return `<article class="meal card" data-slot="${s}">
-      <div class="meal-top"><span class="slot-l">${SLOT_ICON[s]}${label}</span><button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
-      <div class="meal-head">
-        ${title?`<h2 class="dish">${r?`<button class="dishbtn" data-act="recipe" data-id="${esc(r.id)}">${esc(title)}</button>`:esc(title)}</h2>`:`<p class="empty-t">Nothing planned for ${label.toLowerCase()} yet.</p>`}</div>
-      <div class="meal-body">
+    const ok=`${k}|${s}`,open=!!ui.openMeals?.[ok],loggedN=Object.values(log).filter(Boolean).length,done=parts.length&&loggedN>=parts.length;
+    const status=!title?"":loggedN?(done?`<span class="pill on">${I.check}Logged</span>`:`<span class="pill acc">${loggedN} of ${parts.length}</span>`):`<span class="pill">To log</span>`;
+    return `<article class="meal card${open?" open":""}" data-slot="${s}">
+      <button class="meal-toggle" data-act="toggleMeal" aria-expanded="${open}">
+        <span class="mt-top"><span class="slot-l">${SLOT_ICON[s]}${label}</span>${status}</span>
+        <span class="mt-row">${title?`<span class="dish">${esc(title)}</span>`:`<span class="empty-t">Nothing planned yet</span>`}<span class="chev">${I.down}</span></span>
+      </button>
+      <div class="meal-body"${open?"":" hidden"}>
+        <div class="meal-acts">${r?`<button class="link" data-act="recipe" data-id="${esc(r.id)}">${I.bowl}See the recipe</button>`:"<span></span>"}<button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
         <div class="change" hidden>
           <label class="f"><span>Meal</span><select data-pick>${recipeOptions(s,sel)}</select></label>
           <label class="f"${sel==="__custom"?"":" hidden"} data-custwrap><span>What is it?</span><input data-pickcustom value="${esc(m.custom)}" placeholder="e.g. Banana + cheese cubes"></label>
@@ -815,7 +867,7 @@ function viewWeek(){
   const mon=ui.week,t=todayKey();
   let h=`<header class="pagehead">
     <div class="ph-row"><button class="iconbtn" data-act="prevWeek" aria-label="Previous week">${I.left}</button>
-    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1></div>
+    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
     <button class="iconbtn" data-act="nextWeek" aria-label="Next week">${I.right}</button></div>
     
     ${mon!==mondayOf(t)?`<button class="link center-link" data-act="thisWeek">Back to this week</button>`:""}
@@ -846,10 +898,10 @@ function viewWeek(){
 /* Recipes */
 function viewRecipes(){
   const A=analyse(todayKey());const picks=rankRecipes(A);
-  let h=`<header class="pagehead centered"><p class="eyebrow">Ariadne's cookbook</p><h1 class="display">Recipes</h1></header>
+  let h=`<header class="pagehead centered"><p class="eyebrow">Ariadne's cookbook</p><h1 class="display">Recipes</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></header>
   <section class="nutri-card card">
     <div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>Her last 7 days</h2><p class="muted small">${A.used.length?`${A.used.length} day${A.used.length>1?"s":""} logged · daily average`:"Waiting for a few logged days"}</p></div></div>`;
-  if(A.used.length<1){h+=`<p class="muted">Log a few meals on Today, tapping All, Most, Some or None for each part, and this fills in.</p>`}
+  if(A.used.length<1){h+=`<div class="empty-state"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><p class="muted">Log a few meals on Today, tapping All, Most, Some or None for each part, and this fills in.</p></div>`}
   else{
     h+=`${groupChips(null,A.groupDays,A.used.length)}
     ${A.missed.length?`<p class="missed"><b>Didn't eat</b> ${esc(A.missed.slice(-6).map(m=>`${m.name} (${shortDay(m.k)})`).join(", "))}</p>`:""}
@@ -875,7 +927,7 @@ function renderRList(){
   const q=ui.rq.toLowerCase().trim();
   const list=S.recipes.filter(r=>(ui.rf==="all"||(ui.rf==="fav"?r.fav:(r.meals||[]).includes(ui.rf)))&&(!q||r.title.toLowerCase().includes(q)||(r.ingredients||[]).join(" ").toLowerCase().includes(q))).sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title));
   const el=$("#rlist");if(!el)return;
-  el.innerHTML=list.length?list.map(r=>`<li class="rcard"><button class="open" data-act="recipe" data-id="${esc(r.id)}">${pic(r,"rc-ph")}<span class="rc-tx"><strong>${esc(r.title)}</strong><small>${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}${r.time?` · ${esc(r.time)}`:""}</small>${r.ai?`<em class="ai-tag">${I.spark}AI</em>`:""}</span></button><button class="star" data-act="fav" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="Favourite">${I.star}</button></li>`).join(""):`<li class="nores"><span class="muted">No recipes match that.</span></li>`;
+  el.innerHTML=list.length?list.map(r=>`<li class="rcard"><button class="open" data-act="recipe" data-id="${esc(r.id)}">${pic(r,"rc-ph")}<span class="rc-tx"><strong>${esc(r.title)}</strong><small>${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}${r.time?` · ${esc(r.time)}`:""}</small>${r.ai?`<em class="ai-tag">${I.spark}AI</em>`:""}</span></button><button class="star" data-act="fav" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="Favourite">${I.star}</button></li>`).join(""):`<li class="nores"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><span class="muted">No recipes match that.</span></li>`;
 }
 function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"],["calcium","Calcium","mg"],["protein","Protein","g"],["fibre","Fibre","g"],["vitA","Vitamin A","µg"],["vitC","Vitamin C","mg"]];
   if(!Object.keys(n).length)return "";return `<h4>Per portion, estimated</h4><div class="nutri">${show.map(([k,l,u])=>`<div><b class="num">${r1(n[k]||0)}<small> ${u}</small></b><span>${l}</span></div>`).join("")}</div>`}
@@ -929,7 +981,7 @@ function editRecipe(id,preset){
 }
 function askWho(){
   const ppl=S.settings?.people||["Amir","Catherine","Lia"];
-  openSheet(`<div class="who-sheet"><img class="who-logo" src="/img/app-icon-256.png?v=2" alt="" width="84" height="84"><h2 class="display">Who's using this phone?</h2><p class="muted">So everyone can see who logged each meal.</p>
+  openSheet(`<div class="who-sheet"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><h2 class="display">Who's using this phone?</h2><p class="muted">So everyone can see who logged each meal.</p>
   <div class="who">${ppl.map(p=>`<button class="btn ghost wide" data-who="${esc(p)}">${esc(p)}</button>`).join("")}</div></div>`);
 }
 function openSettings(){
@@ -1073,6 +1125,7 @@ $("#view").addEventListener("click",async e=>{
   const rf=e.target.closest("[data-rf]");if(rf){ui.rf=rf.dataset.rf;document.querySelectorAll("[data-rf]").forEach(b=>b.setAttribute("aria-pressed",b===rf));renderRList();return}
   const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
   const slotEl=a.closest("[data-slot]"),slot=slotEl?.dataset.slot;
+  if(act==="toggleMeal"){const key=`${ui.date}|${slot}`;ui.openMeals=ui.openMeals||{};ui.openMeals[key]=!ui.openMeals[key];keepScroll(render);return}
   if(act==="amt"){const part=a.closest("[data-part]").dataset.part,v=a.dataset.val,cur=S.days[ui.date]?.meals?.[slot]?.log?.[part];
     patchDay(ui.date,{meals:{[slot]:{log:{[part]:cur===v?null:v},by:me||null,at:timeNow()}}});keepScroll(render)}
   else if(act==="like"){const cur=S.days[ui.date]?.meals?.[slot]?.like;patchDay(ui.date,{meals:{[slot]:{like:cur===a.dataset.val?null:a.dataset.val,by:me||null,at:timeNow()}}});keepScroll(render)}
