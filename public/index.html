@@ -646,7 +646,7 @@ label.f>span,.lbl{font-weight:600}
   <div class="wrap" id="tabs">
     <button class="tab" data-view="day"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z"/><path d="M9 7.6c0-1.4 1-1.6 1-3M13.5 7.6c0-1.4 1-1.6 1-3"/></svg></span>Today</button>
     <button class="tab" data-view="week"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.3h.01M12 17.3h.01" stroke-width="2.4"/></svg></span>My Week</button>
-    <button class="tab" data-view="her"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/><path d="M8.5 12h2l1-2 1.5 4 1-2h1.5"/></svg></span>Her Week</button>
+    <button class="tab" data-view="her"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/><path d="M8.5 12h2l1-2 1.5 4 1-2h1.5"/></svg></span>Nutrition</button>
     <button class="tab" data-view="recipes"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></svg></span>Recipes</button>
   </div>
 </nav>
@@ -748,7 +748,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.6";
+const APP_VERSION="2.7";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1050,7 +1050,7 @@ function openPhoto(){
 }
 
 
-/* ---------- Her Week: food groups, portions and a weekly score ---------- */
+/* ---------- Nutrition: food groups, portions and a weekly score ---------- */
 const GROUP_TARGET={protein:2,veg:3,fruit:2,grain:3,dairy:1}; // typical toddler portions a day
 const GROUP_NAME={protein:"Protein",veg:"Vegetables",fruit:"Fruit",grain:"Starch & grains",dairy:"Dairy"};
 function foodLabel(k){if(/^chicken/.test(k))return "Chicken";if(k==="beef_mince")return "Beef";if(k==="lamb_mince")return "Lamb";if(/^lentils/.test(k))return "Lentils";if(k==="chickpeas"||k==="hummus")return "Chickpeas & hummus";if(k==="egg")return "Eggs";if(/salmon|cod|sardines/.test(k))return FOODS[k].name.replace(" / white fish","").replace(" (tinned)","");return FOODS[k].name.replace(/ \(dry\)| \(tinned\)| \(no salt\)/,"").replace("Cheddar / mild cheese","Cheese").replace("Pasta / orzo","Pasta & orzo")}
@@ -1074,7 +1074,7 @@ function viewHer(){
   const n=W.end>=mon?Math.round((parse(W.end)-parse(mon))/864e5)+1:0;
   const A=n?analyse(W.end,n):{used:[],rows:[],missed:[],groupDays:{}};const picks=n?rankRecipes(A):[];
   let h=`<header class="pagehead"><div class="ph-row"><button class="iconbtn" data-act="hPrev" aria-label="Previous week">${I.left}</button>
-    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"Her week so far":"Her week"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
+    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"Nutrition · this week":"Nutrition · week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
     <button class="iconbtn" data-act="hNext" aria-label="Next week"${mon>=mondayOf(t)?" disabled":""}>${I.right}</button></div>
     ${mon!==mondayOf(t)?`<button class="link center-link" data-act="hThis">Back to this week</button>`:""}</header>`;
   if(!W.days){return h+`<section class="card score-card"><div class="empty-state"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><p class="muted">Nothing logged this week yet. Tap All, Most, Some or None on Today and her score appears here.</p></div></section>`}
