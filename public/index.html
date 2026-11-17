@@ -503,6 +503,10 @@ select.bare:focus{box-shadow:none}
 .metas{justify-content:flex-start;margin-top:10px}
 .r-body h4{margin:22px 0 10px}
 .r-body>h4:first-child{margin-top:16px}
+
+/* every day framed (v2.3) */
+.wday{box-shadow:0 0 0 2px var(--sage-2),var(--sh-2)}
+.wday.today{box-shadow:0 0 0 2.5px var(--sage),var(--sh-2)}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -656,7 +660,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.2";
+const APP_VERSION="2.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
