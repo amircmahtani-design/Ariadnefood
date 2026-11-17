@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ariadne's Table</title>
+<meta name="theme-color" content="#FBF7F3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ari's Table">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238A4560'/%3E%3Ctext x='32' y='44' font-family='Georgia' font-size='34' fill='%23FBF7F3' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="/foods.js"></script>
+<script src="/engine.js"></script>
+<style>
+[hidden]{display:none!important}
+:root{
+  --bg:#FBF7F3;--surface:#FFFFFF;--ink:#2E2328;--muted:#76686E;--line:#ECE3DC;--soft:#F5EEE8;
+  --accent:#8A4560;--accent-soft:#F3E6EB;--good:#4E7350;--good-soft:#E7F0E4;--mid:#B07A1E;--mid-soft:#F8EEDB;--warn:#A4482B;--warn-soft:#F8E6DF;
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;
+  --r:16px;--r-sm:10px;
+  --serif:"Fraunces",Georgia,serif;--sans:"Figtree",system-ui,-apple-system,sans-serif;
+  --ease:cubic-bezier(0.23,1,0.32,1);
+  --shadow:0 1px 2px rgba(80,40,55,.05),0 8px 24px rgba(80,40,55,.06);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--sans);-webkit-font-smoothing:antialiased;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-0.015em;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+.wrap{max-width:780px;margin:0 auto;padding:0 var(--s4)}
+.num{font-variant-numeric:tabular-nums}
+
+.top{position:sticky;top:0;z-index:20;background:rgba(251,247,243,.92);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.topin{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);height:56px}
+.brand{font:600 21px/1 var(--serif);letter-spacing:-0.02em}
+.who-btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 8px 6px 12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;min-height:38px}
+.who-btn svg{width:18px;height:18px;color:var(--muted)}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs .wrap{display:grid;grid-template-columns:repeat(3,1fr)}
+.tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 9px;color:var(--muted);font-size:12px;font-weight:600;min-height:60px}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--accent)}
+.tab:active{transform:scale(.96)}
+main{padding-top:var(--s5);padding-bottom:var(--s6)}
+
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.btn{border:0;background:var(--accent);color:#fff;border-radius:999px;padding:12px 20px;font-weight:600;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);transition:transform .15s var(--ease),opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.55;cursor:default}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:8px 14px;min-height:38px;font-size:14px}
+.btn.danger{background:var(--surface);color:var(--warn);border:1px solid #EBCFC4}
+.btn svg{width:17px;height:17px}
+.link{border:0;background:none;color:var(--accent);font-weight:600;padding:8px 4px;min-height:36px;font-size:15px}
+.iconbtn{border:1px solid var(--line);background:var(--surface);width:44px;height:44px;border-radius:999px;display:grid;place-items:center;flex:none;transition:transform .15s var(--ease)}
+.iconbtn:active{transform:scale(.94)}
+.iconbtn svg{width:20px;height:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.pill.on{background:var(--good-soft);color:var(--good)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.pill svg{width:12px;height:12px}
+input[type=text],input:not([type]),input[type=search],input[type=number],textarea,select{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:10px 12px;min-height:44px;outline:none;transition:border-color .15s}
+select{appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2376686E' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;text-overflow:ellipsis}
+textarea{resize:vertical;line-height:1.45}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none}
+label.f{display:block}
+label.f>span,.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.stack>*+*{margin-top:var(--s4)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* nav heads */
+.navhead{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s5)}
+.navhead .t{flex:1;min-width:0;text-align:center}
+.navhead h1{font:600 clamp(23px,6vw,30px)/1.15 var(--serif)}
+
+/* today */
+.essentials{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);margin-bottom:var(--s5)}
+.vitd,.milk{display:flex;align-items:center;gap:var(--s3);padding:var(--s3);border:1px solid var(--line);background:var(--surface);border-radius:var(--r);min-height:68px;text-align:left}
+.vitd{transition:background .2s,border-color .2s}
+.vitd .box{width:28px;height:28px;border-radius:8px;border:2px solid #CDBFC5;display:grid;place-items:center;flex:none;transition:background .2s var(--ease),border-color .2s}
+.vitd .box svg{width:16px;height:16px;color:#fff;opacity:0;transform:scale(.6);transition:opacity .2s,transform .2s var(--ease)}
+.vitd.on{background:var(--good-soft);border-color:#CFE0CA}
+.vitd.on .box{background:var(--good);border-color:var(--good)}
+.vitd.on .box svg{opacity:1;transform:none}
+.vitd strong,.milk strong{display:block;font-weight:600;font-size:15px;line-height:1.25;white-space:nowrap}
+.vitd small,.milk small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+.milk{justify-content:space-between}
+.milk .ctl{display:flex;align-items:center;gap:4px}
+.milk .ctl button{width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1;display:grid;place-items:center}
+.milk .ctl output{min-width:56px;text-align:center;font-weight:700}
+
+.meal{padding:var(--s4);margin-bottom:var(--s3)}
+.meal-h{display:flex;align-items:center;gap:var(--s2);min-height:32px}
+.meal-h .slot{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.meal-h .sp{flex:1}
+.dish{font:600 19px/1.3 var(--serif);margin:2px 0 var(--s2)}
+.dishbtn{border:0;background:none;padding:0;text-align:left;font:inherit;color:inherit;text-decoration:underline;text-decoration-color:#D9C7CF;text-underline-offset:4px;text-decoration-thickness:1.5px}
+.empty{color:var(--muted);margin:2px 0 var(--s2)}
+.change{margin:var(--s2) 0 var(--s3);padding:var(--s3);background:var(--soft);border-radius:var(--r-sm)}
+.change .row{display:flex;justify-content:flex-end;margin-top:var(--s2)}
+.parts{margin-top:var(--s2)}
+.part{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);padding:8px 0;border-top:1px solid var(--line)}
+.part:first-child{border-top:0}
+.part .pn{font-weight:600;font-size:15px;min-width:0;flex:1}
+.seg{display:flex;gap:3px;flex:none}
+.seg button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:0 10px;height:36px;font-size:13px;font-weight:600;color:var(--muted);transition:background .15s,border-color .15s,color .15s,transform .12s var(--ease)}
+.seg button:active{transform:scale(.94)}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg button[data-val="none"][aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+.likes{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--s3)}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;min-height:36px;font-size:14px;font-weight:500;transition:background .15s,border-color .15s,color .15s,transform .12s var(--ease)}
+.chip:active{transform:scale(.95)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.bad[aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+.alert{margin-top:var(--s3);background:var(--warn-soft);color:#7A3320;padding:var(--s3);border-radius:var(--r-sm);font-size:14px}
+.notes{margin-top:var(--s3)}
+.notes textarea{min-height:44px;font-size:15px}
+.meta{margin-top:var(--s2);font-size:12px;color:var(--muted)}
+.sofar{padding:var(--s4);margin-top:var(--s5)}
+.sofar h2{font:600 18px/1.2 var(--serif)}
+.groups{display:flex;flex-wrap:wrap;gap:6px;margin:var(--s3) 0}
+
+/* bars */
+.bars{display:grid;gap:10px;margin-top:var(--s3)}
+.bar .bl{display:flex;justify-content:space-between;gap:var(--s2);font-size:14px}
+.bar .bl span:last-child{color:var(--muted)}
+.bar .track{height:8px;background:var(--soft);border-radius:999px;overflow:hidden;margin-top:4px}
+.bar .fill{height:100%;border-radius:999px;background:var(--good)}
+.bar.mid .fill{background:var(--mid)}
+.bar.low .fill{background:var(--warn)}
+.bar.low .bl strong{color:var(--warn)}
+
+/* week */
+.weekacts{display:flex;justify-content:center;gap:var(--s2);margin:-8px 0 var(--s5);flex-wrap:wrap}
+.wday{padding:var(--s3) var(--s4) var(--s4);margin-bottom:var(--s3)}
+.wday.today{border-color:#DCC0CB}
+.wd-h{display:flex;align-items:center;justify-content:space-between;gap:var(--s2)}
+.wd-title{border:0;background:none;padding:8px 0;font:600 18px/1.2 var(--serif);display:flex;align-items:center;gap:var(--s2);text-align:left}
+.wd-title svg{width:16px;height:16px;color:var(--muted)}
+.wd-meta{display:flex;gap:6px;align-items:center}
+.wrow{display:grid;grid-template-columns:72px 1fr;gap:6px var(--s2);align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.wrow:first-of-type{border-top:0}
+.wl{font-size:13px;font-weight:600;color:var(--muted)}
+.wrow select,.wrow input{min-height:42px;padding-top:8px;padding-bottom:8px;font-size:15px}
+.wrow .side{grid-column:2;font-size:14px;min-height:36px;background:var(--bg)}
+.wrow .cust{grid-column:2}
+
+/* recipes */
+.sec{margin-top:var(--s6)}
+.sec:first-child{margin-top:0}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s3)}
+.sec-h h2{font:600 22px/1.2 var(--serif)}
+.box{padding:var(--s4)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:var(--s3) 0 var(--s2)}
+.rlist{list-style:none;margin:0;padding:0}
+.rrow{display:flex;align-items:center;border-top:1px solid var(--line)}
+.rlist li:first-child .rrow{border-top:0}
+.rrow .open{flex:1;border:0;background:none;text-align:left;padding:13px 2px;min-height:58px;display:flex;align-items:center;gap:var(--s3)}
+.rrow .tt{flex:1;min-width:0}
+.rrow .tt strong{display:block;font-weight:600}
+.rrow .tt small{display:block;color:var(--muted);font-size:13px}
+.star{border:0;background:none;width:44px;height:44px;display:grid;place-items:center;color:#CDBFC5;flex:none}
+.star svg{width:20px;height:20px}
+.star[aria-pressed="true"]{color:var(--mid)}
+.star[aria-pressed="true"] svg{fill:currentColor}
+.picks{list-style:none;margin:var(--s3) 0 0;padding:0}
+.picks li{border-top:1px solid var(--line)}
+.picks button{width:100%;border:0;background:none;text-align:left;padding:11px 0;display:flex;justify-content:space-between;gap:var(--s3);align-items:center;min-height:48px}
+.picks small{color:var(--good);font-weight:600;font-size:13px;text-align:right}
+.missed{margin-top:var(--s3);font-size:14px;color:#7A3320;background:var(--warn-soft);padding:var(--s3);border-radius:var(--r-sm)}
+.ask .row{display:flex;gap:var(--s2);margin-top:var(--s3)}
+.ask .row .btn{flex:1}
+.ins{margin-top:var(--s3)}
+.ins .sum{margin-top:var(--s2)}
+.gaps{list-style:none;padding:0;margin:var(--s3) 0 0}
+.gaps li{padding:9px 0;border-top:1px solid var(--line)}
+.gaps li:first-child{border-top:0}
+.gaps strong{display:block}
+.gaps span{color:var(--muted);font-size:14px}
+.rec{margin-top:var(--s4);padding:var(--s4);background:var(--soft);border-radius:var(--r)}
+.rec h3{font:600 20px/1.25 var(--serif);margin-top:4px}
+.rec .covers{margin-top:var(--s2);font-size:14px;color:var(--good);font-weight:600}
+.acts{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s4)}
+.r-body h4{font:700 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:var(--s5) 0 var(--s2)}
+.r-body ul,.r-body ol{margin:0;padding-left:20px}
+.r-body li{margin:4px 0}
+.r-body .tip{margin-top:var(--s4);padding:var(--s3);background:var(--surface);border-radius:var(--r-sm);font-size:15px;border:1px solid var(--line)}
+.nutri{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:var(--s2)}
+.nutri div{background:var(--soft);border-radius:var(--r-sm);padding:8px 10px;font-size:13px;line-height:1.3}
+.nutri b{display:block;font-size:15px}
+.streaming{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:var(--s2);margin-top:var(--s3)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+.errbox{padding:var(--s3);background:var(--warn-soft);color:#7A3320;border-radius:var(--r-sm);margin-top:var(--s3);font-size:15px}
+.note{font-size:12px;color:var(--muted);margin-top:var(--s3)}
+
+/* sheet */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet-bg{position:absolute;inset:0;background:rgba(46,35,40,.38);opacity:0;transition:opacity .25s}
+.sheet-card{position:relative;background:var(--bg);width:100%;max-width:640px;max-height:92dvh;overflow:auto;border-radius:20px 20px 0 0;padding:var(--s5) var(--s4) calc(var(--s6) + env(safe-area-inset-bottom));transform:translateY(24px);opacity:0;transition:transform .3s var(--ease),opacity .25s var(--ease);overscroll-behavior:contain}
+.sheet.open .sheet-bg{opacity:1}
+.sheet.open .sheet-card{transform:none;opacity:1}
+.sh-h{display:flex;gap:var(--s3);align-items:flex-start;justify-content:space-between}
+.sh-h h2{font:600 24px/1.2 var(--serif);margin-top:4px}
+.sh-acts{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s5)}
+.addplan{display:grid;grid-template-columns:1fr 1fr auto;gap:var(--s2);margin-top:var(--s5);align-items:end}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{display:inline-flex;position:relative}
+.checks input{position:absolute;opacity:0;pointer-events:none}
+.checks span{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;min-height:38px;font-size:14px;display:inline-flex;align-items:center}
+.checks input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff}
+.checks input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.picklist{list-style:none;padding:0;margin:var(--s2) 0 0}
+.picklist label{display:flex;gap:var(--s3);align-items:center;padding:10px 0;border-top:1px solid var(--line);min-height:44px}
+.picklist input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);padding:var(--s4) 0;border-top:1px solid var(--line)}
+.opt:first-of-type{border-top:0}
+.opt strong{display:block}
+.opt small{color:var(--muted)}
+.who{display:grid;gap:var(--s2);margin-top:var(--s4)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.thumbs{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s3)}
+.thumbs img{width:72px;height:72px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line)}
+
+.status{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;z-index:60;pointer-events:none;transition:opacity .25s;white-space:nowrap}
+.status.err{background:var(--warn)}
+.status.fade{opacity:0}
+.loading{text-align:center;color:var(--muted);padding:var(--s7) 0}
+#print{display:none}
+
+@media (max-width:380px){.essentials{grid-template-columns:1fr}.seg button{padding:0 8px}}
+@media (min-width:760px){.wrow{grid-template-columns:88px 1fr 200px}.wrow .side{grid-column:auto}.wrow .cust{grid-column:2/4}}
+@media (hover:hover) and (pointer:fine){
+  .chip:hover,.iconbtn:hover,.btn.ghost:hover,.seg button:hover{border-color:#D6C6CD}
+  .rrow .open:hover strong,.picks button:hover span{color:var(--accent)}
+  .btn:not(.ghost):hover{opacity:.92}
+}
+@media (prefers-reduced-motion:reduce){*{transition:opacity .15s!important;animation:none!important}}
+
+/* print: A4 landscape */
+@page{size:A4 landscape;margin:10mm}
+@media print{
+  body{background:#fff;padding:0;font-size:10pt;color:#222}
+  .top,.tabs,main,.sheet,.status{display:none!important}
+  #print{display:block}
+  .p-h{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5pt solid #8A4560;padding-bottom:4pt;margin-bottom:6pt}
+  .p-h h1{font:600 18pt/1.1 var(--serif);color:#2E2328}
+  .p-h span{font-size:9pt;color:#666}
+  table.pw{width:100%;border-collapse:collapse;table-layout:fixed}
+  .pw th,.pw td{border:0.6pt solid #CDBFC5;padding:4pt 5pt;vertical-align:top;font-size:9pt;line-height:1.3}
+  .pw thead th{background:#F3E6EB;font-size:9.5pt;text-align:left}
+  .pw tbody th{background:#FBF7F3;text-align:left;width:22mm;font-size:9pt}
+  .pw td{height:24mm}
+  .pw td b{display:block;font-weight:600}
+  .pw td i{font-style:normal;color:#666;font-size:8.5pt}
+  .pw tr.vd td{height:auto}
+  .tick{display:inline-block;width:10pt;height:10pt;border:0.8pt solid #888;border-radius:2pt;vertical-align:middle;margin-right:4pt}
+  .tick.on{background:#4E7350;border-color:#4E7350}
+  .pw tr.nt td{height:16mm}
+  .p-f{margin-top:5pt;font-size:8pt;color:#777}
+  .pr{display:grid;grid-template-columns:1fr 1fr;gap:6mm;align-items:start}
+  .pr article{break-inside:avoid;border:0.6pt solid #CDBFC5;border-radius:4pt;padding:5mm}
+  .pr h2{font:600 13pt/1.2 var(--serif)}
+  .pr .m{font-size:8.5pt;color:#666;margin:1pt 0 3pt}
+  .pr h3{font-size:8pt;letter-spacing:.06em;text-transform:uppercase;color:#777;margin:5pt 0 2pt}
+  .pr ul,.pr ol{margin:0;padding-left:12pt}
+  .pr li{margin:1pt 0;font-size:9pt}
+  .pr p{font-size:9pt;margin-top:4pt}
+  .ps{columns:3;column-gap:8mm}
+  .ps section{margin-bottom:4mm}
+  .ps h2{break-after:avoid}
+  .ps li{break-inside:avoid}
+  .ps h2{font-size:10pt;text-transform:uppercase;letter-spacing:.06em;color:#8A4560;margin-bottom:2pt}
+  .ps ul{list-style:none;margin:0;padding:0}
+  .ps li{display:flex;gap:5pt;padding:2.5pt 0;border-bottom:0.4pt solid #E5DCD5;font-size:9.5pt}
+  .ps li small{color:#777;font-size:8pt;display:block}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap topin">
+    <div class="brand">Ariadne's Table</div>
+    <button class="who-btn" id="whoBtn" aria-label="Settings"><span id="whoName">Settings</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </div>
+</header>
+
+<main class="wrap" id="view"><p class="loading">Loading…</p></main>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap" id="tabs">
+    <button class="tab" data-view="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>Today</button>
+    <button class="tab" data-view="week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></svg>My Week</button>
+    <button class="tab" data-view="recipes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h11a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h11M9 8h6"/></svg>Recipes</button>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-card" role="dialog" aria-modal="true" id="sheetBody"></div>
+</div>
+<div class="status fade" id="status" aria-live="polite"></div>
+<div id="print"></div>
+
+<script>
+"use strict";
+const FOODS=window.FOODS||{};
+const E=makeEngine(FOODS,()=>S);
+const {SLOTS,SLOT_LABEL,AMOUNTS,FRAC,LIKES,LIKE_LABEL,GROUPS,DOW,MONTHS,NKEYS,pad,key,parse,addDays,mondayOf,dayTitle,shortDay,dmy,clone,cap,r1,
+  matchFood,TARGETS,addItems,recipeById,sideParts,partsFor,mealTitle,recipeNutrition,dayNutrition,analyse,analysisText,rankRecipes}=E;
+const I={
+  left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
+  print:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V3.5h10V9M7 17H4.5V10.5a1.5 1.5 0 0 1 1.5-1.5h12a1.5 1.5 0 0 1 1.5 1.5V17H17"/><path d="M7 14h10v6.5H7z"/></svg>',
+  spark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>',
+  camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>',
+};
+
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayKey=()=>key(new Date());
+const timeNow=()=>{const d=new Date();return `${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const weekRange=mon=>{const a=parse(mon),b=parse(addDays(mon,6));return a.getMonth()===b.getMonth()?`${a.getDate()}–${b.getDate()} ${MONTHS[b.getMonth()]} ${b.getFullYear()}`:`${a.getDate()} ${MONTHS[a.getMonth()]} – ${b.getDate()} ${MONTHS[b.getMonth()]} ${b.getFullYear()}`};
+const isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
+function merge(t,p,keepNull){for(const [k,v] of Object.entries(p)){if(v===null&&!keepNull)delete t[k];else if(isObj(v))t[k]=merge(isObj(t[k])?t[k]:{},v,keepNull);else t[k]=v}return t}
+const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+
+/* ---------- state ---------- */
+let S={days:{},recipes:[],settings:{people:["Amir","Catherine","Lia"],milkDefault:600,dropUg:10,vitDTarget:15,formula:{}},insight:null};
+const ui={view:ls.get("ari-view")||"day",date:todayKey(),week:mondayOf(todayKey()),rq:"",rf:"all"};
+if(!["day","week","recipes"].includes(ui.view))ui.view="day";
+let me=ls.get("ari-me")||"";
+let pending={},timer=null,saving=false,loaded=false,busy=false,photos=[];
+
+/* ---------- ingredient parsing (for manual edits) ---------- */
+const UNIT_G={egg:50,carrot:60,banana:110,potato:170,sweet_potato:150,apple:150,pear:170,courgette:200,onion:110,spring_onion:15,avocado:150,tomato:120,orange:130,kiwi:70,peach:150,mango:200,chicken_thigh:100,chicken_breast:170,salmon:120,cod:120,sardines:90,bread:35,pitta:60,filo:25,lemon:30,dates:20,cucumber:200,red_pepper:150,chickpeas:240,lentils_red:200,broccoli:250,cauliflower:400};
+function gramsFromLine(line,k){
+  const t=line.toLowerCase().replace(/½/g,".5").replace(/¼/g,".25").replace(/¾/g,".75");
+  const m=t.match(/(\d*\.?\d+)\s*(kg|g|ml|l|litres?|tbsp|tsp|cups?|tins?|cans?|handfuls?|slices?|sheets?)?\b/);
+  if(!m)return 0;const q=parseFloat(m[1]),u=(m[2]||"").replace(/s$/,"");
+  if(u==="kg"||u==="l"||u==="litre")return q*1000;if(u==="g"||u==="ml")return q;if(u==="tbsp")return q*15;if(u==="tsp")return q*5;if(u==="cup")return q*150;if(u==="tin"||u==="can")return q*240;if(u==="handful")return q*30;
+  return q*(UNIT_G[k]||FOODS[k]?.portion||50);
+}
+function buildParts(ingredients,serves,plate){
+  serves=Math.max(1,+serves||4);
+  const names=plate.length?plate:["Main"];const parts=names.map(n=>({name:n,items:{}}));
+  ingredients.forEach(line=>{const k=matchFood(line);if(!k)return;const g=gramsFromLine(line,k);if(!g)return;
+    const pi=Math.max(0,names.findIndex(n=>{const nk=matchFood(n);return nk===k||FOODS[k].words.some(w=>n.toLowerCase().includes(w))}));
+    parts[pi].items[k]=(parts[pi].items[k]||0)+g/serves});
+  return parts.map(p=>({name:p.name,items:Object.entries(p.items).map(([k,g])=>[k,Math.round(g)])}));
+}
+
+/* ---------- data sync ---------- */
+async function load(){
+  try{
+    const r=await fetch("/api/state",{cache:"no-store"});if(!r.ok)throw 0;
+    S=await r.json();S.settings=S.settings||{};
+    for(const [k,p] of Object.entries(pending))S.days[k]=merge(S.days[k]||{},clone(p));
+    loaded=true;$("#whoName").textContent=me||"Who are you?";render();
+    if(!me)askWho();
+  }catch(e){if(!loaded)$("#view").innerHTML='<div class="errbox">Couldn\'t load. Check the connection and try again.</div>'}
+}
+function patchDay(k,p){
+  S.days[k]=merge(S.days[k]||{},clone(p));
+  pending[k]=merge(pending[k]||{},clone(p),true);
+  status("Saving…");clearTimeout(timer);timer=setTimeout(flush,600);
+}
+async function flush(){
+  if(saving){timer=setTimeout(flush,400);return}
+  const batch=pending;if(!Object.keys(batch).length)return;pending={};saving=true;
+  try{const d=await post("days",{patches:batch});S.days=d.days;for(const [k,p] of Object.entries(pending))S.days[k]=merge(S.days[k]||{},clone(p));status("Saved",true)}
+  catch(e){for(const [k,p] of Object.entries(batch))pending[k]=merge(clone(p),pending[k]||{},true);status("Not saved yet, retrying…",false,true);timer=setTimeout(flush,4000)}
+  finally{saving=false}
+}
+async function post(path,body){const r=await fetch("/api/"+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||"Request failed");return r.json()}
+let stT;
+function status(msg,fade,err){const el=$("#status");el.textContent=msg;el.classList.toggle("err",!!err);el.classList.remove("fade");clearTimeout(stT);if(fade)stT=setTimeout(()=>el.classList.add("fade"),1300)}
+function idle(){const a=document.activeElement;return !(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))&&$("#sheet").hidden&&!busy&&!saving&&!Object.keys(pending).length}
+setInterval(()=>{if(!document.hidden&&idle())load()},20000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&idle())load()});
+
+/* ---------- AI streaming ---------- */
+async function streamAI(body,onTick){
+  const r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok||!r.body){const j=await r.json().catch(()=>({}));throw new Error(j.error||"The AI didn't answer. Try again in a minute.")}
+  const reader=r.body.getReader(),dec=new TextDecoder();let buf="",text="";
+  for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
+    while((i=buf.indexOf("\n"))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line.startsWith("data:"))continue;let ev;try{ev=JSON.parse(line.slice(5))}catch{continue}
+      if(ev.type==="content_block_delta"&&ev.delta?.text){text+=ev.delta.text;onTick&&onTick(text)}
+      if(ev.type==="error")throw new Error("The AI is busy. Try again in a minute.")}}
+  const s=text.indexOf("{"),e=text.lastIndexOf("}");if(s<0)throw new Error("Couldn't read the answer. Try again.");
+  return JSON.parse(text.slice(s,e+1));
+}
+function cleanRecipe(r,id){
+  const meals=(r.meals||[]).filter(m=>SLOT_LABEL[m]);
+  const parts=(r.parts||[]).map(p=>({name:String(p.name||"").trim()||"Main",items:(p.items||[]).filter(it=>Array.isArray(it)&&FOODS[it[0]]&&+it[1]>0).map(([k,g])=>[k,Math.round(+g)])})).filter(p=>p.name);
+  return {id,title:String(r.title||"New recipe").trim(),meals:meals.length?meals:["lunch"],time:String(r.time||""),serves:+r.serves||4,ingredients:(r.ingredients||[]).map(String),method:(r.method||[]).map(String),tip:String(r.tip||""),parts,ai:true};
+}
+const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll(".tab").forEach(t=>t.dataset.view===ui.view?t.setAttribute("aria-current","page"):t.removeAttribute("aria-current"));
+  const v=$("#view");
+  if(ui.view==="day")v.innerHTML=viewDay();
+  else if(ui.view==="week")v.innerHTML=viewWeek();
+  else{v.innerHTML=viewRecipes();renderRList()}
+}
+function bars(rows){return `<div class="bars">${rows.map(r=>`<div class="bar ${r.pct<50?"low":r.pct<80?"mid":""}"><div class="bl"><strong>${r.label}</strong><span class="num">${r1(r.v)} / ${r.t} ${r.unit} · ${r.pct}%</span></div><div class="track"><div class="fill" style="width:${Math.min(100,r.pct)}%"></div></div></div>`).join("")}</div>`}
+function recipeOptions(slot,selected){
+  const good=S.recipes.filter(r=>(r.meals||[]).includes(slot)).sort((a,b)=>a.title.localeCompare(b.title));
+  const other=S.recipes.filter(r=>!(r.meals||[]).includes(slot)).sort((a,b)=>a.title.localeCompare(b.title));
+  const o=r=>`<option value="${esc(r.id)}"${r.id===selected?" selected":""}>${(r.fav?"★ ":"")+esc(r.title)}</option>`;
+  return `<option value="">Nothing planned</option><optgroup label="${SLOT_LABEL[slot]}">${good.map(o).join("")}</optgroup>${other.length?`<optgroup label="Other recipes">${other.map(o).join("")}</optgroup>`:""}<option value="__custom"${selected==="__custom"?" selected":""}>Something else (type it)</option>`;
+}
+
+/* Today */
+function viewDay(){
+  const k=ui.date,t=todayKey(),day=S.days[k]||{},meals=day.meals||{},vd=day.vitD||{};
+  const rel=k===t?"Today":k===addDays(t,-1)?"Yesterday":k===addDays(t,1)?"Tomorrow":String(parse(k).getFullYear());
+  const ml=day.milk!=null?+day.milk:+S.settings.milkDefault||0;
+  let h=`<section class="navhead">
+    <button class="iconbtn" data-act="prevDay" aria-label="Previous day">${I.left}</button>
+    <div class="t"><div class="eyebrow">${rel}</div><h1>${dayTitle(k)}</h1>${k!==t?`<button class="link" data-act="today">Back to today</button>`:""}</div>
+    <button class="iconbtn" data-act="nextDay" aria-label="Next day">${I.right}</button></section>
+  <div class="essentials">
+    <button class="vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}"><span class="box">${I.check}</span>
+      <span><strong>Vitamin D</strong><small>${vd.done?`Given${vd.by?" by "+esc(vd.by):""}${vd.at?" · "+esc(vd.at):""}`:"Tap once given"}</small></span></button>
+    <div class="milk"><span><strong>Milk</strong><small>${day.milk!=null?"Logged":"Usual amount"}</small></span>
+      <span class="ctl"><button data-act="milk" data-d="-50" aria-label="50 ml less">−</button><output class="num">${ml} ml</output><button data-act="milk" data-d="50" aria-label="50 ml more">+</button></span></div>
+  </div>`;
+  h+=SLOTS.map(([s,label])=>{
+    const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),parts=partsFor(m),log=m.log||{},title=mealTitle(m);
+    const sel=r?r.id:(m.custom?"__custom":"");
+    return `<article class="meal card" data-slot="${s}">
+      <div class="meal-h"><span class="slot">${label}</span><span class="sp"></span><button class="link" data-act="change">${title?"Change":"Add"}</button></div>
+      ${title?`<h2 class="dish">${r?`<button class="dishbtn" data-act="recipe" data-id="${esc(r.id)}">${esc(title)}</button>`:esc(title)}</h2>`:`<p class="empty">Nothing planned.</p>`}
+      <div class="change" hidden>
+        <label class="f"><span>Meal</span><select data-pick>${recipeOptions(s,sel)}</select></label>
+        <label class="f" style="margin-top:10px"${sel==="__custom"?"":" hidden"} data-custwrap><span>What is it?</span><input data-pickcustom value="${esc(m.custom)}" placeholder="e.g. Banana + cheese cubes"></label>
+        <label class="f" style="margin-top:10px"><span>Side (optional)</span><input data-pickside value="${esc(m.side)}" placeholder="e.g. cucumber sticks, orange"></label>
+        <div class="row"><button class="btn sm" data-act="doneChange">Done</button></div>
+      </div>
+      ${parts.length?`<div class="parts">${parts.map(p=>`<div class="part" data-part="${esc(p.name)}"><span class="pn">${esc(p.name.trim())}</span><span class="seg">${AMOUNTS.map(([v,l])=>`<button data-act="amt" data-val="${v}" aria-pressed="${log[p.name]===v}">${l}</button>`).join("")}</span></div>`).join("")}</div>`:""}
+      ${title?`<div class="likes">${LIKES.map(([v,l])=>`<button class="chip${v==="rejected"||v==="reaction"?" bad":""}" data-act="like" data-val="${v}" aria-pressed="${m.like===v}">${l}</button>`).join("")}</div>`:""}
+      ${m.like==="reaction"?`<p class="alert">Note what you saw (rash, swelling, vomiting) and when, and tell her paediatrician. If her lips or face swell or she has any trouble breathing, call 998 now.</p>`:""}
+      ${title?(m.notes||m._n?`<label class="notes"><textarea data-notes rows="2" placeholder="Anything worth knowing">${esc(m.notes)}</textarea></label>`:`<button class="link" data-act="addNote">Add a note</button>`):""}
+      ${m.by?`<p class="meta">Logged by ${esc(m.by)}${m.at?" · "+esc(m.at):""}</p>`:""}
+    </article>`}).join("");
+  const d=dayNutrition(k);
+  if(d.logged){
+    const rows=TARGETS().filter(x=>["iron","calcium","vitD","vitA"].includes(x.k)).map(x=>({...x,v:d.tot[x.k]||0,pct:Math.round(100*(d.tot[x.k]||0)/x.t)}));
+    h+=`<section class="sofar card"><h2>${k===t?"Today so far":"That day"}</h2>
+      <div class="groups">${GROUPS.map(([g,l])=>`<span class="pill${d.groups[g]?" on":""}">${d.groups[g]?I.check:""}${l}</span>`).join("")}</div>
+      ${d.missed.length?`<p class="missed">Didn't eat: ${esc(d.missed.map(m=>m.name).join(", "))}</p>`:""}
+      ${bars(rows)}
+      <p class="note">Estimate from USDA data for the meals logged so far, plus milk and drops. Not a medical measurement. The full 7-day picture is in Recipes.</p></section>`;
+  }
+  return h;
+}
+
+/* Week */
+function viewWeek(){
+  const mon=ui.week,t=todayKey();
+  let h=`<section class="navhead">
+    <button class="iconbtn" data-act="prevWeek" aria-label="Previous week">${I.left}</button>
+    <div class="t"><div class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week of"}</div><h1>${weekRange(mon)}</h1>${mon!==mondayOf(t)?`<button class="link" data-act="thisWeek">Back to this week</button>`:""}</div>
+    <button class="iconbtn" data-act="nextWeek" aria-label="Next week">${I.right}</button></section>
+  <div class="weekacts">
+    <button class="btn sm" data-act="aiPlan"${busy?" disabled":""}>${I.spark}${busy==="plan"?"Planning…":"Plan this week with AI"}</button>
+    <button class="btn ghost sm" data-act="print">${I.print}Print</button>
+    <button class="btn ghost sm" data-act="copyWeek">Copy last week</button>
+  </div><div id="planlive"></div>`;
+  for(let i=0;i<7;i++){
+    const k=addDays(mon,i),day=S.days[k]||{},meals=day.meals||{};
+    const logged=SLOTS.filter(([s])=>Object.keys(meals[s]?.log||{}).length).length;
+    h+=`<section class="wday card${k===t?" today":""}" data-date="${k}">
+      <div class="wd-h"><button class="wd-title" data-act="openDay">${shortDay(k)}${I.right}</button>
+      <span class="wd-meta">${k===t?'<span class="pill acc">Today</span>':""}<span class="pill${day.vitD?.done?" on":""}">${day.vitD?.done?I.check:""}Vit D</span><span class="pill${logged===4?" on":""}">${logged}/4 logged</span></span></div>
+      ${SLOTS.map(([s,l])=>{const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom?"__custom":"");
+        return `<div class="wrow" data-slot="${s}"><span class="wl">${l}</span>
+          <select data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel)}</select>
+          <input class="side" data-wside value="${esc(m.side)}" placeholder="+ side" aria-label="Side for ${l.toLowerCase()} on ${shortDay(k)}">
+          ${sel==="__custom"?`<input class="cust" data-wcustom value="${esc(m.custom)}" placeholder="What is it?" aria-label="Custom ${l.toLowerCase()} on ${shortDay(k)}">`:""}</div>`}).join("")}
+    </section>`;
+  }
+  return h;
+}
+
+/* Recipes */
+function viewRecipes(){
+  const A=analyse(todayKey());const picks=rankRecipes(A);
+  let h=`<section class="sec"><div class="sec-h"><h2>Her last 7 days</h2></div><div class="card box">`;
+  if(A.used.length<1){h+=`<p class="muted">Log a few meals on Today (tap All, Most, Some or None for each part) and this fills in.</p>`}
+  else{
+    h+=`<p class="small muted">${A.used.length} day${A.used.length>1?"s":""} logged · average per day</p>
+    <div class="groups">${GROUPS.map(([g,l])=>`<span class="pill${(A.groupDays[g]||0)>=Math.ceil(A.used.length*.7)?" on":""}">${l} ${A.groupDays[g]||0}/${A.used.length}</span>`).join("")}</div>
+    ${bars(A.rows)}
+    ${A.missed.length?`<p class="missed">Didn't eat: ${esc(A.missed.slice(-6).map(m=>`${m.name} (${shortDay(m.k)})`).join(", "))}</p>`:""}
+    ${picks.length?`<div style="margin-top:16px"><span class="lbl">From your recipes, these cover the gaps</span><ul class="picks">${picks.map(p=>`<li><button data-act="recipe" data-id="${esc(p.r.id)}"><span>${esc(p.r.title)}</span><small>${esc(p.hits.join(" · "))}</small></button></li>`).join("")}</ul></div>`:""}
+    <p class="note">Estimates from USDA FoodData Central and what she ate, part by part, plus milk and vitamin D drops, against US reference intakes for ages 1–3. A low number means "offer more of this", not a confirmed deficiency.</p>`}
+  h+=`</div></section>
+  <section class="sec ask"><div class="card box">
+    <span class="lbl">New recipe for what she's missing</span>
+    <input data-focus placeholder="Anything to focus on? (optional)" aria-label="Focus for the suggestion">
+    <div class="row"><button class="btn" data-act="suggest"${busy?" disabled":""}>${I.spark}${busy==="suggest"?"Thinking…":"Suggest a recipe"}</button></div>
+    <div id="live"></div><div id="insout">${insightCard(S.insight)}</div>
+  </div></section>
+  <section class="sec"><div class="sec-h"><h2>Recipes</h2><span style="display:flex;gap:8px"><button class="btn ghost sm" data-act="photo">${I.camera}From photo</button><button class="btn ghost sm" data-act="newRecipe">Add</button></span></div>
+    <input type="search" data-rsearch placeholder="Search recipes or ingredients" value="${esc(ui.rq)}" aria-label="Search recipes">
+    <div class="filters">${[["all","All"],["fav","★ Favourites"],...SLOTS].map(([k,l])=>`<button class="chip" data-rf="${k}" aria-pressed="${ui.rf===k}">${l}</button>`).join("")}</div>
+    <ul class="rlist" id="rlist"></ul></section>`;
+  return h;
+}
+function renderRList(){
+  const q=ui.rq.toLowerCase().trim();
+  const list=S.recipes.filter(r=>(ui.rf==="all"||(ui.rf==="fav"?r.fav:(r.meals||[]).includes(ui.rf)))&&(!q||r.title.toLowerCase().includes(q)||(r.ingredients||[]).join(" ").toLowerCase().includes(q))).sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title));
+  const el=$("#rlist");if(!el)return;
+  el.innerHTML=list.length?list.map(r=>`<li class="rrow"><button class="open" data-act="recipe" data-id="${esc(r.id)}"><span class="tt"><strong>${esc(r.title)}</strong><small>${(r.meals||[]).map(m=>SLOT_LABEL[m]).filter(Boolean).join(", ")}${r.time?" · "+esc(r.time):""}${r.ai?" · AI":""}</small></span></button><button class="star" data-act="fav" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="Favourite">${I.star}</button></li>`).join(""):`<li class="muted" style="padding:16px 0">No recipes match.</li>`;
+}
+function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"],["calcium","Calcium","mg"],["protein","Protein","g"],["fibre","Fibre","g"],["vitA","Vit A","µg"],["vitC","Vit C","mg"]];
+  if(!Object.keys(n).length)return "";return `<h4>Per portion (estimate)</h4><div class="nutri">${show.map(([k,l,u])=>`<div><b class="num">${r1(n[k]||0)} ${u}</b>${l}</div>`).join("")}</div>`}
+function recipeBody(r,withNutri=true){
+  return `${withNutri?nutriGrid(r):""}
+  ${r.parts?.length>1?`<h4>On her plate</h4><p>${esc(r.parts.map(p=>p.name).join(" · "))}</p>`:""}
+  ${r.ingredients?.length?`<h4>Ingredients${r.serves?` · makes about ${r.serves} toddler portions`:""}</h4><ul>${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  ${r.method?.length?`<h4>Method</h4><ol>${r.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}
+  ${r.tip?`<p class="tip">${esc(r.tip)}</p>`:""}`;
+}
+function insightCard(ins){
+  if(!ins)return "";const r=ins.recipe;
+  const whenTxt=ins.when?.date?`${shortDay(ins.when.date)}${SLOT_LABEL[ins.when.slot]?" · "+SLOT_LABEL[ins.when.slot].toLowerCase():""}`:"";
+  return `<div class="ins">
+    ${ins.at?`<p class="note" style="margin-top:12px">Suggested ${esc(ins.at)}${ins.by?" for "+esc(ins.by):""}</p>`:""}
+    ${ins.summary?`<p class="sum">${esc(ins.summary)}</p>`:""}
+    ${ins.gaps?.length?`<ul class="gaps">${ins.gaps.map(g=>`<li><strong>${esc(g.what)}</strong><span>${esc(g.why)}</span></li>`).join("")}</ul>`:""}
+    ${r?.title?`<div class="rec"><div class="eyebrow">Try this${whenTxt?" · "+esc(whenTxt):""}</div><h3>${esc(r.title)}</h3>${ins.covers?`<p class="covers">Covers: ${esc(ins.covers)}</p>`:""}
+      <div class="r-body">${recipeBody(r)}</div>
+      <div class="acts">${ins.when?.date?`<button class="btn sm" data-act="aiAdd">${ins.added?"Added to "+esc(shortDay(ins.when.date)):"Add to "+esc(shortDay(ins.when.date))}</button>`:""}<button class="btn ghost sm" data-act="aiSave"${ins.savedId?" disabled":""}>${ins.savedId?"Saved to recipes":"Save recipe"}</button></div></div>`:""}
+    ${ins.tryNext?.length?`<div style="margin-top:16px"><span class="lbl">Also this week</span><ul style="margin:0;padding-left:20px">${ins.tryNext.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+  </div>`;
+}
+
+/* ---------- actions ---------- */
+async function suggest(){
+  if(busy)return;busy="suggest";render();
+  const live=$("#live");live.innerHTML=`<p class="streaming"><span class="dot"></span>Reading her last 7 days…</p>`;
+  const A=analyse(todayKey());const focus=ui._focus||"";
+  try{
+    const ins=await streamAI({task:"suggest",today:todayKey(),analysis:analysisText(A),focus},()=>{const l=$("#live");if(l)l.innerHTML=`<p class="streaming"><span class="dot"></span>Writing a recipe for her…</p>`});
+    if(ins.recipe)ins.recipe=cleanRecipe(ins.recipe,"tmp");
+    if(ins.when?.date&&!/^\d{4}-\d{2}-\d{2}$/.test(ins.when.date))delete ins.when;
+    ins.at=`${dmy(todayKey())} at ${timeNow()}`;ins.by=me||"";S.insight=ins;post("insight",{insight:ins}).catch(()=>{});
+  }catch(err){busy=false;render();const l=$("#live");if(l)l.innerHTML=`<div class="errbox">${esc(err.message)}</div>`;return}
+  busy=false;render();
+}
+async function saveInsightRecipe(){
+  const ins=S.insight;if(!ins?.recipe)return null;if(ins.savedId&&recipeById(ins.savedId))return ins.savedId;
+  const rec={...ins.recipe,id:newId(ins.recipe.title)};const d=await post("recipe",{recipe:rec});S.recipes=d.recipes;
+  ins.savedId=rec.id;post("insight",{insight:ins}).catch(()=>{});return rec.id;
+}
+async function aiPlan(){
+  if(busy)return;const mon=ui.week;
+  const hasPlan=[...Array(7)].some((_,i)=>Object.keys(S.days[addDays(mon,i)]?.meals||{}).length);
+  if(hasPlan&&!confirm(`Replace the plan for ${weekRange(mon)} with an AI plan? Meals already logged stay as they are.`))return;
+  busy="plan";render();const live=$("#planlive");if(live)live.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Planning the week around what she's eaten…</p>`;
+  try{
+    const A=analyse(todayKey(),14);
+    const res=await streamAI({task:"plan",weekStart:mon,today:todayKey(),analysis:analysisText(A)},t=>{const l=$("#planlive");if(l)l.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Writing the menu… ${Math.min(99,Math.round(t.length/45))}%</p>`});
+    const refMap={};const newR=(res.newRecipes||[]).map(r=>{const c=cleanRecipe(r,newId(r.title));refMap[r.ref||c.title]=c.id;return c});
+    if(newR.length){const d=await post("recipes",{recipes:newR});S.recipes=d.recipes}
+    (res.days||[]).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);if(i>6)return;
+      const meals={};SLOTS.forEach(([s])=>{const x=d[s];if(!x)return;const cur=S.days[k]?.meals?.[s];if(cur&&Object.keys(cur.log||{}).length)return;
+        const id=refMap[x.recipe]||(recipeById(x.recipe)?x.recipe:null);
+        meals[s]=id?{recipeId:id,side:x.side||null,custom:null,log:null,like:null}:{custom:String(x.recipe||""),recipeId:null,side:x.side||null}});
+      patchDay(k,{meals})});
+    busy=false;render();status(newR.length?`Planned · ${newR.length} new recipes added`:"Week planned",true);
+    if(res.note){const l=$("#planlive");if(l)l.innerHTML=`<p class="card box small" style="margin:-8px 0 20px">${esc(res.note)}</p>`}
+  }catch(err){busy=false;render();const l=$("#planlive");if(l)l.innerHTML=`<div class="errbox" style="margin:-8px 0 20px">${esc(err.message)}</div>`}
+}
+
+/* ---------- sheets ---------- */
+function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0}
+function closeSheet(){const sh=$("#sheet");sh.classList.remove("open");setTimeout(()=>{if(!sh.classList.contains("open")){sh.hidden=true;$("#sheetBody").innerHTML=""}},250)}
+function openRecipe(id){
+  const r=recipeById(id);if(!r)return;
+  const dayOpts=[...Array(14)].map((_,i)=>addDays(todayKey(),i)).map(k=>`<option value="${k}">${shortDay(k)}</option>`).join("");
+  openSheet(`<div class="sh-h"><div><div class="eyebrow">${(r.meals||[]).map(m=>SLOT_LABEL[m]).filter(Boolean).join(", ")}${r.time?" · "+esc(r.time):""}</div><h2>${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <div class="r-body">${recipeBody(r)}</div>
+  <div class="addplan"><label class="f"><span>Add to</span><select id="apDay">${dayOpts}</select></label><label class="f"><span>Meal</span><select id="apSlot">${SLOTS.map(([k,l])=>`<option value="${k}"${(r.meals||[])[0]===k?" selected":""}>${l}</option>`).join("")}</select></label><button class="btn" data-sact="addplan" data-id="${esc(r.id)}">Add</button></div>
+  <div class="sh-acts"><button class="btn ghost sm" data-sact="fav" data-id="${esc(r.id)}">${r.fav?"★ Favourite":"☆ Add to favourites"}</button><button class="btn ghost sm" data-sact="edit" data-id="${esc(r.id)}">Edit</button><button class="btn ghost sm" data-sact="print1" data-id="${esc(r.id)}">${I.print}Print</button></div>`);
+}
+function editRecipe(id,preset){
+  const r=preset||(id?recipeById(id):{title:"",meals:[],time:"",serves:4,ingredients:[],method:[],tip:"",parts:[]});
+  openSheet(`<form id="rform" class="stack" data-id="${esc(id||"")}">
+    <div class="sh-h"><h2>${preset?"Check and save":id?"Edit recipe":"New recipe"}</h2><button type="button" class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+    ${preset?`<p class="small muted">Read from your photo. Fix anything that's off, then save.</p>`:""}
+    <label class="f"><span>Name</span><input name="title" required value="${esc(r.title)}"></label>
+    <div><span class="lbl">Good for</span><div class="checks">${SLOTS.map(([k,l])=>`<label><input type="checkbox" name="meals" value="${k}" ${(r.meals||[]).includes(k)?"checked":""}><span>${l}</span></label>`).join("")}</div></div>
+    <div class="grid2"><label class="f"><span>Time</span><input name="time" value="${esc(r.time)}" placeholder="25 min"></label><label class="f"><span>Toddler portions it makes</span><input name="serves" type="number" min="1" max="30" value="${esc(r.serves||4)}"></label></div>
+    <label class="f"><span>Ingredients, one per line, with amounts</span><textarea name="ingredients" rows="7" placeholder="200 g chicken thigh&#10;2 carrots&#10;1 egg">${esc((r.ingredients||[]).join("\n"))}</textarea></label>
+    <label class="f"><span>On her plate, one per line (so you can log each)</span><textarea name="plate" rows="3" placeholder="Chicken&#10;Carrots">${esc((r.parts||[]).map(p=>p.name).join("\n"))}</textarea></label>
+    <label class="f"><span>Method, one step per line</span><textarea name="method" rows="6">${esc((r.method||[]).join("\n"))}</textarea></label>
+    <label class="f"><span>Tip</span><textarea name="tip" rows="2">${esc(r.tip)}</textarea></label>
+    <div class="sh-acts"><button class="btn" type="submit">Save</button>${id&&!preset?`<button class="btn danger" type="button" data-sact="delete" data-id="${esc(id)}">Delete</button>`:""}</div>
+  </form>`);
+  $("#rform")._preset=preset||null;
+}
+async function submitRecipe(form){
+  const fd=new FormData(form),lines=s=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
+  const preset=form._preset,old=form.dataset.id?recipeById(form.dataset.id):null,base=preset||old||{};
+  const id=old?old.id:newId(fd.get("title"));
+  const ingredients=lines(fd.get("ingredients")),plate=lines(fd.get("plate")),serves=+fd.get("serves")||4;
+  const sameIng=JSON.stringify(ingredients)===JSON.stringify(base.ingredients||[])&&serves===(+base.serves||4);
+  const samePlate=JSON.stringify(plate)===JSON.stringify((base.parts||[]).map(p=>p.name));
+  let parts=base.parts||[];
+  if(!(sameIng&&samePlate)||!parts.length)parts=buildParts(ingredients,serves,plate.length?plate:[String(fd.get("title")).trim()]);
+  const rec={...base,id,title:String(fd.get("title")).trim(),meals:fd.getAll("meals"),time:String(fd.get("time")||"").trim(),serves,ingredients,method:lines(fd.get("method")),tip:String(fd.get("tip")||"").trim(),parts};
+  if(!rec.title)return;
+  try{status("Saving…");const d=await post("recipe",{recipe:rec});S.recipes=d.recipes;status("Saved",true);openRecipe(id);render()}
+  catch{status("Couldn't save. Try again.",false,true)}
+}
+function askWho(){
+  const ppl=S.settings?.people||["Amir","Catherine","Lia"];
+  openSheet(`<h2 style="font:600 24px/1.2 var(--serif)">Who's using this phone?</h2><p class="muted" style="margin-top:8px">So everyone can see who logged each meal.</p>
+  <div class="who">${ppl.map(p=>`<button class="btn ghost" data-who="${esc(p)}">${esc(p)}</button>`).join("")}</div>`);
+}
+function openSettings(){
+  const s=S.settings,f=s.formula||{},ppl=s.people||[];
+  openSheet(`<form id="sform" class="stack">
+    <div class="sh-h"><h2>Settings</h2><button type="button" class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+    <label class="f"><span>Who's using this phone</span><select name="me">${ppl.map(p=>`<option${p===me?" selected":""}>${esc(p)}</option>`).join("")}</select></label>
+    <div class="grid2"><label class="f"><span>Usual milk per day (ml)</span><input name="milkDefault" type="number" min="0" step="10" value="${esc(s.milkDefault)}"></label>
+    <label class="f"><span>Vitamin D drops (µg per day)</span><input name="dropUg" type="number" min="0" step="0.5" value="${esc(s.dropUg)}"></label></div>
+    <label class="f"><span>Vitamin D daily target (µg)</span><input name="vitDTarget" type="number" min="0" step="0.5" value="${esc(s.vitDTarget)}"><span class="note" style="display:block;font-weight:400">15 µg (600 IU) is the US reference for ages 1–3; the NHS uses 10 µg. Use what her paediatrician advises. 400 IU = 10 µg.</span></label>
+    <div><span class="lbl">Her milk, per 100 ml (copy from the tin)</span>
+      <div class="grid2"><label class="f"><span>Vitamin D (µg)</span><input name="f_vitD" type="number" step="0.1" value="${esc(f.vitD)}"></label><label class="f"><span>Iron (mg)</span><input name="f_iron" type="number" step="0.01" value="${esc(f.iron)}"></label>
+      <label class="f"><span>Calcium (mg)</span><input name="f_calcium" type="number" step="1" value="${esc(f.calcium)}"></label><label class="f"><span>Energy (kcal)</span><input name="f_kcal" type="number" step="1" value="${esc(f.kcal)}"></label></div>
+      <p class="note">Defaults are a typical toddler formula from USDA. Her own tin's numbers make the estimates more accurate.</p></div>
+    <div class="sh-acts"><button class="btn" type="submit">Save</button></div></form>`);
+}
+function openPrint(){
+  const mon=ui.week,ids=[];for(let i=0;i<7;i++){const ms=S.days[addDays(mon,i)]?.meals||{};SLOTS.forEach(([s])=>{const id=ms[s]?.recipeId;if(id&&recipeById(id)&&!ids.includes(id))ids.push(id)})}
+  openSheet(`<div class="sh-h"><div><div class="eyebrow">A4 landscape</div><h2>Print ${weekRange(mon)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <div style="margin-top:12px">
+    <div class="opt"><span><strong>Week plan</strong><small>All 7 days, with vitamin D boxes</small></span><button class="btn sm" data-sact="pweek">Print</button></div>
+    <div class="opt"><span><strong>Shopping list</strong><small>Everything this week's recipes need</small></span><button class="btn sm" data-sact="pshop">Print</button></div>
+    <div class="opt" style="display:block"><span><strong>Recipes</strong><small>Tick the ones you're cooking</small></span>
+      ${ids.length?`<ul class="picklist">${ids.map(id=>`<li><label><input type="checkbox" data-prid="${esc(id)}" checked><span>${esc(recipeById(id).title)}</span></label></li>`).join("")}</ul><div style="margin-top:12px"><button class="btn sm" data-sact="precipes">Print recipes</button></div>`:`<p class="muted small" style="margin-top:8px">No recipes planned this week yet.</p>`}</div>
+  </div>`);
+}
+function openPhoto(){
+  photos=[];
+  openSheet(`<div class="sh-h"><div><div class="eyebrow">Recipes</div><h2>Add from photo</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <p class="muted" style="margin-top:8px">Photograph the recipe page or card (up to 4 photos), or the dish itself. The AI reads it and works out what's on her plate, so the nutrition is counted.</p>
+  <label class="btn ghost" style="margin-top:16px;width:100%">${I.camera}Choose photos<input type="file" accept="image/*" multiple id="photoIn" hidden></label>
+  <div class="thumbs" id="thumbs"></div>
+  <label class="f" style="margin-top:16px"><span>Anything to add? (optional)</span><input id="photoNote" placeholder="e.g. we use half the salt, she has it for lunch"></label>
+  <div class="sh-acts"><button class="btn" data-sact="readphoto" disabled id="readBtn">${I.spark}Read recipe</button></div><div id="photoLive"></div>`);
+}
+async function shrink(file){
+  const url=URL.createObjectURL(file);const img=new Image();img.src=url;await img.decode();
+  const max=1600,sc=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);return c.toDataURL("image/jpeg",.82);
+}
+
+/* ---------- printing ---------- */
+function doPrint(html){$("#print").innerHTML=html;closeSheet();setTimeout(()=>window.print(),300)}
+const pHead=t=>`<div class="p-h"><h1>${t}</h1><span>Ariadne's Table · printed ${dmy(todayKey())}</span></div>`;
+function printWeek(){
+  const mon=ui.week,ks=[...Array(7)].map((_,i)=>addDays(mon,i));
+  doPrint(`${pHead("Week of "+weekRange(mon))}<table class="pw"><thead><tr><th style="width:22mm"></th>${ks.map(k=>`<th>${shortDay(k)}</th>`).join("")}</tr></thead><tbody>
+  ${SLOTS.map(([s,l])=>`<tr><th>${l}</th>${ks.map(k=>{const m=S.days[k]?.meals?.[s];const r=m?.recipeId&&recipeById(m.recipeId);return `<td>${r?`<b>${esc(r.title)}</b>`:m?.custom?`<b>${esc(m.custom)}</b>`:""}${m?.side?`<i>+ ${esc(m.side)}</i>`:""}</td>`}).join("")}</tr>`).join("")}
+  <tr class="vd"><th>Vitamin D</th>${ks.map(k=>`<td><span class="tick${S.days[k]?.vitD?.done?" on":""}"></span></td>`).join("")}</tr>
+  <tr class="nt"><th>Notes</th>${ks.map(()=>"<td></td>").join("")}</tr></tbody></table>
+  <p class="p-f">Log what she ate in the app: All / Most / Some / None for each part of the meal.</p>`);
+}
+function printRecipes(ids){
+  const rs=ids.map(recipeById).filter(Boolean);if(!rs.length)return;
+  doPrint(`${pHead("Recipes")}<div class="pr">${rs.map(r=>`<article><h2>${esc(r.title)}</h2><p class="m">${[r.time,r.serves?`about ${r.serves} toddler portions`:""].filter(Boolean).map(esc).join(" · ")}</p>
+  <h3>Ingredients</h3><ul>${(r.ingredients||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul><h3>Method</h3><ol>${(r.method||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${r.tip?`<p>${esc(r.tip)}</p>`:""}</article>`).join("")}</div>`);
+}
+function printShopping(){
+  const mon=ui.week,map={},other=[];
+  for(let i=0;i<7;i++){const ms=S.days[addDays(mon,i)]?.meals||{};
+    SLOTS.forEach(([s])=>{const m=ms[s];if(!m)return;const r=m.recipeId&&recipeById(m.recipeId);
+      const add=(k,src,line)=>{(map[k]??={k,uses:{},lines:new Set()});map[k].uses[src]=(map[k].uses[src]||0)+1;if(line)map[k].lines.add(line)};
+      if(r)(r.ingredients||[]).forEach(line=>{const k=matchFood(line);if(k)add(k,r.title,line);else if(!/salt|pepper|cinnamon|cumin|paprika|oregano|water|spice/i.test(line))other.push(line)});
+      [m.side,m.custom].filter(Boolean).forEach(t=>sideParts(t).forEach(p=>p.items.forEach(([k])=>add(k,t))))})}
+  const aisles={};Object.values(map).forEach(x=>{const a=FOODS[x.k].aisle;(aisles[a]??=[]).push(x)});
+  const order=["Fruit & veg","Meat & fish","Dairy & eggs","Bakery","Fridge","Freezer","Tins & dry"];
+  doPrint(`${pHead("Shopping list · "+weekRange(mon))}<div class="ps">${order.filter(a=>aisles[a]).map(a=>`<section><h2>${a}</h2><ul>${aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>`<li><span class="tick"></span><span>${esc(FOODS[x.k].name)}<small>${esc(Object.keys(x.uses).length>3?`${Object.keys(x.uses).slice(0,3).join(", ")} +${Object.keys(x.uses).length-3} more`:Object.entries(x.uses).map(([t,n])=>n>1?`${t} ×${n}`:t).join(", "))}</small></span></li>`).join("")}</ul></section>`).join("")}
+  ${other.length?`<section><h2>Other</h2><ul>${[...new Set(other)].map(l=>`<li><span class="tick"></span><span>${esc(l)}</span></li>`).join("")}</ul></section>`:""}</div>`);
+}
+
+/* ---------- events ---------- */
+$("#tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;ui.view=t.dataset.view;ls.set("ari-view",ui.view);render();window.scrollTo(0,0)});
+$("#whoBtn").addEventListener("click",()=>loaded&&openSettings());
+const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo(0,y)};
+function setMeal(k,slot,val,side,custom){
+  const cur=S.days[k]?.meals?.[slot]||{};
+  const p=val==="__custom"?{recipeId:null,custom:custom??cur.custom??"",side:side??cur.side??null}:val?{recipeId:val,custom:null,side:side??cur.side??null}:{recipeId:null,custom:null,side:null};
+  const changed=(p.recipeId||null)!==(cur.recipeId||null)||(p.custom||null)!==(cur.custom||null)||(p.side||null)!==(cur.side||null);
+  if(changed&&cur.log)p.log=null; // parts changed, old log no longer matches
+  patchDay(k,{meals:{[slot]:p}});
+}
+
+$("#view").addEventListener("click",async e=>{
+  const rf=e.target.closest("[data-rf]");if(rf){ui.rf=rf.dataset.rf;document.querySelectorAll("[data-rf]").forEach(b=>b.setAttribute("aria-pressed",b===rf));renderRList();return}
+  const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
+  const slotEl=a.closest("[data-slot]"),slot=slotEl?.dataset.slot;
+  if(act==="amt"){const part=a.closest("[data-part]").dataset.part,v=a.dataset.val,cur=S.days[ui.date]?.meals?.[slot]?.log?.[part];
+    patchDay(ui.date,{meals:{[slot]:{log:{[part]:cur===v?null:v},by:me||null,at:timeNow()}}});keepScroll(render)}
+  else if(act==="like"){const cur=S.days[ui.date]?.meals?.[slot]?.like;patchDay(ui.date,{meals:{[slot]:{like:cur===a.dataset.val?null:a.dataset.val,by:me||null,at:timeNow()}}});keepScroll(render)}
+  else if(act==="addNote"){const m=S.days[ui.date]?.meals?.[slot]||{};m._n=1;(S.days[ui.date]??={meals:{}}).meals??={};S.days[ui.date].meals[slot]=m;keepScroll(render);const t=$(`[data-slot="${slot}"] [data-notes]`);t&&t.focus()}
+  else if(act==="prevDay"){ui.date=addDays(ui.date,-1);render()}
+  else if(act==="nextDay"){ui.date=addDays(ui.date,1);render()}
+  else if(act==="today"){ui.date=todayKey();render()}
+  else if(act==="vitd"){const on=S.days[ui.date]?.vitD?.done;patchDay(ui.date,{vitD:on?null:{done:true,by:me||"",at:timeNow()}});keepScroll(render)}
+  else if(act==="milk"){const day=S.days[ui.date]||{};const cur=day.milk!=null?+day.milk:+S.settings.milkDefault||0;patchDay(ui.date,{milk:Math.max(0,cur+ +a.dataset.d)});keepScroll(render)}
+  else if(act==="change"){const p=slotEl.querySelector(".change");p.hidden=!p.hidden}
+  else if(act==="doneChange"){document.activeElement?.blur();keepScroll(render)}
+  else if(act==="recipe")openRecipe(a.dataset.id);
+  else if(act==="fav"){const r=recipeById(a.dataset.id);if(!r)return;r.fav=!r.fav;a.setAttribute("aria-pressed",r.fav);post("recipe",{recipe:r}).then(d=>{S.recipes=d.recipes}).catch(()=>status("Couldn't save. Try again.",false,true))}
+  else if(act==="prevWeek"){ui.week=addDays(ui.week,-7);render()}
+  else if(act==="nextWeek"){ui.week=addDays(ui.week,7);render()}
+  else if(act==="thisWeek"){ui.week=mondayOf(todayKey());render()}
+  else if(act==="openDay"){ui.date=a.closest("[data-date]").dataset.date;ui.view="day";ls.set("ari-view","day");render();window.scrollTo(0,0)}
+  else if(act==="copyWeek"){
+    const mon=ui.week;let any=false;const patches={};
+    for(let i=0;i<7;i++){const src=S.days[addDays(mon,i-7)]?.meals||{},k=addDays(mon,i),tm=S.days[k]?.meals||{};
+      SLOTS.forEach(([s])=>{const x=src[s];if(x&&(x.recipeId||x.custom)){if(tm[s]&&(tm[s].recipeId||tm[s].custom))any=true;if(tm[s]&&Object.keys(tm[s].log||{}).length)return;(patches[k]??={meals:{}}).meals[s]={recipeId:x.recipeId||null,custom:x.custom||null,side:x.side||null}}})}
+    if(!Object.keys(patches).length){status("Last week has nothing planned",true);return}
+    if(any&&!confirm("Copy last week's meals into this week? Meals already planned (but not logged) will be replaced."))return;
+    Object.entries(patches).forEach(([k,p])=>patchDay(k,p));render();
+  }
+  else if(act==="aiPlan")aiPlan();
+  else if(act==="print")openPrint();
+  else if(act==="suggest"){ui._focus=$("[data-focus]")?.value||"";suggest()}
+  else if(act==="aiSave"){try{a.disabled=true;await saveInsightRecipe();keepScroll(render);status("Saved to recipes",true)}catch{a.disabled=false;status("Couldn't save. Try again.",false,true)}}
+  else if(act==="aiAdd"){const ins=S.insight;if(!ins?.when?.date)return;
+    try{a.disabled=true;const id=await saveInsightRecipe();const s=SLOT_LABEL[ins.when.slot]?ins.when.slot:"lunch";const cur=S.days[ins.when.date]?.meals?.[s];
+      if(cur&&(cur.recipeId||cur.custom)&&!confirm(`Replace "${mealTitle(cur)}" on ${shortDay(ins.when.date)} (${SLOT_LABEL[s].toLowerCase()})?`)){a.disabled=false;return}
+      setMeal(ins.when.date,s,id,null);ins.added=true;post("insight",{insight:ins}).catch(()=>{});keepScroll(render);status(`Added to ${shortDay(ins.when.date)}`,true)}
+    catch{a.disabled=false;status("Couldn't add. Try again.",false,true)}}
+  else if(act==="newRecipe")editRecipe(null);
+  else if(act==="photo")openPhoto();
+});
+
+const typing={};
+$("#view").addEventListener("input",e=>{
+  const el=e.target;
+  if(el.matches("[data-rsearch]")){ui.rq=el.value;renderRList();return}
+  if(el.matches("[data-notes]")){const slot=el.closest("[data-slot]").dataset.slot;clearTimeout(typing[slot]);typing[slot]=setTimeout(()=>patchDay(ui.date,{meals:{[slot]:{notes:el.value,by:me||null,at:timeNow()}}}),500);return}
+  if(el.matches("[data-pickcustom],[data-pickside]")){const slot=el.closest("[data-slot]").dataset.slot,box=el.closest(".change");const id="p"+slot;clearTimeout(typing[id]);
+    typing[id]=setTimeout(()=>setMeal(ui.date,slot,box.querySelector("[data-pick]").value,box.querySelector("[data-pickside]").value.trim()||null,box.querySelector("[data-pickcustom]").value.trim()),500);return}
+  if(el.matches("[data-wside],[data-wcustom]")){const k=el.closest("[data-date]").dataset.date,row=el.closest("[data-slot]"),slot=row.dataset.slot,id=k+slot;clearTimeout(typing[id]);
+    typing[id]=setTimeout(()=>setMeal(k,slot,row.querySelector("[data-wpick]").value,row.querySelector("[data-wside]").value.trim()||null,row.querySelector("[data-wcustom]")?.value.trim()),500)}
+});
+$("#view").addEventListener("change",e=>{
+  const el=e.target;
+  if(el.matches("[data-pick]")){const slot=el.closest("[data-slot]").dataset.slot,box=el.closest(".change");box.querySelector("[data-custwrap]").hidden=el.value!=="__custom";
+    setMeal(ui.date,slot,el.value,box.querySelector("[data-pickside]").value.trim()||null,box.querySelector("[data-pickcustom]").value.trim())}
+  if(el.matches("[data-wpick]")){const k=el.closest("[data-date]").dataset.date,row=el.closest("[data-slot]");setMeal(k,row.dataset.slot,el.value,row.querySelector("[data-wside]").value.trim()||null,row.querySelector("[data-wcustom]")?.value.trim());
+    if(el.value==="__custom"||row.querySelector("[data-wcustom]"))keepScroll(()=>{render();const c=$(`[data-date="${k}"] [data-slot="${row.dataset.slot}"] [data-wcustom]`);c&&c.focus()})}
+});
+$("#view").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("[data-focus]")){ui._focus=e.target.value;suggest()}});
+
+$("#sheet").addEventListener("click",async e=>{
+  if(e.target.closest("[data-close]")){closeSheet();return}
+  const w=e.target.closest("[data-who]");if(w){me=w.dataset.who;ls.set("ari-me",me);$("#whoName").textContent=me;closeSheet();return}
+  const s=e.target.closest("[data-sact]");if(!s)return;const act=s.dataset.sact;
+  if(act==="edit")editRecipe(s.dataset.id);
+  else if(act==="delete"){if(!confirm("Delete this recipe? Meals already planned with it will show as empty."))return;
+    try{const d=await post("recipe-delete",{id:s.dataset.id});S.recipes=d.recipes;closeSheet();render();status("Deleted",true)}catch{status("Couldn't delete. Try again.",false,true)}}
+  else if(act==="fav"){const r=recipeById(s.dataset.id);r.fav=!r.fav;s.textContent=r.fav?"★ Favourite":"☆ Add to favourites";post("recipe",{recipe:r}).then(d=>{S.recipes=d.recipes;if(ui.view==="recipes")renderRList()}).catch(()=>{})}
+  else if(act==="addplan"){const k=$("#apDay").value,sl=$("#apSlot").value,cur=S.days[k]?.meals?.[sl];
+    if(cur&&(cur.recipeId||cur.custom)&&!confirm(`Replace "${mealTitle(cur)}" on ${shortDay(k)}?`))return;setMeal(k,sl,s.dataset.id,null);closeSheet();render();status(`Added to ${shortDay(k)}`,true)}
+  else if(act==="print1")printRecipes([s.dataset.id]);
+  else if(act==="pweek")printWeek();
+  else if(act==="pshop")printShopping();
+  else if(act==="precipes")printRecipes([...document.querySelectorAll("[data-prid]:checked")].map(x=>x.dataset.prid));
+  else if(act==="readphoto"){
+    if(!photos.length)return;s.disabled=true;s.textContent="Reading…";const live=$("#photoLive");live.innerHTML=`<p class="streaming"><span class="dot"></span>Reading the recipe…</p>`;
+    try{const res=await streamAI({task:"photo",images:photos,focus:$("#photoNote").value});if(!res.recipe)throw new Error("Couldn't find a recipe in that photo.");
+      editRecipe(null,cleanRecipe(res.recipe,""))}
+    catch(err){live.innerHTML=`<div class="errbox">${esc(err.message)}</div>`;s.disabled=false;s.innerHTML=`${I.spark}Read recipe`}}
+});
+$("#sheet").addEventListener("change",async e=>{
+  if(e.target.id!=="photoIn")return;const files=[...e.target.files].slice(0,4);photos=[];
+  $("#thumbs").innerHTML='<p class="small muted">Preparing…</p>';
+  try{for(const f of files)photos.push(await shrink(f))}catch{status("Couldn't open that photo",false,true)}
+  $("#thumbs").innerHTML=photos.map(p=>`<img src="${p}" alt="">`).join("");$("#readBtn").disabled=!photos.length;
+});
+$("#sheet").addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.target;
+  if(f.id==="rform")return submitRecipe(f);
+  if(f.id==="sform"){const fd=new FormData(f);me=fd.get("me")||me;ls.set("ari-me",me);$("#whoName").textContent=me||"Settings";
+    const num=n=>{const v=fd.get(n);return v===""||v==null?null:+v};
+    const settings={milkDefault:num("milkDefault"),dropUg:num("dropUg"),vitDTarget:num("vitDTarget"),formula:{vitD:num("f_vitD"),iron:num("f_iron"),calcium:num("f_calcium"),kcal:num("f_kcal")}};
+    try{const d=await post("settings",{settings});S.settings=d.settings;closeSheet();render();status("Saved",true)}catch{status("Couldn't save. Try again.",false,true)}}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet()});
+
+load();
+</script>
+</body>
+</html>
