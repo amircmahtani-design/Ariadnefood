@@ -558,7 +558,7 @@ label.f>span,.lbl{font-weight:600}
 
 /* Her Week (v2.6) */
 .tab{font-size:12px}
-.score-card{padding:20px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:center}
+.score-card{padding:20px;margin-bottom:16px;margin-top:0;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:center}
 .score{width:86px;height:86px;border-radius:50%;display:flex;align-items:baseline;justify-content:center;padding-top:22px;background:var(--sage-soft);color:var(--good)}
 .score b{font-family:var(--serif);font-variation-settings:"SOFT" 100;font-size:34px;font-weight:560;line-height:1}
 .score span{font-size:14px;font-weight:600;margin-left:1px}
@@ -780,7 +780,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.1";
+const APP_VERSION="3.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1124,10 +1124,7 @@ function viewHer(){
     ${mon!==mondayOf(t)?`<button class="link center-link" data-act="hThis">Back to this week</button>`:""}</header>`;
   const sc=W.score,tone=!has?"none":sc>=8?"ok":sc>=5.5?"mid":"low";
   const good=has?W.rows.filter(r=>r.pct>=90).map(r=>r.label):[],low=has?W.rows.filter(r=>r.pct<60).sort((a,b)=>a.pct-b.pct).map(r=>r.label):[];
-  h+=`<section class="card score-card"><div class="score ${tone}"><b class="num">${has?sc:"–"}</b><span>/10</span></div>
-    <div class="score-t"><h2>${!has?"Her score for the week":sc>=8?"Eating really well":sc>=6.5?"A good week":sc>=5?"Getting there":"Room to improve"}</h2><p class="muted small">${has?`${W.days} day${W.days>1?"s":""} logged · average per day`:"Fills in as you log meals on Today"}</p></div>
-    ${has&&(good.length||low.length)?`<div class="score-notes">${good.length?`<p><span class="dotc ok"></span><b>Doing well</b> ${esc(good.join(", "))}</p>`:""}${low.length?`<p><span class="dotc low"></span><b>Needs more</b> ${esc(low.join(", "))}</p>`:""}</div>`:""}</section>
-  <section class="card fg-box"><div class="fg-head"><h2>Food groups</h2><p class="muted small">Portions a day · tap a group to open it</p></div>
+  h+=`<section class="card fg-box"><div class="fg-head"><h2>Food groups</h2><p class="muted small">Portions a day · tap a group to open it</p></div>
   ${W.rows.map(r=>{const open=!!ui.openGroups?.[r.g],tn=!has?"none":r.pct>=90?"ok":r.pct>=60?"mid":"low";
     return `<div class="grp${open?" open":""}"><button class="grp-h" data-act="grp" data-g="${r.g}" aria-expanded="${open}">
       <span class="grp-ic ${tn}">${GROUP_ICON[r.g]}</span>
@@ -1137,7 +1134,10 @@ function viewHer(){
       <div class="grp-b"${open?"":" hidden"}>
         <ul class="subs">${r.subs.map(sb=>`<li class="${sb.serv>0?"":"zero"}"><div class="sub-top"><span>${esc(sb.n)}</span><span class="num">${sb.serv>0?`${E.r1(sb.serv)} portion${E.r1(sb.serv)===1?"":"s"} · ${sb.days} day${sb.days>1?"s":""}`:"none yet"}</span></div>${sb.foods.length>1||(sb.foods.length===1&&sb.foods[0][0]!==sb.n)?`<p class="sub-foods">${esc(sb.foods.map(([f,v])=>`${f} ${E.r1(v)}`).join(" · "))}</p>`:""}</li>`).join("")}</ul>
         ${r.left.length?`<p class="missed"><b>Left on the plate</b> ${esc(r.left.map(([n,c])=>c>1?`${n} ×${c}`:n).join(", "))}</p>`:""}</div></div>`}).join("")}
-  <p class="fg-note">Toddler portions counted from what you log, hidden veg included. Daily guide: protein 2, vegetables 3, fruit 2, starch and grains 3, dairy 1, on top of her formula.</p></section>`;
+  <p class="fg-note">Toddler portions counted from what you log, hidden veg included. Daily guide: protein 2, vegetables 3, fruit 2, starch and grains 3, dairy 1, on top of her formula.</p></section>
+  <section class="card score-card"><div class="score ${tone}"><b class="num">${has?sc:"–"}</b><span>/10</span></div>
+    <div class="score-t"><h2>${!has?"Her score for the week":sc>=8?"Eating really well":sc>=6.5?"A good week":sc>=5?"Getting there":"Room to improve"}</h2><p class="muted small">${has?`${W.days} day${W.days>1?"s":""} logged · average per day`:"Fills in as you log meals on Today"}</p></div>
+    ${has&&(good.length||low.length)?`<div class="score-notes">${good.length?`<p><span class="dotc ok"></span><b>Doing well</b> ${esc(good.join(", "))}</p>`:""}${low.length?`<p><span class="dotc low"></span><b>Needs more</b> ${esc(low.join(", "))}</p>`:""}</div>`:""}</section>`;
   h+=`<section class="nutri-card card"><div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>Vitamins & minerals</h2><p class="muted small">${A.used.length?`${A.used.length} day${A.used.length>1?"s":""} with 2 or more meals logged · with formula and drops`:"Fills in once a day has 2 or more meals logged"}</p></div></div>
     ${gauges(A.used.length?A.rows:TARGETS().map(x=>({...x,v:0,pct:0})))}
     ${picks.length?`<div class="picks-wrap"><p class="micro">From your recipes, these cover the gaps</p><ul class="picks">${picks.map(p=>`<li><button data-act="recipe" data-id="${esc(p.r.id)}">${pic(p.r,"pthumb")}<span class="pk-t"><strong>${esc(p.r.title)}</strong><small>${esc(p.hits.join(" · "))}</small></span>${I.right}</button></li>`).join("")}</ul></div>`:""}
