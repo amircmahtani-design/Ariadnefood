@@ -626,6 +626,18 @@ label.f>span,.lbl{font-weight:600}
 .rest-banner p{font-size:14.5px;color:var(--ink-2);line-height:1.5}
 .rest-banner.alert-b{background:var(--terra-soft)}
 .rest-banner .btn{margin-top:4px}
+
+/* profile pictures (v3.3) */
+.avt{display:inline-grid;place-items:center;border-radius:50%;object-fit:cover;flex:none;font-weight:600;font-family:var(--sans);line-height:1;overflow:hidden;vertical-align:middle}
+.avt svg{width:60%;height:60%}
+.who-btn .av{background:none;width:34px;height:34px}
+.meta.by{display:flex;align-items:center;gap:7px}
+.vd-by{display:flex;align-items:center;gap:5px}
+.who-row{justify-content:flex-start;gap:12px;padding-left:10px}
+.av-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.av-list li{display:flex;align-items:center;gap:12px}
+.av-n{flex:1;font-weight:500}
+.av-list .link{padding:8px 0}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -737,7 +749,7 @@ async function load(){
     const r=await fetch("/api/state",{cache:"no-store"});if(!r.ok)throw 0;
     S=await r.json();S.settings=S.settings||{};
     for(const [k,p] of Object.entries(pending))S.days[k]=merge(S.days[k]||{},clone(p));
-    loaded=true;$("#whoName").textContent=me||"Who are you?";render();
+    loaded=true;setWho();render();
     if(!me)askWho();
   }catch(e){if(!loaded)$("#view").innerHTML='<div class="errbox">Couldn\'t load. Check the connection and try again.</div>'}
 }
@@ -780,7 +792,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.2";
+const APP_VERSION="3.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -891,7 +903,7 @@ function viewDay(){
   <div class="essentials">
     <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}">
       <span class="tile-top"><span class="tile-ic">${I.sun}</span><span class="box">${I.check}</span></span>
-      <strong>Vitamin D</strong><small>${vd.done?`Given${vd.by?" by "+esc(vd.by):""}${vd.at?" · "+esc(vd.at):""}`:"Tap once given"}</small></button>
+      <strong>Vitamin D</strong><small class="vd-by">${vd.done?`${vd.by?avatar(vd.by,18):""}Given${vd.by?" by "+esc(vd.by):""}${vd.at?" · "+esc(vd.at):""}`:"Tap once given"}</small></button>
     <div class="tile milk">
       <span class="tile-top"><span class="tile-ic">${I.bottle}</span><small class="tile-tag">${day.milk!=null?"Logged":"Usual"}</small></span>
       <strong>Milk</strong>
@@ -919,7 +931,7 @@ function viewDay(){
         ${title?`<div class="took"><span class="took-l">How she took it</span><div class="seg likes" role="group" aria-label="How she took it">${LIKES.map(([v,l])=>`<button class="${v==="rejected"||v==="reaction"?"bad":""}" data-act="like" data-val="${v}" aria-pressed="${m.like===v}">${LIKE_ICON[v]}<span>${v==="loved"?"Loved":l}</span></button>`).join("")}</div></div>`:""}
         ${m.like==="reaction"?`<p class="alert">${I.alert}<span>Note what you saw (rash, swelling, vomiting) and when, and tell her paediatrician. If her lips or face swell or she has any trouble breathing, call 998 now.</span></p>`:""}
         ${title?(m.notes||m._n?`<label class="notes"><textarea data-notes rows="2" placeholder="Anything worth knowing">${esc(m.notes)}</textarea></label>`:`<button class="link addnote" data-act="addNote">${I.note}Add a note</button>`):""}
-        ${m.by?`<p class="meta">Logged by ${esc(m.by)}${m.at?" · "+esc(m.at):""}</p>`:""}
+        ${m.by?`<p class="meta by">${avatar(m.by,22)}<span>Logged by ${esc(m.by)}${m.at?" · "+esc(m.at):""}</span></p>`:""}
       </div>
     </article>`}).join("");
   const d=dayNutrition(k);
@@ -1045,13 +1057,14 @@ function editRecipe(id,preset){
 function askWho(){
   const ppl=S.settings?.people||["Amir","Catherine","Lia"];
   openSheet(`<div class="who-sheet"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><h2 class="display">Who's using this phone?</h2><p class="muted">So everyone can see who logged each meal.</p>
-  <div class="who">${ppl.map(p=>`<button class="btn ghost wide" data-who="${esc(p)}">${esc(p)}</button>`).join("")}</div></div>`);
+  <div class="who">${ppl.map(p=>`<button class="btn ghost wide who-row" data-who="${esc(p)}">${avatar(p,34)}<span>${esc(p)}</span></button>`).join("")}</div></div>`);
 }
 function openSettings(){
   const s=S.settings,f=s.formula||{},ppl=s.people||[];
   openSheet(`<form id="sform" class="stack">
     <div class="sh-h"><div><p class="eyebrow">Ariadne's Table</p><h2 class="display">Settings</h2></div><button type="button" class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
     <label class="f"><span>Who's using this phone</span><select name="me">${ppl.map(p=>`<option${p===me?" selected":""}>${esc(p)}</option>`).join("")}</select></label>
+    <div class="card-soft"><p class="micro">Profile pictures</p><ul class="av-list">${ppl.map(p=>`<li>${avatar(p,44)}<span class="av-n">${esc(p)}</span><label class="btn ghost sm">${S.settings?.avatars?.[p]?"Change":"Add photo"}<input type="file" accept="image/*" data-avfile="${esc(p)}" hidden></label>${S.settings?.avatars?.[p]?`<button type="button" class="link" data-avremove="${esc(p)}">Remove</button>`:""}</li>`).join("")}</ul></div>
     <div class="grid2"><label class="f"><span>Usual milk a day (ml)</span><input name="milkDefault" type="number" min="0" step="10" value="${esc(s.milkDefault)}"></label>
     <label class="f"><span>Vitamin D drops (µg)</span><input name="dropUg" type="number" min="0" step="0.5" value="${esc(s.dropUg)}"></label></div>
     <label class="f"><span>Vitamin D daily target (µg)</span><input name="vitDTarget" type="number" min="0" step="0.5" value="${esc(s.vitDTarget)}"><em class="hint">15 µg (600 IU) is the US reference for ages 1 to 3; the NHS uses 10 µg. Follow her paediatrician. 400 IU = 10 µg.</em></label>
@@ -1163,6 +1176,24 @@ function restingMap(){
 }
 function restingText(){const R=restingMap();const ids=Object.keys(R);if(!ids.length)return "";
   return "\n\nResting recipes (she rejected them recently or had a reaction). Do NOT plan or suggest these: "+ids.map(id=>`${id} (${recipeById(id).title}; ${R[id].reaction?"physical reaction, check with paediatrician":"rejected "+R[id].k+", back after "+R[id].until})`).join("; ")+".";}
+
+
+/* ---------- profile pictures ---------- */
+const AV_TONE={Amir:["#E9EFE2","#526447"],Catherine:["#FBE7DE","#A65A3D"],Lia:["#FBEFC8","#8A6512"]};
+function avatar(name,size=32){
+  if(!name)return `<span class="avt" style="width:${size}px;height:${size}px">${I.user}</span>`;
+  const v=S.settings?.avatars?.[name];
+  if(v)return `<img class="avt" src="/api/avatar/${encodeURIComponent(name)}?v=${v}" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px">`;
+  const [bg,fg]=AV_TONE[name]||["#EFE6D8","#5F6656"];
+  return `<span class="avt" style="width:${size}px;height:${size}px;background:${bg};color:${fg};font-size:${Math.round(size*.44)}px">${esc(name.trim().charAt(0).toUpperCase())}</span>`;
+}
+function setWho(){const n=$("#whoName");if(n)n.textContent=me||"Who are you?";const a=$("#whoBtn .av");if(a)a.innerHTML=avatar(me,34)}
+async function squareAvatar(file){
+  const url=URL.createObjectURL(file);const img=new Image();img.src=url;await img.decode();
+  const side=Math.min(img.width,img.height),c=document.createElement("canvas");c.width=c.height=256;
+  c.getContext("2d").drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,256,256);URL.revokeObjectURL(url);
+  return c.toDataURL("image/webp",.85);
+}
 
 /* ---------- actions ---------- */
 async function suggest(){
@@ -1334,7 +1365,8 @@ $("#view").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("
 
 $("#sheet").addEventListener("click",async e=>{
   if(e.target.closest("[data-close]")){closeSheet();return}
-  const w=e.target.closest("[data-who]");if(w){me=w.dataset.who;ls.set("ari-me",me);$("#whoName").textContent=me;closeSheet();return}
+  const avr=e.target.closest("[data-avremove]");if(avr){try{const d=await post("avatar",{name:avr.dataset.avremove,data:null});S.settings=d.settings;setWho();openSettings();render();status("Photo removed",true)}catch{status("Couldn't remove it",false,true)}return}
+  const w=e.target.closest("[data-who]");if(w){me=w.dataset.who;ls.set("ari-me",me);setWho();closeSheet();return}
   const s=e.target.closest("[data-sact]");if(!s)return;const act=s.dataset.sact;
   if(act==="edit")editRecipe(s.dataset.id);
   else if(act==="delete"){if(!confirm("Delete this recipe? Meals already planned with it will show as empty."))return;
@@ -1354,6 +1386,8 @@ $("#sheet").addEventListener("click",async e=>{
     catch(err){live.innerHTML=`<div class="errbox">${esc(err.message)}</div>`;s.disabled=false;s.innerHTML=`${I.spark}Read recipe`}}
 });
 $("#sheet").addEventListener("change",async e=>{
+  if(e.target.matches("[data-avfile]")){const name=e.target.dataset.avfile,f=e.target.files[0];if(!f)return;
+    try{status("Saving photo…");const data=await squareAvatar(f);const d=await post("avatar",{name,data});S.settings=d.settings;setWho();openSettings();render();status("Photo saved",true)}catch{status("Couldn't save that photo",false,true)}return}
   if(e.target.id!=="photoIn")return;const files=[...e.target.files].slice(0,4);photos=[];
   $("#thumbs").innerHTML='<p class="small muted">Preparing…</p>';
   try{for(const f of files)photos.push(await shrink(f))}catch{status("Couldn't open that photo",false,true)}
@@ -1362,7 +1396,7 @@ $("#sheet").addEventListener("change",async e=>{
 $("#sheet").addEventListener("submit",async e=>{
   e.preventDefault();const f=e.target;
   if(f.id==="rform")return submitRecipe(f);
-  if(f.id==="sform"){const fd=new FormData(f);me=fd.get("me")||me;ls.set("ari-me",me);$("#whoName").textContent=me||"Settings";
+  if(f.id==="sform"){const fd=new FormData(f);me=fd.get("me")||me;ls.set("ari-me",me);setWho();
     const num=n=>{const v=fd.get(n);return v===""||v==null?null:+v};
     const settings={milkDefault:num("milkDefault"),dropUg:num("dropUg"),vitDTarget:num("vitDTarget"),formula:{vitD:num("f_vitD"),iron:num("f_iron"),calcium:num("f_calcium"),kcal:num("f_kcal")}};
     try{const d=await post("settings",{settings});S.settings=d.settings;closeSheet();render();status("Saved",true)}catch{status("Couldn't save. Try again.",false,true)}}

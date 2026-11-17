@@ -69,6 +69,14 @@ export default async (req) => {
   const store = getStore({ name: "ari-meals", consistency: "strong" });
   const route = new URL(req.url).pathname.replace(/^\/api\/?/, "");
 
+  // Profile pictures: GET /api/avatar/<name>
+  if (req.method === "GET" && route.startsWith("avatar/")) {
+    const name = decodeURIComponent(route.slice(7));
+    const buf = await store.get("avatar:" + name, { type: "arrayBuffer" });
+    if (!buf) return new Response("Not found", { status: 404 });
+    return new Response(buf, { headers: { "content-type": "image/webp", "cache-control": "public, max-age=31536000, immutable" } });
+  }
+
   if (req.method === "GET" && route === "state") {
     let [days, recipes, settings, insight] = await Promise.all([
       store.get("days", { type: "json" }),
@@ -182,6 +190,24 @@ export default async (req) => {
     if (!isObj(body.insight)) return json({ error: "Bad request" }, 400);
     await store.setJSON("insight", body.insight);
     return json({ ok: true });
+  }
+
+  if (route === "avatar") {
+    const settings = { ...DEFAULT_SETTINGS, ...((await store.get("settings", { type: "json" })) || {}) };
+    const name = String(body.name || "");
+    if (!(settings.people || []).includes(name)) return json({ error: "Unknown person" }, 400);
+    settings.avatars = { ...(settings.avatars || {}) };
+    if (body.data === null) {
+      await store.delete("avatar:" + name);
+      delete settings.avatars[name];
+    } else {
+      const m = /^data:image\/(webp|jpeg|png);base64,(.+)$/.exec(String(body.data || ""));
+      if (!m || m[2].length > 400000) return json({ error: "Bad image" }, 400);
+      await store.set("avatar:" + name, Buffer.from(m[2], "base64"));
+      settings.avatars[name] = Date.now();
+    }
+    await store.setJSON("settings", settings);
+    return json({ ok: true, settings });
   }
 
   if (route === "settings") {
