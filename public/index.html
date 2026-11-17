@@ -594,6 +594,28 @@ label.f>span,.lbl{font-weight:600}
 .foods li .muted{font-size:13.5px;white-space:nowrap}
 .grp-b .missed{margin:8px 0 0}
 .iconbtn[disabled]{opacity:.35}
+
+/* Nutrition box (v3.0) */
+.fg-box{padding:6px 0 4px;margin-bottom:16px;overflow:hidden}
+.fg-head{padding:14px 18px 10px}
+.fg-head h2{font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:21px;letter-spacing:-.015em}
+.fg-box .grp{margin:0;border-radius:0;box-shadow:none;background:none;border-top:1px solid var(--line)}
+.fg-box .grp-h{padding:12px 16px;min-height:72px}
+.fg-box .grp.open{background:var(--sage-mist)}
+.fg-box .grp-b{border-top:0;padding:0 16px 14px 74px}
+.grp-ic.none,.gbar span.none{background:var(--bg);color:var(--ink-3)}
+.grp-top em.none{color:var(--ink-3);font-weight:500}
+.score.none{background:var(--bg);color:var(--ink-3)}
+.subs{list-style:none;margin:0;padding:0}
+.subs li{padding:9px 0;border-top:1px solid var(--line)}
+.subs li:first-child{border-top:0}
+.sub-top{display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.sub-top span:first-child{font-weight:500}
+.sub-top span:last-child{font-size:13.5px;color:var(--ink-2);white-space:nowrap}
+.subs li.zero .sub-top span{color:var(--ink-3)}
+.sub-foods{font-size:13px;color:var(--ink-3);margin-top:2px}
+.fg-note{font-size:13px;color:var(--ink-3);padding:12px 18px 14px;border-top:1px solid var(--line);line-height:1.5}
+.grp-top strong{white-space:nowrap}.grp-top em{white-space:nowrap}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -748,7 +770,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.9";
+const APP_VERSION="3.0";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1054,47 +1076,61 @@ function openPhoto(){
 const GROUP_TARGET={protein:2,veg:3,fruit:2,grain:3,dairy:1}; // typical toddler portions a day
 const GROUP_NAME={protein:"Protein",veg:"Vegetables",fruit:"Fruit",grain:"Starch & grains",dairy:"Dairy"};
 function foodLabel(k){if(/^chicken/.test(k))return "Chicken";if(k==="beef_mince")return "Beef";if(k==="lamb_mince")return "Lamb";if(/^lentils/.test(k))return "Lentils";if(k==="chickpeas"||k==="hummus")return "Chickpeas & hummus";if(k==="egg")return "Eggs";if(/salmon|cod|sardines/.test(k))return FOODS[k].name.replace(" / white fish","").replace(" (tinned)","");return FOODS[k].name.replace(/ \(dry\)| \(tinned\)| \(no salt\)/,"").replace("Cheddar / mild cheese","Cheese").replace("Pasta / orzo","Pasta & orzo")}
+const SUBS={
+  protein:[["Chicken",/^chicken/],["Red meat",/^(beef_mince|lamb_mince)$/],["Fish",/^(salmon|cod|sardines)$/],["Eggs",/^egg$/],["Beans & lentils",/^(lentils_red|lentils_brown|chickpeas|hummus)$/]],
+  veg:[["Orange veg",/^(carrot|sweet_potato|pumpkin|red_pepper)$/],["Green veg",/^(spinach|broccoli|courgette|peas|green_beans|cucumber)$/],["Other veg",/./]],
+  fruit:[["Berries",/^(blueberries|strawberries|raspberries)$/],["Citrus & tropical",/^(orange|kiwi|mango)$/],["Everyday fruit",/./]],
+  grain:[["Oats",/^oats$/],["Bread & pastry",/^(bread|pitta|filo|breadcrumbs|flour|sr_flour)$/],["Rice & pasta",/^(rice|pasta|quinoa|bulgur|couscous)$/],["Potatoes",/^potato$/]],
+  dairy:[["Yoghurt",/^greek_yoghurt$/],["Cheese",/^(cheddar|ricotta|feta|mozzarella)$/],["Milk in cooking",/^milk$/]],
+};
+const subOf=(g,k)=>{const L=SUBS[g]||[];const hit=L.find(([,re])=>re.test(k));return hit?hit[0]:(L[L.length-1]||[""])[0]};
 function weekGroups(mon){
-  const t=todayKey(),end=addDays(mon,6)<t?addDays(mon,6):t;const G={};GROUPS.forEach(([g])=>G[g]={serv:0,foods:{},left:{}});
+  const t=todayKey(),end=addDays(mon,6)<t?addDays(mon,6):t;const G={};
+  GROUPS.forEach(([g])=>{G[g]={serv:0,subs:{},left:{}};(SUBS[g]||[]).forEach(([n])=>G[g].subs[n]={serv:0,days:new Set(),foods:{}})});
   let days=0;
   for(let i=0;i<7;i++){const k=addDays(mon,i);if(k>end)break;const ms=S.days[k]?.meals||{};let any=false;
     SLOTS.forEach(([s])=>{const m=ms[s];if(!m)return;const log=m.log||{};
       partsFor(m).forEach(p=>{const a=log[p.name];if(!a)return;any=true;const fr=FRAC[a]??0;
         if(fr===0){const gs=new Set((p.items||[]).map(([fk])=>FOODS[fk]?.group).filter(g=>G[g]));gs.forEach(g=>{const n=p.name.trim();G[g].left[n]=(G[g].left[n]||0)+1})}
-        (p.items||[]).forEach(([fk,gr])=>{const f=FOODS[fk];if(!f||!G[f.group]||fr===0)return;const sv=gr*fr/f.portion;G[f.group].serv+=sv;const L=foodLabel(fk);const o=G[f.group].foods[L]??={serv:0,days:new Set()};o.serv+=sv;o.days.add(k)})})});
+        (p.items||[]).forEach(([fk,gr])=>{const f=FOODS[fk];if(!f||!G[f.group]||fr===0)return;const sv=gr*fr/f.portion;G[f.group].serv+=sv;
+          const sb=G[f.group].subs[subOf(f.group,fk)];sb.serv+=sv;sb.days.add(k);const L=foodLabel(fk);sb.foods[L]=(sb.foods[L]||0)+sv})})});
     if(any)days++}
-  const rows=GROUPS.map(([g,l])=>{const avg=days?G[g].serv/days:0,pct=Math.round(100*avg/GROUP_TARGET[g]);return {g,label:GROUP_NAME[g],avg,pct,score:Math.min(1,avg/GROUP_TARGET[g]),
-    foods:Object.entries(G[g].foods).map(([n,o])=>({n,serv:o.serv,days:o.days.size})).sort((a,b)=>b.serv-a.serv),left:Object.entries(G[g].left).sort((a,b)=>b[1]-a[1])}});
+  const rows=GROUPS.map(([g])=>{const avg=days?G[g].serv/days:0,pct=Math.round(100*avg/GROUP_TARGET[g]);
+    return {g,label:GROUP_NAME[g],avg,pct,score:Math.min(1,avg/GROUP_TARGET[g]),
+      subs:Object.entries(G[g].subs).map(([n,o])=>({n,serv:o.serv,days:o.days.size,foods:Object.entries(o.foods).sort((a,b)=>b[1]-a[1])})),
+      left:Object.entries(G[g].left).sort((a,b)=>b[1]-a[1])}});
   const score=days?Math.round(10*rows.reduce((a,r)=>a+r.score,0)/rows.length*10)/10:null;
   return {days,end,rows,score};
 }
 const word=p=>p>=90?"Great":p>=60?"Good":p>=35?"Getting there":"Needs more";
 function viewHer(){
-  const t=todayKey(),mon=ui.hweek||mondayOf(t),W=weekGroups(mon);
+  const t=todayKey(),mon=ui.hweek||mondayOf(t),W=weekGroups(mon),has=W.days>0;
   const n=W.end>=mon?Math.round((parse(W.end)-parse(mon))/864e5)+1:0;
-  const A=n?analyse(W.end,n):{used:[],rows:[],missed:[],groupDays:{}};const picks=n?rankRecipes(A):[];
+  const A=n&&has?analyse(W.end,n):{used:[],rows:[],missed:[],groupDays:{}};const picks=A.used.length?rankRecipes(A):[];
   let h=`<header class="pagehead"><div class="ph-row"><button class="iconbtn" data-act="hPrev" aria-label="Previous week">${I.left}</button>
     <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"Nutrition · this week":"Nutrition · week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1></div>
     <button class="iconbtn" data-act="hNext" aria-label="Next week"${mon>=mondayOf(t)?" disabled":""}>${I.right}</button></div>
     ${mon!==mondayOf(t)?`<button class="link center-link" data-act="hThis">Back to this week</button>`:""}</header>`;
-  if(!W.days){return h+`<section class="card score-card"><div class="empty-state"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><p class="muted">Nothing logged this week yet. Tap All, Most, Some or None on Today and her score appears here.</p></div></section>`}
-  const good=W.rows.filter(r=>r.pct>=90).map(r=>r.label),low=W.rows.filter(r=>r.pct<60).sort((a,b)=>a.pct-b.pct).map(r=>r.label);
-  const sc=W.score,tone=sc>=8?"ok":sc>=5.5?"mid":"low";
-  h+=`<section class="card score-card"><div class="score ${tone}"><b class="num">${sc}</b><span>/10</span></div>
-    <div class="score-t"><h2>${sc>=8?"Eating really well":sc>=6.5?"A good week":sc>=5?"Getting there":"Room to improve"}</h2><p class="muted small">${W.days} day${W.days>1?"s":""} logged · average per day</p></div>
-    <div class="score-notes">${good.length?`<p><span class="dotc ok"></span><b>Doing well</b> ${esc(good.join(", "))}</p>`:""}${low.length?`<p><span class="dotc low"></span><b>Needs more</b> ${esc(low.join(", "))}</p>`:""}</div></section>
-  <section class="groups-list">${W.rows.map(r=>{const open=!!ui.openGroups?.[r.g],tn=r.pct>=90?"ok":r.pct>=60?"mid":"low";
-    return `<article class="grp card${open?" open":""}"><button class="grp-h" data-act="grp" data-g="${r.g}" aria-expanded="${open}">
+  const sc=W.score,tone=!has?"none":sc>=8?"ok":sc>=5.5?"mid":"low";
+  const good=has?W.rows.filter(r=>r.pct>=90).map(r=>r.label):[],low=has?W.rows.filter(r=>r.pct<60).sort((a,b)=>a.pct-b.pct).map(r=>r.label):[];
+  h+=`<section class="card score-card"><div class="score ${tone}"><b class="num">${has?sc:"–"}</b><span>/10</span></div>
+    <div class="score-t"><h2>${!has?"Her score for the week":sc>=8?"Eating really well":sc>=6.5?"A good week":sc>=5?"Getting there":"Room to improve"}</h2><p class="muted small">${has?`${W.days} day${W.days>1?"s":""} logged · average per day`:"Fills in as you log meals on Today"}</p></div>
+    ${has&&(good.length||low.length)?`<div class="score-notes">${good.length?`<p><span class="dotc ok"></span><b>Doing well</b> ${esc(good.join(", "))}</p>`:""}${low.length?`<p><span class="dotc low"></span><b>Needs more</b> ${esc(low.join(", "))}</p>`:""}</div>`:""}</section>
+  <section class="card fg-box"><div class="fg-head"><h2>Food groups</h2><p class="muted small">Portions a day · tap a group to open it</p></div>
+  ${W.rows.map(r=>{const open=!!ui.openGroups?.[r.g],tn=!has?"none":r.pct>=90?"ok":r.pct>=60?"mid":"low";
+    return `<div class="grp${open?" open":""}"><button class="grp-h" data-act="grp" data-g="${r.g}" aria-expanded="${open}">
       <span class="grp-ic ${tn}">${GROUP_ICON[r.g]}</span>
-      <span class="grp-t"><span class="grp-top"><strong>${r.label}</strong><em class="${tn}">${word(r.pct)}</em></span>
+      <span class="grp-t"><span class="grp-top"><strong>${r.label}</strong><em class="${tn}">${has?word(r.pct):"Not logged"}</em></span>
         <span class="gbar"><span class="${tn}" style="width:${Math.min(100,r.pct)}%"></span></span>
-        <small class="num">${E.r1(r.avg)} of ${GROUP_TARGET[r.g]} portions a day</small></span><span class="chev">${I.down}</span></button>
-      <div class="grp-b"${open?"":" hidden"}>${r.foods.length?`<ul class="foods">${r.foods.map(f=>`<li><span>${esc(f.n)}</span><span class="num muted">${E.r1(f.serv)} portion${E.r1(f.serv)===1?"":"s"} · ${f.days} day${f.days>1?"s":""}</span></li>`).join("")}</ul>`:`<p class="muted small">Nothing from this group logged yet.</p>`}
-        ${r.left.length?`<p class="missed"><b>Left on the plate</b> ${esc(r.left.map(([n,c])=>c>1?`${n} ×${c}`:n).join(", "))}</p>`:""}</div></article>`}).join("")}
-  <p class="note">Portions are toddler-sized and counted from what you logged (All, Most, Some, None for each part, hidden veg included). Daily guide: protein 2, vegetables 3, fruit 2, starch and grains 3, dairy 1, on top of her formula.</p></section>`;
-  h+=`<section class="nutri-card card"><div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>Vitamins & minerals</h2><p class="muted small">${A.used.length?`${A.used.length} day${A.used.length>1?"s":""} with 2 or more meals logged · with formula and drops`:"Needs a day with 2 or more meals logged"}</p></div></div>
-    ${A.used.length?`${gauges(A.rows)}${picks.length?`<div class="picks-wrap"><p class="micro">From your recipes, these cover the gaps</p><ul class="picks">${picks.map(p=>`<li><button data-act="recipe" data-id="${esc(p.r.id)}">${pic(p.r,"pthumb")}<span class="pk-t"><strong>${esc(p.r.title)}</strong><small>${esc(p.hits.join(" · "))}</small></span>${I.right}</button></li>`).join("")}</ul></div>`:""}
-    <p class="note">Estimates from USDA FoodData Central against US reference intakes for ages 1 to 3. A low number means offer more, not a confirmed deficiency.</p>`:""}</section>`;
+        <small class="num">${E.r1(r.avg)} of ${GROUP_TARGET[r.g]} a day</small></span><span class="chev">${I.down}</span></button>
+      <div class="grp-b"${open?"":" hidden"}>
+        <ul class="subs">${r.subs.map(sb=>`<li class="${sb.serv>0?"":"zero"}"><div class="sub-top"><span>${esc(sb.n)}</span><span class="num">${sb.serv>0?`${E.r1(sb.serv)} portion${E.r1(sb.serv)===1?"":"s"} · ${sb.days} day${sb.days>1?"s":""}`:"none yet"}</span></div>${sb.foods.length>1||(sb.foods.length===1&&sb.foods[0][0]!==sb.n)?`<p class="sub-foods">${esc(sb.foods.map(([f,v])=>`${f} ${E.r1(v)}`).join(" · "))}</p>`:""}</li>`).join("")}</ul>
+        ${r.left.length?`<p class="missed"><b>Left on the plate</b> ${esc(r.left.map(([n,c])=>c>1?`${n} ×${c}`:n).join(", "))}</p>`:""}</div></div>`}).join("")}
+  <p class="fg-note">Toddler portions counted from what you log, hidden veg included. Daily guide: protein 2, vegetables 3, fruit 2, starch and grains 3, dairy 1, on top of her formula.</p></section>`;
+  h+=`<section class="nutri-card card"><div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>Vitamins & minerals</h2><p class="muted small">${A.used.length?`${A.used.length} day${A.used.length>1?"s":""} with 2 or more meals logged · with formula and drops`:"Fills in once a day has 2 or more meals logged"}</p></div></div>
+    ${gauges(A.used.length?A.rows:TARGETS().map(x=>({...x,v:0,pct:0})))}
+    ${picks.length?`<div class="picks-wrap"><p class="micro">From your recipes, these cover the gaps</p><ul class="picks">${picks.map(p=>`<li><button data-act="recipe" data-id="${esc(p.r.id)}">${pic(p.r,"pthumb")}<span class="pk-t"><strong>${esc(p.r.title)}</strong><small>${esc(p.hits.join(" · "))}</small></span>${I.right}</button></li>`).join("")}</ul></div>`:""}
+    <p class="note">Estimates from USDA FoodData Central against US reference intakes for ages 1 to 3. A low number means offer more, not a confirmed deficiency.</p></section>`;
   return h;
 }
 
