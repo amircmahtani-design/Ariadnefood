@@ -748,7 +748,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.8";
+const APP_VERSION="2.9";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -851,7 +851,7 @@ function viewDay(){
   const ml=day.milk!=null?+day.milk:+S.settings.milkDefault||0;
   let h=`<header class="pagehead">
     <div class="ph-row"><button class="iconbtn" data-act="prevDay" aria-label="Previous day">${I.left}</button>
-    <div class="ph-t"><p class="eyebrow">${rel}</p><h1 class="display">${dayTitle(k)}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
+    <div class="ph-t"><p class="eyebrow">${rel}</p><h1 class="display">${dayTitle(k)}</h1></div>
     <button class="iconbtn" data-act="nextDay" aria-label="Next day">${I.right}</button></div>
     
     ${k!==t?`<button class="link center-link" data-act="today">Back to today</button>`:""}
@@ -908,7 +908,7 @@ function viewWeek(){
   const mon=ui.week,t=todayKey();
   let h=`<header class="pagehead">
     <div class="ph-row"><button class="iconbtn" data-act="prevWeek" aria-label="Previous week">${I.left}</button>
-    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
+    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1></div>
     <button class="iconbtn" data-act="nextWeek" aria-label="Next week">${I.right}</button></div>
     
     ${mon!==mondayOf(t)?`<button class="link center-link" data-act="thisWeek">Back to this week</button>`:""}
@@ -938,7 +938,7 @@ function viewWeek(){
 
 /* Recipes */
 function viewRecipes(){
-  let h=`<header class="pagehead centered"><p class="eyebrow">Ariadne's cookbook</p><h1 class="display">Recipes</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></header>
+  let h=`<header class="pagehead centered"><p class="eyebrow">Ariadne's cookbook</p><h1 class="display">Recipes</h1></header>
   <section class="ask card">
     <div class="ask-h"><span class="ask-ic">${I.spark}</span><div><h2>A new recipe for what she's missing</h2><p class="small">Reads her last 7 days and writes something she'll eat, never mushy.</p></div></div>
     <input data-focus placeholder="Anything to focus on? (optional)" aria-label="Focus for the suggestion">
@@ -1074,7 +1074,7 @@ function viewHer(){
   const n=W.end>=mon?Math.round((parse(W.end)-parse(mon))/864e5)+1:0;
   const A=n?analyse(W.end,n):{used:[],rows:[],missed:[],groupDays:{}};const picks=n?rankRecipes(A):[];
   let h=`<header class="pagehead"><div class="ph-row"><button class="iconbtn" data-act="hPrev" aria-label="Previous week">${I.left}</button>
-    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"Nutrition · this week":"Nutrition · week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
+    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"Nutrition · this week":"Nutrition · week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1></div>
     <button class="iconbtn" data-act="hNext" aria-label="Next week"${mon>=mondayOf(t)?" disabled":""}>${I.right}</button></div>
     ${mon!==mondayOf(t)?`<button class="link center-link" data-act="hThis">Back to this week</button>`:""}</header>`;
   if(!W.days){return h+`<section class="card score-card"><div class="empty-state"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><p class="muted">Nothing logged this week yet. Tap All, Most, Some or None on Today and her score appears here.</p></div></section>`}
