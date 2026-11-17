@@ -67,7 +67,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none}
 
 /* tab bar */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tabs .wrap{display:grid;grid-template-columns:repeat(3,1fr);padding:6px 12px 4px}
+.tabs .wrap{display:grid;grid-template-columns:repeat(4,1fr);padding:6px 12px 4px}
 .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 6px;color:var(--ink-3);font-size:12.5px;font-weight:600;min-height:58px;transition:color var(--fast)}
 .tab .ti{width:58px;height:32px;border-radius:999px;display:grid;place-items:center;transition:background var(--med) var(--ease)}
 .tab svg{width:23px;height:23px}
@@ -555,6 +555,45 @@ label.f>span,.lbl{font-weight:600}
 .meal .parts{margin-top:4px}
 .meal .part:first-of-type{border-top:0}
 .meal.open{box-shadow:0 0 0 1.5px var(--sage-2),var(--sh-2)}
+
+/* Her Week (v2.6) */
+.tab{font-size:12px}
+.score-card{padding:20px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:center}
+.score{width:86px;height:86px;border-radius:50%;display:flex;align-items:baseline;justify-content:center;padding-top:22px;background:var(--sage-soft);color:var(--good)}
+.score b{font-family:var(--serif);font-variation-settings:"SOFT" 100;font-size:34px;font-weight:560;line-height:1}
+.score span{font-size:14px;font-weight:600;margin-left:1px}
+.score.mid{background:var(--butter);color:#8A6512}
+.score.low{background:var(--terra-soft);color:var(--terra-ink)}
+.score-t h2{font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:22px;letter-spacing:-.015em;line-height:1.2}
+.score-notes{grid-column:1/-1;display:grid;gap:6px;margin-top:10px;font-size:15px}
+.score-notes p{display:flex;gap:8px;align-items:baseline}
+.score-notes b{font-weight:600;white-space:nowrap}
+.dotc{width:9px;height:9px;border-radius:50%;flex:none;transform:translateY(-1px)}
+.dotc.ok{background:var(--good)}.dotc.low{background:var(--terra-ink)}
+.score-card .empty-state{grid-column:1/-1}
+.groups-list{margin-bottom:20px}
+.grp{margin-bottom:10px;padding:0;overflow:hidden;border-radius:var(--r-lg)}
+.grp-h{width:100%;border:0;background:none;text-align:left;display:flex;align-items:center;gap:14px;padding:14px 14px 14px 14px;min-height:76px}
+.grp-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--sage-soft);color:var(--good)}
+.grp-ic svg{width:22px;height:22px}
+.grp-ic.mid{background:var(--butter);color:#8A6512}.grp-ic.low{background:var(--terra-soft);color:var(--terra-ink)}
+.grp-t{flex:1;min-width:0;display:grid;gap:6px}
+.grp-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.grp-top strong{font-weight:600;font-size:16.5px}
+.grp-top em{font-style:normal;font-size:13px;font-weight:600}
+.grp-top em.ok{color:var(--good)}.grp-top em.mid{color:#8A6512}.grp-top em.low{color:var(--terra-ink)}
+.gbar{height:8px;border-radius:999px;background:var(--bg);overflow:hidden;display:block}
+.gbar span{display:block;height:100%;border-radius:999px;background:var(--good);transition:width .6s var(--ease)}
+.gbar span.mid{background:var(--mid)}.gbar span.low{background:var(--terra-ink)}
+.grp-t small{font-size:13px;color:var(--ink-3)}
+.grp.open .chev{transform:rotate(180deg)}
+.grp-b{padding:2px 16px 14px;border-top:1px solid var(--line)}
+.foods{list-style:none;margin:0;padding:0}
+.foods li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:15.5px}
+.foods li:first-child{border-top:0}
+.foods li .muted{font-size:13.5px;white-space:nowrap}
+.grp-b .missed{margin:8px 0 0}
+.iconbtn[disabled]{opacity:.35}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -607,6 +646,7 @@ label.f>span,.lbl{font-weight:600}
   <div class="wrap" id="tabs">
     <button class="tab" data-view="day"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z"/><path d="M9 7.6c0-1.4 1-1.6 1-3M13.5 7.6c0-1.4 1-1.6 1-3"/></svg></span>Today</button>
     <button class="tab" data-view="week"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.3h.01M12 17.3h.01" stroke-width="2.4"/></svg></span>My Week</button>
+    <button class="tab" data-view="her"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/><path d="M8.5 12h2l1-2 1.5 4 1-2h1.5"/></svg></span>Her Week</button>
     <button class="tab" data-view="recipes"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></svg></span>Recipes</button>
   </div>
 </nav>
@@ -637,7 +677,7 @@ const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v)
 /* ---------- state ---------- */
 let S={days:{},recipes:[],settings:{people:["Amir","Catherine","Lia"],milkDefault:600,dropUg:10,vitDTarget:15,formula:{}},insight:null};
 const ui={view:ls.get("ari-view")||"day",date:todayKey(),week:mondayOf(todayKey()),rq:"",rf:"all"};
-if(!["day","week","recipes"].includes(ui.view))ui.view="day";
+if(!["day","week","her","recipes"].includes(ui.view))ui.view="day";
 let me=ls.get("ari-me")||"";
 let pending={},timer=null,saving=false,loaded=false,busy=false,photos=[];
 
@@ -708,7 +748,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="2.5";
+const APP_VERSION="2.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -793,6 +833,7 @@ function render(){
   const v=$("#view");
   if(ui.view==="day")v.innerHTML=viewDay();
   else if(ui.view==="week")v.innerHTML=viewWeek();
+  else if(ui.view==="her")v.innerHTML=viewHer();
   else{v.innerHTML=viewRecipes();renderRList()}
 }
 function bars(rows){return gauges(rows)}
@@ -897,18 +938,7 @@ function viewWeek(){
 
 /* Recipes */
 function viewRecipes(){
-  const A=analyse(todayKey());const picks=rankRecipes(A);
   let h=`<header class="pagehead centered"><p class="eyebrow">Ariadne's cookbook</p><h1 class="display">Recipes</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></header>
-  <section class="nutri-card card">
-    <div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>Her last 7 days</h2><p class="muted small">${A.used.length?`${A.used.length} day${A.used.length>1?"s":""} logged · daily average`:"Waiting for a few logged days"}</p></div></div>`;
-  if(A.used.length<1){h+=`<div class="empty-state"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><p class="muted">Log a few meals on Today, tapping All, Most, Some or None for each part, and this fills in.</p></div>`}
-  else{
-    h+=`${groupChips(null,A.groupDays,A.used.length)}
-    ${A.missed.length?`<p class="missed"><b>Didn't eat</b> ${esc(A.missed.slice(-6).map(m=>`${m.name} (${shortDay(m.k)})`).join(", "))}</p>`:""}
-    ${gauges(A.rows)}
-    ${picks.length?`<div class="picks-wrap"><p class="micro">From your recipes, these cover the gaps</p><ul class="picks">${picks.map(p=>`<li><button data-act="recipe" data-id="${esc(p.r.id)}">${pic(p.r,"pthumb")}<span class="pk-t"><strong>${esc(p.r.title)}</strong><small>${esc(p.hits.join(" · "))}</small></span>${I.right}</button></li>`).join("")}</ul></div>`:""}
-    <p class="note">Estimates from USDA FoodData Central and what she ate, part by part, plus milk and vitamin D drops, against US reference intakes for ages 1 to 3. A low number means offer more of this, not a confirmed deficiency.</p>`}
-  h+=`</section>
   <section class="ask card">
     <div class="ask-h"><span class="ask-ic">${I.spark}</span><div><h2>A new recipe for what she's missing</h2><p class="small">Reads her last 7 days and writes something she'll eat, never mushy.</p></div></div>
     <input data-focus placeholder="Anything to focus on? (optional)" aria-label="Focus for the suggestion">
@@ -1019,6 +1049,55 @@ function openPhoto(){
   <div class="sh-acts"><button class="btn wide" data-sact="readphoto" disabled id="readBtn">${I.spark}Read recipe</button></div><div id="photoLive"></div>`);
 }
 
+
+/* ---------- Her Week: food groups, portions and a weekly score ---------- */
+const GROUP_TARGET={protein:2,veg:3,fruit:2,grain:3,dairy:1}; // typical toddler portions a day
+const GROUP_NAME={protein:"Protein",veg:"Vegetables",fruit:"Fruit",grain:"Starch & grains",dairy:"Dairy"};
+function foodLabel(k){if(/^chicken/.test(k))return "Chicken";if(k==="beef_mince")return "Beef";if(k==="lamb_mince")return "Lamb";if(/^lentils/.test(k))return "Lentils";if(k==="chickpeas"||k==="hummus")return "Chickpeas & hummus";if(k==="egg")return "Eggs";if(/salmon|cod|sardines/.test(k))return FOODS[k].name.replace(" / white fish","").replace(" (tinned)","");return FOODS[k].name.replace(/ \(dry\)| \(tinned\)| \(no salt\)/,"").replace("Cheddar / mild cheese","Cheese").replace("Pasta / orzo","Pasta & orzo")}
+function weekGroups(mon){
+  const t=todayKey(),end=addDays(mon,6)<t?addDays(mon,6):t;const G={};GROUPS.forEach(([g])=>G[g]={serv:0,foods:{},left:{}});
+  let days=0;
+  for(let i=0;i<7;i++){const k=addDays(mon,i);if(k>end)break;const ms=S.days[k]?.meals||{};let any=false;
+    SLOTS.forEach(([s])=>{const m=ms[s];if(!m)return;const log=m.log||{};
+      partsFor(m).forEach(p=>{const a=log[p.name];if(!a)return;any=true;const fr=FRAC[a]??0;
+        if(fr===0){const gs=new Set((p.items||[]).map(([fk])=>FOODS[fk]?.group).filter(g=>G[g]));gs.forEach(g=>{const n=p.name.trim();G[g].left[n]=(G[g].left[n]||0)+1})}
+        (p.items||[]).forEach(([fk,gr])=>{const f=FOODS[fk];if(!f||!G[f.group]||fr===0)return;const sv=gr*fr/f.portion;G[f.group].serv+=sv;const L=foodLabel(fk);const o=G[f.group].foods[L]??={serv:0,days:new Set()};o.serv+=sv;o.days.add(k)})})});
+    if(any)days++}
+  const rows=GROUPS.map(([g,l])=>{const avg=days?G[g].serv/days:0,pct=Math.round(100*avg/GROUP_TARGET[g]);return {g,label:GROUP_NAME[g],avg,pct,score:Math.min(1,avg/GROUP_TARGET[g]),
+    foods:Object.entries(G[g].foods).map(([n,o])=>({n,serv:o.serv,days:o.days.size})).sort((a,b)=>b.serv-a.serv),left:Object.entries(G[g].left).sort((a,b)=>b[1]-a[1])}});
+  const score=days?Math.round(10*rows.reduce((a,r)=>a+r.score,0)/rows.length*10)/10:null;
+  return {days,end,rows,score};
+}
+const word=p=>p>=90?"Great":p>=60?"Good":p>=35?"Getting there":"Needs more";
+function viewHer(){
+  const t=todayKey(),mon=ui.hweek||mondayOf(t),W=weekGroups(mon);
+  const n=W.end>=mon?Math.round((parse(W.end)-parse(mon))/864e5)+1:0;
+  const A=n?analyse(W.end,n):{used:[],rows:[],missed:[],groupDays:{}};const picks=n?rankRecipes(A):[];
+  let h=`<header class="pagehead"><div class="ph-row"><button class="iconbtn" data-act="hPrev" aria-label="Previous week">${I.left}</button>
+    <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"Her week so far":"Her week"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1><img class="flourish" src="/img/flourish.webp?v=1" alt="" aria-hidden="true" width="900" height="197"></div>
+    <button class="iconbtn" data-act="hNext" aria-label="Next week"${mon>=mondayOf(t)?" disabled":""}>${I.right}</button></div>
+    ${mon!==mondayOf(t)?`<button class="link center-link" data-act="hThis">Back to this week</button>`:""}</header>`;
+  if(!W.days){return h+`<section class="card score-card"><div class="empty-state"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><p class="muted">Nothing logged this week yet. Tap All, Most, Some or None on Today and her score appears here.</p></div></section>`}
+  const good=W.rows.filter(r=>r.pct>=90).map(r=>r.label),low=W.rows.filter(r=>r.pct<60).sort((a,b)=>a.pct-b.pct).map(r=>r.label);
+  const sc=W.score,tone=sc>=8?"ok":sc>=5.5?"mid":"low";
+  h+=`<section class="card score-card"><div class="score ${tone}"><b class="num">${sc}</b><span>/10</span></div>
+    <div class="score-t"><h2>${sc>=8?"Eating really well":sc>=6.5?"A good week":sc>=5?"Getting there":"Room to improve"}</h2><p class="muted small">${W.days} day${W.days>1?"s":""} logged · average per day</p></div>
+    <div class="score-notes">${good.length?`<p><span class="dotc ok"></span><b>Doing well</b> ${esc(good.join(", "))}</p>`:""}${low.length?`<p><span class="dotc low"></span><b>Needs more</b> ${esc(low.join(", "))}</p>`:""}</div></section>
+  <section class="groups-list">${W.rows.map(r=>{const open=!!ui.openGroups?.[r.g],tn=r.pct>=90?"ok":r.pct>=60?"mid":"low";
+    return `<article class="grp card${open?" open":""}"><button class="grp-h" data-act="grp" data-g="${r.g}" aria-expanded="${open}">
+      <span class="grp-ic ${tn}">${GROUP_ICON[r.g]}</span>
+      <span class="grp-t"><span class="grp-top"><strong>${r.label}</strong><em class="${tn}">${word(r.pct)}</em></span>
+        <span class="gbar"><span class="${tn}" style="width:${Math.min(100,r.pct)}%"></span></span>
+        <small class="num">${E.r1(r.avg)} of ${GROUP_TARGET[r.g]} portions a day</small></span><span class="chev">${I.down}</span></button>
+      <div class="grp-b"${open?"":" hidden"}>${r.foods.length?`<ul class="foods">${r.foods.map(f=>`<li><span>${esc(f.n)}</span><span class="num muted">${E.r1(f.serv)} portion${E.r1(f.serv)===1?"":"s"} · ${f.days} day${f.days>1?"s":""}</span></li>`).join("")}</ul>`:`<p class="muted small">Nothing from this group logged yet.</p>`}
+        ${r.left.length?`<p class="missed"><b>Left on the plate</b> ${esc(r.left.map(([n,c])=>c>1?`${n} ×${c}`:n).join(", "))}</p>`:""}</div></article>`}).join("")}
+  <p class="note">Portions are toddler-sized and counted from what you logged (All, Most, Some, None for each part, hidden veg included). Daily guide: protein 2, vegetables 3, fruit 2, starch and grains 3, dairy 1, on top of her formula.</p></section>`;
+  h+=`<section class="nutri-card card"><div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>Vitamins & minerals</h2><p class="muted small">${A.used.length?`${A.used.length} day${A.used.length>1?"s":""} with 2 or more meals logged · with formula and drops`:"Needs a day with 2 or more meals logged"}</p></div></div>
+    ${A.used.length?`${gauges(A.rows)}${picks.length?`<div class="picks-wrap"><p class="micro">From your recipes, these cover the gaps</p><ul class="picks">${picks.map(p=>`<li><button data-act="recipe" data-id="${esc(p.r.id)}">${pic(p.r,"pthumb")}<span class="pk-t"><strong>${esc(p.r.title)}</strong><small>${esc(p.hits.join(" · "))}</small></span>${I.right}</button></li>`).join("")}</ul></div>`:""}
+    <p class="note">Estimates from USDA FoodData Central against US reference intakes for ages 1 to 3. A low number means offer more, not a confirmed deficiency.</p>`:""}</section>`;
+  return h;
+}
+
 /* ---------- actions ---------- */
 async function suggest(){
   if(busy)return;busy="suggest";render();
@@ -1125,6 +1204,10 @@ $("#view").addEventListener("click",async e=>{
   const rf=e.target.closest("[data-rf]");if(rf){ui.rf=rf.dataset.rf;document.querySelectorAll("[data-rf]").forEach(b=>b.setAttribute("aria-pressed",b===rf));renderRList();return}
   const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
   const slotEl=a.closest("[data-slot]"),slot=slotEl?.dataset.slot;
+  if(act==="grp"){ui.openGroups=ui.openGroups||{};ui.openGroups[a.dataset.g]=!ui.openGroups[a.dataset.g];keepScroll(render);return}
+  if(act==="hPrev"){ui.hweek=addDays(ui.hweek||mondayOf(todayKey()),-7);render();return}
+  if(act==="hNext"){const n=addDays(ui.hweek||mondayOf(todayKey()),7);if(n<=mondayOf(todayKey())){ui.hweek=n;render()}return}
+  if(act==="hThis"){ui.hweek=mondayOf(todayKey());render();return}
   if(act==="toggleMeal"){const key=`${ui.date}|${slot}`;ui.openMeals=ui.openMeals||{};ui.openMeals[key]=!ui.openMeals[key];keepScroll(render);return}
   if(act==="amt"){const part=a.closest("[data-part]").dataset.part,v=a.dataset.val,cur=S.days[ui.date]?.meals?.[slot]?.log?.[part];
     patchDay(ui.date,{meals:{[slot]:{log:{[part]:cur===v?null:v},by:me||null,at:timeNow()}}});keepScroll(render)}
