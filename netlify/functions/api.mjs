@@ -2,6 +2,7 @@ import { getStore } from "@netlify/blobs";
 import { SEED_RECIPES, seedDays } from "../lib/seed.mjs";
 import { FOODS } from "../lib/foods.mjs";
 import { makeEngine } from "../lib/engine.mjs";
+import { applyV4 } from "../lib/prefs-v4.mjs";
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -23,7 +24,7 @@ function merge(target, patch) {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const DATA_VERSION = 3;
+const DATA_VERSION = 4;
 const DEFAULT_SETTINGS = {
   people: ["Amir", "Catherine", "Lia"],
   milkDefault: 600,
@@ -33,7 +34,7 @@ const DEFAULT_SETTINGS = {
   formula: { name: "Toddler formula", kcal: 64, protein: 1.78, calcium: 133, iron: 1.37, vitD: 1.0, vitA: 58, vitC: 8.2, zinc: 0.68 },
 };
 
-const ABOUT = `Ariadne is 16 months old and lives in Dubai. No food allergies seen so far. She loves chicken in any form (wings, breast, thighs, roast chicken); with roast chicken the family also roasts potatoes and sweet potatoes, but it is not yet clear she eats those, so check the log. She loves oat pancakes, beef meatballs, Greek youvarlakia soup, salmon, potatoes, carrots, spinach and fruit. Her breakfast at the moment is always 3 spanakopita triangles and a homemade carrot cookie. She eats carrot cookies made with Greek yoghurt and eggs (that is how the family gets yoghurt and egg into her), and vegetables hidden in meatballs. She dislikes purées and mushy textures: she wants firm, crisp, finger-food shapes she can hold (fritters, bites, fingers, mini muffins, patties, bakes, soft meatballs). She drinks about 600 ml of toddler formula a day and gets daily vitamin D drops.
+const ABOUT = `Ariadne is 16 months old and lives in Dubai. No food allergies seen so far. She loves chicken in any form (wings, breast, thighs, roast chicken); with roast chicken the family also roasts potatoes and sweet potatoes, but it is not yet clear she eats those, so check the log. She loves oat pancakes, beef meatballs, Greek youvarlakia soup, salmon, potatoes, carrots, spinach and fruit. Her breakfast at the moment is always 3 spanakopita triangles and a homemade carrot cookie. She eats carrot cookies made with Greek yoghurt and eggs (that is how the family gets yoghurt and egg into her), and vegetables hidden in meatballs. She dislikes purées and mushy textures: she wants firm, crisp, finger-food shapes she can hold (fritters, bites, fingers, mini muffins, patties, bakes, soft meatballs). She REJECTS banana (mainly the smell) and GAGS on plain yoghurt: never use banana, and use yoghurt only baked into something (cookies, muffins, marinades). Egg on its own was rejected earlier; egg baked into recipes is fine. Earlier she rejected purées of courgette, avocado and pear, but those foods are fine hidden in meatballs or bakes. She also enjoys bolognese, grilled chicken, Greek-style goat, soutzoukakia, bell pepper, celery, diluted kefir, bakery foods, chicken patties, pancakes, carrot bites and watermelon, and likes warm, well-seasoned family food rather than bland baby food. Lunch and dinner are usually the same dish. The family is introducing small sea bream and large shrimp cooked in the air fryer (shellfish is an allergen: first tries at lunch). She drinks about 600 ml of toddler formula a day and gets daily vitamin D drops.
 Safety rules: no whole nuts, popcorn or whole roasted chickpeas; quarter round fruit and cherry tomatoes; no added salt, stock cubes or added sugar; rinse feta; cook egg through; take meat off the bone and check fish for bones. Ingredients must be easy to buy in Dubai. Greek and Mediterranean flavours welcome. Metric units, British spelling, concise.`;
 
 const RECIPE_SHAPE = `{"title":"","meals":["breakfast"|"lunch"|"snack"|"dinner"],"time":"25 min","serves":4,"ingredients":["200 g chicken thigh, diced", "..."],"method":["step", "..."],"tip":"how to serve it so she eats it","parts":[{"name":"what is on her plate, e.g. Chicken bites","items":[["food_key", grams_in_ONE_toddler_portion]]}]}
@@ -111,6 +112,23 @@ export default async (req) => {
         const d = (days[k] = days[k] || {}); d.meals = d.meals || {};
         if (untouched(d.meals.breakfast)) d.meals.breakfast = { recipeId: "spanakbreakfast" };
         if (new Date(k).getUTCDay() === 0 && untouched(d.meals.dinner)) d.meals.dinner = { recipeId: "roastchicken" };
+      }
+      settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: 3 };
+    }
+    // v4: family's 17/11 update (no banana, no plain yoghurt). Rewrites affected seed recipes, pauses the rest,
+    // and swaps banana / yoghurt-bark snacks in unlogged days from today on.
+    if ((settings?.dataVersion || 0) < DATA_VERSION) {
+      recipes = applyV4(recipes || []);
+      days = days || {};
+      const today = new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 10);
+      for (const [k, d] of Object.entries(days)) {
+        if (k < today) continue;
+        for (const m of Object.values(d.meals || {})) {
+          if (!m || (m.log && Object.keys(m.log).length)) continue;
+          if (m.custom && /banana/i.test(m.custom)) m.custom = m.custom.replace(/^banana \+ cheese cubes$/i, "Apple slices + cheese cubes").replace(/banana/gi, "apple");
+          if (m.side && /banana/i.test(m.side)) m.side = m.side.replace(/banana/gi, "apple");
+          if (["yoghurtbark", "mangolollies", "tzatzikisticks", "bananaflax"].includes(m.recipeId)) { m.recipeId = null; m.custom = "Watermelon fingers"; }
+        }
       }
       settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: DATA_VERSION };
       await Promise.all([store.setJSON("recipes", recipes), store.setJSON("days", days), store.setJSON("settings", settings)]);

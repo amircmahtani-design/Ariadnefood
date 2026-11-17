@@ -1,4 +1,5 @@
 import { MORE_RECIPES } from "./seed-more.mjs";
+import { applyV4 } from "./prefs-v4.mjs";
 // Starter recipes and a two-week starter plan. Only written to storage when empty.
 // Built around Ariadne's preferences: firm, crisp finger food, no purées or mushy textures.
 
@@ -120,15 +121,15 @@ const BASE_RECIPES = [
     ["Toss everything in the lemon, oil and oregano.", "Roast at 200°C for 45 min.", "Take her meat off the bone and cut it into strips."],
     "Her favourite done the Greek way. Always take the meat off the bone for her, wings especially, because their bones are small.", []),
 ];
-export const SEED_RECIPES = [...BASE_RECIPES, ...MORE_RECIPES];
+export const SEED_RECIPES = applyV4([...BASE_RECIPES, ...MORE_RECIPES]);
 
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 // [breakfast, lunch, snack, dinner, newFood, slot for new food]
 const PLAN = [
-  ["Spanakopita triangles & carrot cookie", "Youvarlakia (meatball soup)", "Frozen yoghurt berry bark", "Salmon bites with potato wedges & peas", "", ""],
+  ["Spanakopita triangles & carrot cookie", "Youvarlakia (meatball soup)", "Watermelon fingers", "Salmon bites with potato wedges & peas", "", ""],
   ["Spanakopita triangles & carrot cookie", "Lentil & carrot fritters + orange segments", "Carrot & oat cookies + pear slices", "Lemon-oregano chicken thighs with potatoes", "Lentils", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Spanakopita fingers + cucumber sticks", "Banana + cheese cubes", "Hidden-veg meatballs + rice", "Filo & ricotta", "lunch"],
+  ["Spanakopita triangles & carrot cookie", "Spanakopita fingers + cucumber sticks", "Apple slices + cheese cubes", "Hidden-veg meatballs + rice", "Filo & ricotta", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Chicken & orzo with tomato (kritharaki)", "Courgette & cheese muffins", "Beef & lentil bolognese", "Avocado", "breakfast"],
   ["Spanakopita triangles & carrot cookie", "Chickpea & courgette fritters + tomato", "Carrot & oat cookies + halved blueberries", "Salmon bites with potato wedges & peas", "Chickpeas & tahini", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Sardine & potato fishcakes", "Courgette & cheese muffins + strawberries", "Lemon-oregano chicken thighs with potatoes", "Sardines", "lunch"],
@@ -138,7 +139,7 @@ const PLAN = [
   ["Spanakopita triangles & carrot cookie", "Beef & lentil bolognese", "Carrot & oat cookies", "Salmon bites with potato wedges & peas", "Kiwi", "breakfast"],
   ["Spanakopita triangles & carrot cookie", "Broccoli cheese bites + shredded chicken", "Chickpea & courgette fritters", "Spanakopita fingers", "Broccoli", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Chicken & orzo with tomato (kritharaki)", "Mango fingers", "Sardine & potato fishcakes", "Mango", "snack"],
-  ["Spanakopita triangles & carrot cookie", "Chicken & sweet potato bites + roast veg fries", "Frozen yoghurt berry bark + peach", "Youvarlakia (meatball soup)", "Peach", "snack"],
+  ["Spanakopita triangles & carrot cookie", "Chicken & sweet potato bites + roast veg fries", "Watermelon fingers + peach", "Youvarlakia (meatball soup)", "Peach", "snack"],
   ["Spanakopita triangles & carrot cookie", "Lemon-oregano chicken thighs with potatoes + cherry tomatoes", "Carrot & oat cookies", "Roast chicken with potatoes & sweet potatoes", "Cherry tomatoes (quartered)", "lunch"],
 ];
 
