@@ -616,6 +616,16 @@ label.f>span,.lbl{font-weight:600}
 .sub-foods{font-size:13px;color:var(--ink-3);margin-top:2px}
 .fg-note{font-size:13px;color:var(--ink-3);padding:12px 18px 14px;border-top:1px solid var(--line);line-height:1.5}
 .grp-top strong{white-space:nowrap}.grp-top em{white-space:nowrap}
+
+/* resting recipes (v3.1) */
+.rest-tag{display:inline-block;font-style:normal;font-size:12.5px;font-weight:600;color:var(--terra-ink);background:var(--terra-soft);padding:2px 8px;border-radius:999px;margin-top:5px}
+.chip .cnt{font-style:normal;font-weight:600;background:var(--terra-soft);color:var(--terra-ink);border-radius:999px;padding:0 7px;margin-left:2px;font-size:12.5px}
+.chip[aria-pressed="true"] .cnt{background:rgb(255 255 255 / .25);color:#fff}
+.rest-banner{margin-top:16px;padding:14px 16px;border-radius:var(--r-lg);background:var(--butter);display:grid;gap:6px;justify-items:start}
+.rest-banner strong{font-weight:600}
+.rest-banner p{font-size:14.5px;color:var(--ink-2);line-height:1.5}
+.rest-banner.alert-b{background:var(--terra-soft)}
+.rest-banner .btn{margin-top:4px}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -770,7 +780,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.0";
+const APP_VERSION="3.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -862,7 +872,7 @@ function bars(rows){return gauges(rows)}
 function recipeOptions(slot,selected){
   const good=S.recipes.filter(r=>(r.meals||[]).includes(slot)).sort((a,b)=>a.title.localeCompare(b.title));
   const other=S.recipes.filter(r=>!(r.meals||[]).includes(slot)).sort((a,b)=>a.title.localeCompare(b.title));
-  const o=r=>`<option value="${esc(r.id)}"${r.id===selected?" selected":""}>${(r.fav?"★ ":"")+esc(r.title)}</option>`;
+  const RS=restingMap();const o=r=>`<option value="${esc(r.id)}"${r.id===selected?" selected":""}>${(r.fav?"★ ":"")+esc(r.title)}${RS[r.id]?" · resting":""}</option>`;
   return `<option value="">Nothing planned</option><optgroup label="${SLOT_LABEL[slot]}">${good.map(o).join("")}</optgroup>${other.length?`<optgroup label="Other recipes">${other.map(o).join("")}</optgroup>`:""}<option value="__custom"${selected==="__custom"?" selected":""}>Something else (type it)</option>`;
 }
 
@@ -970,16 +980,16 @@ function viewRecipes(){
   <section class="library">
     <div class="lib-h"><h2 class="display-s">All recipes</h2><span class="lib-acts"><button class="btn ghost sm" data-act="photo">${I.camera}From photo</button><button class="btn ghost sm" data-act="newRecipe">${I.plus}Add</button></span></div>
     <label class="search">${I.search}<input type="search" data-rsearch placeholder="Search recipes or ingredients" value="${esc(ui.rq)}" aria-label="Search recipes"></label>
-    <div class="filters">${[...SLOTS,["side","Sides"],["fav","Favourites"],["all","All"]].map(([k,l])=>`<button class="chip" data-rf="${k}" aria-pressed="${ui.rf===k}">${k==="fav"?I.star:""}${l}</button>`).join("")}</div>
+    <div class="filters">${[...SLOTS,["side","Sides"],["fav","Favourites"],["rest","Resting"],["all","All"]].map(([k,l])=>`<button class="chip" data-rf="${k}" aria-pressed="${ui.rf===k}">${k==="fav"?I.star:""}${l}${k==="rest"&&Object.keys(restingMap()).length?` <em class="cnt">${Object.keys(restingMap()).length}</em>`:""}</button>`).join("")}</div>
     <ul class="rlist" id="rlist"></ul>
   </section>`;
   return h;
 }
 function renderRList(){
   const q=ui.rq.toLowerCase().trim();
-  const list=S.recipes.filter(r=>(ui.rf==="all"||(ui.rf==="fav"?r.fav:(r.meals||[]).includes(ui.rf)))&&(!q||r.title.toLowerCase().includes(q)||(r.ingredients||[]).join(" ").toLowerCase().includes(q))).sort((a,b)=>{const O=["breakfast","lunch","snack","dinner","side"],rank=r=>Math.min(...(r.meals||[]).map(m=>O.indexOf(m)).filter(i=>i>=0),9);const ra=ui.rf==="all"||ui.rf==="fav"?rank(a):0,rb=ui.rf==="all"||ui.rf==="fav"?rank(b):0;return ra-rb||(b.id==="spanakbreakfast")-(a.id==="spanakbreakfast")||(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title)});
+  const RS=restingMap();const list=S.recipes.filter(r=>(ui.rf==="all"||(ui.rf==="fav"?r.fav:ui.rf==="rest"?!!RS[r.id]:(r.meals||[]).includes(ui.rf)))&&(!q||r.title.toLowerCase().includes(q)||(r.ingredients||[]).join(" ").toLowerCase().includes(q))).sort((a,b)=>{const O=["breakfast","lunch","snack","dinner","side"],rank=r=>Math.min(...(r.meals||[]).map(m=>O.indexOf(m)).filter(i=>i>=0),9);const ra=ui.rf==="all"||ui.rf==="fav"?rank(a):0,rb=ui.rf==="all"||ui.rf==="fav"?rank(b):0;return ra-rb||(b.id==="spanakbreakfast")-(a.id==="spanakbreakfast")||(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title)});
   const el=$("#rlist");if(!el)return;
-  el.innerHTML=list.length?list.map(r=>`<li class="rcard"><button class="open" data-act="recipe" data-id="${esc(r.id)}">${pic(r,"rc-ph")}<span class="rc-tx"><strong>${esc(r.title)}</strong><small>${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}${r.time?` · ${esc(r.time)}`:""}</small>${r.ai?`<em class="ai-tag">New</em>`:""}</span></button><button class="star" data-act="fav" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="Favourite">${I.star}</button></li>`).join(""):`<li class="nores"><img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><span class="muted">No recipes match that.</span></li>`;
+  el.innerHTML=list.length?list.map(r=>`<li class="rcard"><button class="open" data-act="recipe" data-id="${esc(r.id)}">${pic(r,"rc-ph")}<span class="rc-tx"><strong>${esc(r.title)}</strong><small>${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}${r.time?` · ${esc(r.time)}`:""}</small>${r.ai?`<em class="ai-tag">New</em>`:""}${RS[r.id]?`<em class="rest-tag">${RS[r.id].reaction?"Paused after a reaction":"Resting · back "+dmy(RS[r.id].until).slice(0,5)}</em>`:""}</span></button><button class="star" data-act="fav" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="Favourite">${I.star}</button></li>`).join(""):`<li class="nores">${ui.rf==="rest"?`<span class="muted">Nothing resting. When she rejects a dish, it steps back here for 3 weeks.</span></li>`:`<img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><span class="muted">No recipes match that.</span></li>`}`;
 }
 function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"],["calcium","Calcium","mg"],["protein","Protein","g"],["fibre","Fibre","g"],["vitA","Vitamin A","µg"],["vitC","Vitamin C","mg"]];
   if(!Object.keys(n).length)return "";return `<h4>Per portion, estimated</h4><div class="nutri">${show.map(([k,l,u])=>`<div><b class="num">${r1(n[k]||0)}<small> ${u}</small></b><span>${l}</span></div>`).join("")}</div>`}
@@ -1011,6 +1021,7 @@ function openRecipe(id){
   const dayOpts=[...Array(14)].map((_,i)=>addDays(todayKey(),i)).map(k=>`<option value="${k}">${shortDay(k)}</option>`).join("");
   openSheet(`<div class="r-head"><div class="r-title"><div><p class="eyebrow">${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
     <div class="metas">${r.time?`<span>${I.clock}${esc(r.time)}</span>`:""}${r.serves?`<span>${I.people}${r.serves} ${r.serves==1?"portion":"portions"}</span>`:""}${r.ai?`<span>New recipe</span>`:""}</div></div>
+  ${(()=>{const R=restingMap()[r.id];if(!R)return "";return `<div class="rest-banner${R.reaction?" alert-b":""}"><strong>${R.reaction?"Paused after a reaction":"Resting for now"}</strong><p>${R.reaction?`She had a physical reaction on ${dayTitle(R.k)}. Check with her paediatrician before offering it again.`:`She rejected it on ${dayTitle(R.k)}. It stays out of the AI's menus until ${dayTitle(R.until)}, then comes back to try again, ideally in a different shape or with a favourite alongside.`}</p><button class="btn ghost sm" data-sact="unrest" data-id="${esc(r.id)}">Bring back now</button></div>`})()}
   <div class="r-body">${recipeBody(r)}</div>
   <div class="addplan card-soft"><p class="micro">Put it in the plan</p><div class="ap-row"><label class="f"><span>Day</span><select id="apDay">${dayOpts}</select></label><label class="f"><span>Meal</span><select id="apSlot">${SLOTS.map(([k,l])=>`<option value="${k}"${(r.meals||[])[0]===k?" selected":""}>${l}</option>`).join("")}</select></label></div><button class="btn wide" data-sact="addplan" data-id="${esc(r.id)}">Add to plan</button></div>
   <div class="sh-acts"><button class="btn ghost" data-sact="fav" data-id="${esc(r.id)}">${r.fav?"★ Favourite":"☆ Add to favourites"}</button><button class="btn ghost" data-sact="edit" data-id="${esc(r.id)}">${I.pencil}Edit</button><button class="btn ghost" data-sact="print1" data-id="${esc(r.id)}">${I.print}Print</button></div>`);
@@ -1134,13 +1145,32 @@ function viewHer(){
   return h;
 }
 
+
+/* ---------- resting recipes: rejected ones step back for 3 weeks; a reaction rests until cleared ---------- */
+const REST_DAYS=21;
+function restingMap(){
+  const last={};
+  Object.keys(S.days).sort().forEach(k=>{const ms=S.days[k]?.meals||{};SLOTS.forEach(([s])=>{const m=ms[s];if(!m||!m.recipeId)return;
+    const vals=Object.values(m.log||{}).filter(Boolean),allNone=vals.length&&vals.every(v=>v==="none");
+    const reaction=m.like==="reaction",rej=m.like==="rejected"||allNone;
+    if(reaction||rej){const o=last[m.recipeId]??={count:0};o.k=k;o.slot=s;o.reaction=o.reaction||reaction;o.count++}})});
+  const t=todayKey(),out={};
+  for(const [id,o] of Object.entries(last)){const r=recipeById(id);if(!r)continue;
+    if(r.restCleared&&r.restCleared>=o.k)continue;
+    const until=o.reaction?null:addDays(o.k,REST_DAYS);
+    if(o.reaction||until>t)out[id]={...o,until}}
+  return out;
+}
+function restingText(){const R=restingMap();const ids=Object.keys(R);if(!ids.length)return "";
+  return "\n\nResting recipes (she rejected them recently or had a reaction). Do NOT plan or suggest these: "+ids.map(id=>`${id} (${recipeById(id).title}; ${R[id].reaction?"physical reaction, check with paediatrician":"rejected "+R[id].k+", back after "+R[id].until})`).join("; ")+".";}
+
 /* ---------- actions ---------- */
 async function suggest(){
   if(busy)return;busy="suggest";render();
   const live=$("#live");live.innerHTML=`<p class="streaming"><span class="dot"></span>Reading her last 7 days…</p>`;
   const A=analyse(todayKey());const focus=ui._focus||"";
   try{
-    const ins=await streamAI({task:"suggest",today:todayKey(),analysis:analysisText(A),focus},()=>{const l=$("#live");if(l)l.innerHTML=`<p class="streaming"><span class="dot"></span>Writing a recipe for her…</p>`});
+    const ins=await streamAI({task:"suggest",today:todayKey(),analysis:analysisText(A)+restingText(),focus},()=>{const l=$("#live");if(l)l.innerHTML=`<p class="streaming"><span class="dot"></span>Writing a recipe for her…</p>`});
     if(ins.recipe)ins.recipe=cleanRecipe(ins.recipe,"tmp");
     if(ins.when?.date&&!/^\d{4}-\d{2}-\d{2}$/.test(ins.when.date))delete ins.when;
     ins.at=`${dmy(todayKey())} at ${timeNow()}`;ins.by=me||"";S.insight=ins;post("insight",{insight:ins}).catch(()=>{});
@@ -1159,7 +1189,7 @@ async function aiPlan(){
   busy="plan";render();const live=$("#planlive");if(live)live.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Planning the week around what she's eaten…</p>`;
   try{
     const A=analyse(todayKey(),14);
-    const res=await streamAI({task:"plan",weekStart:mon,today:todayKey(),analysis:analysisText(A)},t=>{const l=$("#planlive");if(l)l.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Writing the menu… ${Math.min(99,Math.round(t.length/45))}%</p>`});
+    const res=await streamAI({task:"plan",weekStart:mon,today:todayKey(),analysis:analysisText(A)+restingText()},t=>{const l=$("#planlive");if(l)l.innerHTML=`<p class="streaming" style="justify-content:center;margin:-12px 0 20px"><span class="dot"></span>Writing the menu… ${Math.min(99,Math.round(t.length/45))}%</p>`});
     const refMap={};const newR=(res.newRecipes||[]).map(r=>{const c=cleanRecipe(r,newId(r.title));refMap[r.ref||c.title]=c.id;return c});
     if(newR.length){const d=await post("recipes",{recipes:newR});S.recipes=d.recipes}
     (res.days||[]).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);if(i>6)return;
@@ -1310,6 +1340,7 @@ $("#sheet").addEventListener("click",async e=>{
   else if(act==="delete"){if(!confirm("Delete this recipe? Meals already planned with it will show as empty."))return;
     try{const d=await post("recipe-delete",{id:s.dataset.id});S.recipes=d.recipes;closeSheet();render();status("Deleted",true)}catch{status("Couldn't delete. Try again.",false,true)}}
   else if(act==="fav"){const r=recipeById(s.dataset.id);r.fav=!r.fav;s.textContent=r.fav?"★ Favourite":"☆ Add to favourites";post("recipe",{recipe:r}).then(d=>{S.recipes=d.recipes;if(ui.view==="recipes")renderRList()}).catch(()=>{})}
+  else if(act==="unrest"){const r=recipeById(s.dataset.id);if(!r)return;r.restCleared=todayKey();try{const d=await post("recipe",{recipe:r});S.recipes=d.recipes;openRecipe(r.id);render();status("Back in the rotation",true)}catch{status("Couldn't save. Try again.",false,true)}}
   else if(act==="addplan"){const k=$("#apDay").value,sl=$("#apSlot").value,cur=S.days[k]?.meals?.[sl];
     if(cur&&(cur.recipeId||cur.custom)&&!confirm(`Replace "${mealTitle(cur)}" on ${shortDay(k)}?`))return;setMeal(k,sl,s.dataset.id,null);closeSheet();render();status(`Added to ${shortDay(k)}`,true)}
   else if(act==="print1")printRecipes([s.dataset.id]);
