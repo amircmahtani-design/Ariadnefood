@@ -179,6 +179,8 @@ export const MORE_RECIPES = [
     ["Cut the melon into fingers with the rind removed.", "Cut the kiwi into wedges.", "Quarter the strawberries."], "Kiwi and strawberries are very high in vitamin C.", [["Melon", [["melon", 35]]], ["Kiwi & berries", [["kiwi", 20], ["strawberries", 20]]]]),
 
   /* ---------- Snacks ---------- */
+  R("watermelon", "Watermelon fingers", ["snack"], "5 min", 2, ["2 thick slices of watermelon"],
+    ["Cut away the rind.", "Cut into fingers about 1.5 cm thick.", "Pick out any black seeds."], "One of her favourites. Serve it cold.", [["Watermelon", [["watermelon", 70]]]]),
   R("sweetcheesefingers", "Sweet potato & cheese fingers", ["snack"], "35 min", 5, ["1 large sweet potato, baked and mashed", "60 g grated cheese", "4 tbsp oats", "1 egg"],
     ["Mix everything together.", "Press 1.5 cm deep into a lined tin.", "Bake at 190°C for 25 min, cool, then cut into fingers."], "Firm fingers from something that would otherwise be mash.", [["Fingers", [["sweet_potato", 40], ["cheddar", 12], ["oats", 8], ["egg", 10]]]]),
   R("beetbites", "Beetroot & apple oat bites", ["snack"], "30 min", 8, ["1 beetroot, finely grated", "1 apple, grated", "120 g oats", "1 egg", "4 dates, chopped"],

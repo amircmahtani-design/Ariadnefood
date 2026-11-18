@@ -815,7 +815,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.8";
+const APP_VERSION="3.9";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -904,11 +904,11 @@ function render(){
   else{v.innerHTML=viewRecipes();renderRList()}
 }
 function bars(rows){return gauges(rows)}
-function recipeOptions(slot,selected){
-  const good=S.recipes.filter(r=>(r.meals||[]).includes(slot)).sort((a,b)=>a.title.localeCompare(b.title));
-  const other=S.recipes.filter(r=>!(r.meals||[]).includes(slot)).sort((a,b)=>a.title.localeCompare(b.title));
-  const RS=restingMap();const o=r=>`<option value="${esc(r.id)}"${r.id===selected?" selected":""}>${(r.fav?"★ ":"")+esc(r.title)}${RS[r.id]?" · resting":""}</option>`;
-  return `<option value="">Nothing planned</option><optgroup label="${SLOT_LABEL[slot]}">${good.map(o).join("")}</optgroup>${other.length?`<optgroup label="Other recipes">${other.map(o).join("")}</optgroup>`:""}<option value="__custom"${selected==="__custom"?" selected":""}>Something else (type it)</option>`;
+function recipeOptions(slot,selected,custom){
+  const RS=restingMap(),good=S.recipes.filter(r=>(r.meals||[]).includes(slot)).sort((a,b)=>(b.id==="spanakbreakfast")-(a.id==="spanakbreakfast")||(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title));
+  const o=r=>`<option value="${esc(r.id)}"${r.id===selected?" selected":""}>${(r.fav?"★ ":"")+esc(r.title)}${RS[r.id]?" · resting":""}</option>`;
+  const cur=selected&&selected!=="__custom"&&!good.some(r=>r.id===selected)?recipeById(selected):null;
+  return `${cur?`<optgroup label="Planned">${o(cur)}</optgroup>`:""}<optgroup label="${SLOT_LABEL[slot]}">${good.map(o).join("")}</optgroup><option value="__custom"${selected==="__custom"?" selected":""}>${selected==="__custom"&&custom?"✎ "+esc(custom):"Something else (type it)"}</option><option value=""${!selected?" selected":""}>Nothing planned</option>`;
 }
 
 /* Today */
@@ -945,7 +945,7 @@ function viewDay(){
       <div class="meal-body"${open?"":" hidden"}>
         <div class="meal-acts">${r?`<button class="link" data-act="recipe" data-id="${esc(r.id)}">${I.bowl}See the recipe</button>`:"<span></span>"}<button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
         <div class="change" hidden>
-          <label class="f"><span>Meal</span><select data-pick>${recipeOptions(s,sel)}</select></label>
+          <label class="f"><span>Meal</span><select data-pick>${recipeOptions(s,sel,m.custom)}</select></label>
           <label class="f"${sel==="__custom"?"":" hidden"} data-custwrap><span>What is it?</span><input data-pickcustom value="${esc(m.custom)}" placeholder="e.g. Banana + cheese cubes"></label>
           <label class="f"><span>Side (optional)</span><input data-pickside value="${esc(m.side)}" placeholder="e.g. cucumber sticks, orange"></label>
           <div class="row"><button class="btn sm" data-act="doneChange">Done</button></div>
@@ -996,7 +996,7 @@ function viewWeek(){
       ${SLOTS.map(([s,l])=>{const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom?"__custom":"");
         return `<div class="wrow" data-slot="${s}">${pic(r,"wthumb",m.custom||"")}
           <div class="wfields"><span class="wl">${SLOT_ICON[s]}${l}</span>
-          <span class="selwrap"><select class="bare" data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel)}</select>${I.down}</span>
+          <span class="selwrap"><select class="bare" data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel,m.custom)}</select>${I.down}</span>
           ${sel==="__custom"?`<input class="cust" data-wcustom value="${esc(m.custom)}" placeholder="What is it?" aria-label="Custom ${l.toLowerCase()} on ${shortDay(k)}">`:""}
           <input class="side" data-wside value="${esc(m.side)}" placeholder="+ add a side" aria-label="Side for ${l.toLowerCase()} on ${shortDay(k)}"></div></div>`}).join("")}
     </section>`;
@@ -1262,6 +1262,8 @@ async function aiPlan(){
     (res.days||[]).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);if(i>6)return;
       const meals={};SLOTS.forEach(([s])=>{const x=d[s];if(!x)return;const cur=S.days[k]?.meals?.[s];if(cur&&Object.keys(cur.log||{}).length)return;
         const id=refMap[x.recipe]||(recipeById(x.recipe)?x.recipe:null);
+        const bId=(d.breakfast&&(refMap[d.breakfast.recipe]||d.breakfast.recipe))||S.days[k]?.meals?.breakfast?.recipeId;
+        if((s==="lunch"||s==="dinner")&&id&&(id===bId||(bId==="spanakbreakfast"&&/spanakopita/i.test(recipeById(id)?.title||""))))return;
         meals[s]=id?{recipeId:id,side:x.side||null,custom:null,log:null,like:null}:{custom:String(x.recipe||""),recipeId:null,side:x.side||null}});
       patchDay(k,{meals})});
     busy=false;render();status(newR.length?`Planned · ${newR.length} new recipes added`:"Week planned",true);

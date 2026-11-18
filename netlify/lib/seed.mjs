@@ -129,7 +129,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
 const PLAN = [
   ["Spanakopita triangles & carrot cookie", "Youvarlakia (meatball soup)", "Watermelon fingers", "Salmon bites with potato wedges & peas", "", ""],
   ["Spanakopita triangles & carrot cookie", "Lentil & carrot fritters + orange segments", "Carrot & oat cookies + pear slices", "Lemon-oregano chicken thighs with potatoes", "Lentils", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Spanakopita fingers + cucumber sticks", "Apple slices + cheese cubes", "Hidden-veg meatballs + rice", "Filo & ricotta", "lunch"],
+  ["Spanakopita triangles & carrot cookie", "Chicken & spinach meatballs + cucumber sticks", "Apple slices + cheese cubes", "Hidden-veg meatballs + rice", "Filo & ricotta", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Chicken & orzo with tomato (kritharaki)", "Courgette & cheese muffins", "Beef & lentil bolognese", "Avocado", "breakfast"],
   ["Spanakopita triangles & carrot cookie", "Chickpea & courgette fritters + tomato", "Carrot & oat cookies + halved blueberries", "Salmon bites with potato wedges & peas", "Chickpeas & tahini", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Sardine & potato fishcakes", "Courgette & cheese muffins + strawberries", "Lemon-oregano chicken thighs with potatoes", "Sardines", "lunch"],
@@ -137,7 +137,7 @@ const PLAN = [
   ["Spanakopita triangles & carrot cookie", "Yoghurt-marinated chicken strips + tzatziki", "Apple slices (thin) + cheese", "Hidden-veg meatballs + roast potatoes", "Tzatziki", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Lemon cod bites with rice", "Courgette & cheese muffins + apple", "Lentil & carrot fritters", "Cod", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Beef & lentil bolognese", "Carrot & oat cookies", "Salmon bites with potato wedges & peas", "Kiwi", "breakfast"],
-  ["Spanakopita triangles & carrot cookie", "Broccoli cheese bites + shredded chicken", "Chickpea & courgette fritters", "Spanakopita fingers", "Broccoli", "lunch"],
+  ["Spanakopita triangles & carrot cookie", "Broccoli cheese bites + shredded chicken", "Chickpea & courgette fritters", "Chicken & spinach meatballs", "Broccoli", "lunch"],
   ["Spanakopita triangles & carrot cookie", "Chicken & orzo with tomato (kritharaki)", "Mango fingers", "Sardine & potato fishcakes", "Mango", "snack"],
   ["Spanakopita triangles & carrot cookie", "Chicken & sweet potato bites + roast veg fries", "Watermelon fingers + peach", "Youvarlakia (meatball soup)", "Peach", "snack"],
   ["Spanakopita triangles & carrot cookie", "Lemon-oregano chicken thighs with potatoes + cherry tomatoes", "Carrot & oat cookies", "Roast chicken with potatoes & sweet potatoes", "Cherry tomatoes (quartered)", "lunch"],
