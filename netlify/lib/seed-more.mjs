@@ -215,3 +215,28 @@ export const SCRAMBLED = {
   tags: ["egg", "wheat"],
   parts: [{ name: "Scrambled egg", items: [["egg", 50], ["milk", 15], ["butter", 3]] }, { name: "Toast fingers", items: [["bread", 25]] }],
 };
+
+// Added 18/11/2026: the family's own staples from their kitchen whiteboard.
+const S = (id, title, time, serves, ingredients, method, tip, parts, sides) => ({ id, title, meals: ["lunch", "dinner"], time, serves, ingredients, method, tip, tags: [], parts, sides });
+export const STAPLES = [
+  S("wings", "Oven-baked chicken wings", "45 min", 3,
+    ["8 chicken wings", "1 tbsp olive oil", "Juice of ½ lemon", "1 tsp dried oregano", "1 garlic clove, crushed"],
+    ["Toss the wings with the olive oil, lemon, oregano and garlic. No salt.", "Bake at 200°C for 35 to 40 minutes, turning once, until golden and the juices run clear.", "Let them cool, then pull the meat off the bone in strips. Check carefully for small bones and cartilage."],
+    "Give her the meat in strips, never the wing on the bone: wings have many small bones.",
+    [{ name: "Chicken wings", items: [["chicken_thigh", 60], ["olive_oil", 2]] }], ["rice", "roast carrot coins"]),
+  S("drumsticks", "Roast chicken drumsticks", "50 min", 4,
+    ["6 chicken drumsticks", "1 tbsp olive oil", "1 tsp sweet paprika", "1 tsp dried oregano"],
+    ["Rub the drumsticks with the oil, paprika and oregano. No salt.", "Roast at 200°C for 40 to 45 minutes, turning once, until cooked through with no pink near the bone.", "Pull the meat off the bone in strips and remove skin, tendons and any bone bits."],
+    "Thigh and drumstick meat is darker than breast and has more iron and zinc.",
+    [{ name: "Chicken drumsticks", items: [["chicken_thigh", 70], ["olive_oil", 2]] }], ["roast potatoes", "green beans"]),
+  S("beefpatties", "Beef patties with hidden courgette", "30 min", 6,
+    ["500 g beef mince", "1 small courgette, grated and squeezed dry", "1 small onion, grated", "1 egg", "3 tbsp breadcrumbs", "1 tsp dried oregano"],
+    ["Mix everything with your hands until it holds together.", "Shape into 12 small flat patties.", "Bake at 200°C for 15 to 18 minutes, turning once, or fry gently in a little oil, until cooked through with no pink inside.", "Cut into fingers for her."],
+    "Freeze the extras raw on a tray, then bag them: they cook from frozen in about 25 minutes.",
+    [{ name: "Beef patty", items: [["beef_mince", 55], ["courgette", 12], ["onion", 6], ["egg", 6], ["breadcrumbs", 5]] }], ["roast potatoes", "roast carrot coins"]),
+  S("chickenpatties", "Chicken patties with carrot and spinach", "30 min", 6,
+    ["500 g chicken mince", "1 carrot, finely grated", "1 handful spinach, finely chopped", "1 spring onion, finely chopped", "1 egg", "3 tbsp breadcrumbs"],
+    ["Mix everything together until it holds.", "Shape into 12 small flat patties.", "Bake at 200°C for 15 to 18 minutes, turning once, until cooked through with no pink inside.", "Cut into fingers for her."],
+    "Cook a double batch and freeze half for a busy day.",
+    [{ name: "Chicken patty", items: [["chicken_mince", 55], ["carrot", 12], ["spinach", 6], ["egg", 6], ["breadcrumbs", 5]] }], ["rice", "green beans"]),
+];
