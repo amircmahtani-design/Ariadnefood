@@ -730,7 +730,8 @@ body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:cent
   body>*:not(#print){display:none!important}
   #print{display:block!important;padding:0!important}
   .page{zoom:1!important;margin:0!important;box-shadow:none!important;width:297mm;height:210mm;min-height:0;overflow:hidden;break-after:page;page-break-after:always}
-  .page:last-child{break-after:auto;page-break-after:auto}
+  .page:last-of-type{break-after:auto;page-break-after:auto}
+  .pt-hint{display:none!important}
   .page.flow{height:auto;min-height:210mm;overflow:visible}
   .safe-cut{display:none}
 }
