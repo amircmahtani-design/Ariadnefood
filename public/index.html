@@ -855,9 +855,10 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.2";
+const APP_VERSION="5.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
+  snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
   right:sv('<path d="M9.5 5.5 16 12l-6.5 6.5"/>',2),
   down:sv('<path d="m6 9.5 6 6 6-6"/>',2),
@@ -1111,7 +1112,7 @@ function openRecipe(id){
   const r=recipeById(id);if(!r)return;
   const dayOpts=[...Array(14)].map((_,i)=>addDays(todayKey(),i)).map(k=>`<option value="${k}">${shortDay(k)}</option>`).join("");
   openSheet(`<div class="r-head"><div class="r-title"><div><p class="eyebrow">${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-    <div class="metas">${r.time?`<span>${I.clock}${esc(r.time)}</span>`:""}${r.serves?`<span>${I.people}${r.serves} ${r.serves==1?"portion":"portions"}</span>`:""}${r.ai?`<span>New recipe</span>`:""}</div></div>
+    <div class="metas">${r.time?`<span>${I.clock}${esc(r.time)}</span>`:""}${r.serves?`<span>${I.people}${r.serves} ${r.serves==1?"portion":"portions"}</span>`:""}${r.freezes?`<span>${I.snow}Freezes well</span>`:""}${r.ai?`<span>New recipe</span>`:""}</div></div>
   ${(()=>{const R=restingMap()[r.id];if(!R)return "";if(R.manual)return `<div class="rest-banner"><strong>Paused for now</strong><p>${esc(R.reason)}. The AI leaves it out of her menus until you bring it back.</p><button class="btn ghost sm" data-sact="unrest" data-id="${esc(r.id)}">Bring back now</button></div>`;
     return `<div class="rest-banner${R.reaction?" alert-b":""}"><strong>${R.reaction?"Paused after a reaction":"Resting for now"}</strong><p>${R.reaction?`She had a physical reaction on ${dayTitle(R.k)}. Check with her paediatrician before offering it again.`:`She rejected it on ${dayTitle(R.k)}. It stays out of the AI's menus until ${dayTitle(R.until)}, then comes back to try again, ideally in a different shape or with a favourite alongside.`}</p><button class="btn ghost sm" data-sact="unrest" data-id="${esc(r.id)}">Bring back now</button></div>`})()}
   <div class="r-body">${recipeBody(r)}</div>

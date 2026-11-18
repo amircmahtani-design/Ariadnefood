@@ -48,3 +48,7 @@ export const SPANAK_COURGETTE = {
     { name: "Fruit", items: [["orange", 40]] },
   ],
 };
+
+// v14: recipes that freeze well (a freezer stash on top of the two fresh bakes a week).
+export const FREEZES = ["oatpancakes", "pumpkinpancakes", "pancakes", "broccoli", "muffins", "pumpkinmuffins", "sausagerolls", "chickpeafritters", "lentilfritters", "peafritters", "caulibites", "quinoabites", "sweetcheesefingers", "beetbites", "oatfingers", "carrotcookies", "courgettecookies", "chiabars", "lentilpasties", "spanakopita", "frittata", "meatballs", "chickenspinballs", "keftedes", "beefpatties", "chickenpatties", "vealkeftedakia", "porkkeftedakia", "vealspinach", "soutzoukakia", "youvarlakia", "bolognese", "pulledpork", "salmoncakes", "sardine", "vealschnitzel", "kofta", "chickensweet"];
+export const markFreezes = (recipes) => recipes.map((r) => FREEZES.includes(r.id) ? { ...r, freezes: true } : r);
