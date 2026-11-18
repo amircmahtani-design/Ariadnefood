@@ -207,8 +207,10 @@ export default async (req) => {
     if ((settings?.dataVersion || 0) < DATA_VERSION) {
       for (const r of [SCRAMBLED, ...STAPLES]) if (!(recipes || []).some((x) => x.id === r.id)) recipes = [...(recipes || []), r];
       recipes = applyBreakfast(recipes);
+      const daysTouched = (settings?.dataVersion || 0) < 8; // only the old migrations change days
       settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: DATA_VERSION };
-      await Promise.all([store.setJSON("recipes", recipes), store.setJSON("days", days), store.setJSON("settings", settings)]);
+      // Never rewrite days unless a migration changed them: a write here could undo a tick made during a deploy.
+      await Promise.all([store.setJSON("recipes", recipes), daysTouched ? store.setJSON("days", days) : null, store.setJSON("settings", settings)]);
     }
     return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight });
   }
