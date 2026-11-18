@@ -855,7 +855,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.0";
+const APP_VERSION="5.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -945,7 +945,7 @@ function render(){
 }
 function bars(rows){return gauges(rows)}
 function recipeOptions(slot,selected,custom){
-  const RS=restingMap(),good=S.recipes.filter(r=>(r.meals||[]).includes(slot)).sort((a,b)=>(b.id==="spanakbreakfast")-(a.id==="spanakbreakfast")||(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title));
+  const RS=restingMap(),good=S.recipes.filter(r=>(r.meals||[]).includes(slot)).sort((a,b)=>(b.id.startsWith("spanakbreakfast"))-(a.id.startsWith("spanakbreakfast"))||(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title));
   const o=r=>`<option value="${esc(r.id)}"${r.id===selected?" selected":""}>${(r.fav?"★ ":"")+esc(r.title)}${RS[r.id]?" · resting":""}</option>`;
   const cur=selected&&selected!=="__custom"&&!good.some(r=>r.id===selected)?recipeById(selected):null;
   return `${cur?`<optgroup label="Planned">${o(cur)}</optgroup>`:""}<optgroup label="${SLOT_LABEL[slot]}">${good.map(o).join("")}</optgroup><option value="__custom"${selected==="__custom"?" selected":""}>${selected==="__custom"&&custom?"✎ "+esc(custom):"Something else (type it)"}</option><option value=""${!selected?" selected":""}>Nothing planned</option>`;
@@ -1075,7 +1075,7 @@ function viewRecipes(){
 }
 function renderRList(){
   const q=ui.rq.toLowerCase().trim();
-  const RS=restingMap();const list=S.recipes.filter(r=>(ui.rf==="all"||(ui.rf==="fav"?r.fav:ui.rf==="rest"?!!RS[r.id]:(r.meals||[]).includes(ui.rf)))&&(!q||r.title.toLowerCase().includes(q)||(r.ingredients||[]).join(" ").toLowerCase().includes(q))).sort((a,b)=>{const O=["breakfast","lunch","snack","dinner","side"],rank=r=>Math.min(...(r.meals||[]).map(m=>O.indexOf(m)).filter(i=>i>=0),9);const ra=ui.rf==="all"||ui.rf==="fav"?rank(a):0,rb=ui.rf==="all"||ui.rf==="fav"?rank(b):0;return ra-rb||(b.id==="spanakbreakfast")-(a.id==="spanakbreakfast")||(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title)});
+  const RS=restingMap();const list=S.recipes.filter(r=>(ui.rf==="all"||(ui.rf==="fav"?r.fav:ui.rf==="rest"?!!RS[r.id]:(r.meals||[]).includes(ui.rf)))&&(!q||r.title.toLowerCase().includes(q)||(r.ingredients||[]).join(" ").toLowerCase().includes(q))).sort((a,b)=>{const O=["breakfast","lunch","snack","dinner","side"],rank=r=>Math.min(...(r.meals||[]).map(m=>O.indexOf(m)).filter(i=>i>=0),9);const ra=ui.rf==="all"||ui.rf==="fav"?rank(a):0,rb=ui.rf==="all"||ui.rf==="fav"?rank(b):0;return ra-rb||(b.id.startsWith("spanakbreakfast"))-(a.id.startsWith("spanakbreakfast"))||(b.fav?1:0)-(a.fav?1:0)||a.title.localeCompare(b.title)});
   const el=$("#rlist");if(!el)return;
   el.innerHTML=list.length?list.map(r=>`<li class="rcard"><button class="open" data-act="recipe" data-id="${esc(r.id)}">${pic(r,"rc-ph")}<span class="rc-tx"><strong>${esc(r.title)}</strong><small>${(r.meals||[]).map(m=>MEAL_LABEL[m]).filter(Boolean).join(" · ")}${r.time?` · ${esc(r.time)}`:""}</small>${r.ai?`<em class="ai-tag">New</em>`:""}${RS[r.id]?`<em class="rest-tag">${RS[r.id].manual?"Paused · "+esc(RS[r.id].reason.toLowerCase()):RS[r.id].reaction?"Paused after a reaction":"Resting · back "+dmy(RS[r.id].until).slice(0,5)}</em>`:""}</span></button><button class="star" data-act="fav" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="Favourite">${I.star}</button></li>`).join(""):`<li class="nores">${ui.rf==="rest"?`<span class="muted">Nothing resting. When she rejects a dish, it steps back here for 3 weeks.</span></li>`:`<img class="bunny" src="/img/bunny.webp?v=1" alt="" aria-hidden="true" width="500" height="694"><span class="muted">No recipes match that.</span></li>`}`;
 }
@@ -1321,7 +1321,7 @@ async function aiPlan(){
       const meals={};SLOTS.forEach(([s])=>{const x=d[s];if(!x)return;const cur=S.days[k]?.meals?.[s];if(cur&&Object.keys(cur.log||{}).length)return;
         const id=refMap[x.recipe]||(recipeById(x.recipe)?x.recipe:null);
         const bId=(d.breakfast&&(refMap[d.breakfast.recipe]||d.breakfast.recipe))||S.days[k]?.meals?.breakfast?.recipeId;
-        if((s==="lunch"||s==="dinner")&&id&&(id===bId||(bId==="spanakbreakfast"&&/spanakopita/i.test(recipeById(id)?.title||""))))return;
+        if((s==="lunch"||s==="dinner")&&id&&(id===bId||(String(bId).startsWith("spanakbreakfast")&&/spanakopita/i.test(recipeById(id)?.title||""))))return;
         meals[s]=id?{recipeId:id,side:x.side||null,custom:null,log:null,like:null}:{custom:String(x.recipe||""),recipeId:null,side:x.side||null}});
       patchDay(k,{meals})});
     busy=false;render();status(newR.length?`Planned · ${newR.length} new recipes added`:"Week planned",true);

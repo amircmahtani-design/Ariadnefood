@@ -1,5 +1,5 @@
 import { MORE_RECIPES, SCRAMBLED, STAPLES, VEAL_PORK } from "./seed-more.mjs";
-import { applyBreakfast } from "./breakfast.mjs";
+import { applyBreakfast, COURGETTE_COOKIES, SPANAK_COURGETTE } from "./breakfast.mjs";
 import { applyV4 } from "./prefs-v4.mjs";
 import { completeSide } from "./plate.mjs";
 import { applySides, withSides } from "./sides.mjs";
@@ -126,7 +126,7 @@ const BASE_RECIPES = [
     ["Toss everything in the lemon, oil and oregano.", "Roast at 200°C for 45 min.", "Take her meat off the bone and cut it into strips."],
     "Her favourite done the Greek way. Always take the meat off the bone for her, wings especially, because their bones are small.", []),
 ];
-export const SEED_RECIPES = applyBreakfast(applySafety(applySides(applyV4([...BASE_RECIPES, ...MORE_RECIPES, SCRAMBLED, ...STAPLES, ...VEAL_PORK]))));
+export const SEED_RECIPES = applyBreakfast(applySafety(applySides(applyV4([...BASE_RECIPES, ...MORE_RECIPES, SCRAMBLED, ...STAPLES, ...VEAL_PORK, COURGETTE_COOKIES, SPANAK_COURGETTE]))));
 
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
