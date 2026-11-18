@@ -200,3 +200,18 @@ export const MORE_RECIPES = [
   R("bananaflax", "Banana flax cookies", ["snack"], "25 min", 6, ["2 ripe bananas", "120 g oats", "2 tbsp ground flaxseed", "1 tbsp smooth peanut butter"],
     ["Mash the bananas and mix in everything else.", "Shape into small flat cookies.", "Bake at 180°C for 15 min."], "Flax adds omega-3 (ALA) and fibre. No sugar needed.", [["Cookies", [["banana", 35], ["oats", 20], ["flax", 4], ["peanut_butter", 3]]]]),
 ];
+
+// Added 18/11/2026: she ate scrambled egg on its own for the first time.
+export const SCRAMBLED = {
+  id: "scrambled", title: "Scrambled egg with toast fingers", meals: ["breakfast", "snack"], time: "5 min", serves: 1,
+  ingredients: ["1 egg", "1 tbsp milk", "Small knob of butter", "1 slice wholemeal bread"],
+  method: [
+    "Whisk the egg with the milk.",
+    "Melt the butter in a small pan on low heat, add the egg and stir slowly with a spatula.",
+    "Keep cooking until the egg is set all the way through, in soft but firm curds with no runny bits.",
+    "Toast the bread and cut it into fingers. Let the egg cool a little before serving.",
+  ],
+  tip: "Big curds are easier for her to pick up than small ones. A pinch of grated cheese or a few chopped spinach leaves stirred in near the end adds calcium or iron.",
+  tags: ["egg", "wheat"],
+  parts: [{ name: "Scrambled egg", items: [["egg", 50], ["milk", 15], ["butter", 3]] }, { name: "Toast fingers", items: [["bread", 25]] }],
+};
