@@ -4,6 +4,7 @@ import { FOODS } from "../lib/foods.mjs";
 import { makeEngine } from "../lib/engine.mjs";
 import { applyV4 } from "../lib/prefs-v4.mjs";
 import { completeSide } from "../lib/plate.mjs";
+import { applySides, withSides } from "../lib/sides.mjs";
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -25,7 +26,7 @@ function merge(target, patch) {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const DATA_VERSION = 6;
+const DATA_VERSION = 7;
 const DEFAULT_SETTINGS = {
   people: ["Amir", "Catherine", "Lia"],
   milkDefault: 600,
@@ -176,6 +177,25 @@ export default async (req) => {
           if (side) m.side = side;
         }
       }
+      settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: 6 };
+    }
+    // v7: recommended sides ("serve with"), no tzatziki with kofta; plans start from a recipe's sides.
+    if ((settings?.dataVersion || 0) < DATA_VERSION) {
+      recipes = applySides(recipes || []);
+      days = days || {};
+      const today = new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 10);
+      let n = 0;
+      for (const k of Object.keys(days).sort()) {
+        if (k < today) continue;
+        for (const slot of ["lunch", "dinner"]) {
+          const m = (days[k].meals || {})[slot];
+          if (!m || !m.recipeId || (m.log && Object.keys(m.log).length)) continue;
+          const r = recipes.find((x) => x.id === m.recipeId);
+          m.side = withSides(r, m.side);
+          const side = completeSide(FOODS, recipes, m, n++);
+          if (side) m.side = side;
+        }
+      }
       settings = { ...DEFAULT_SETTINGS, ...(settings || {}), dataVersion: DATA_VERSION };
       await Promise.all([store.setJSON("recipes", recipes), store.setJSON("days", days), store.setJSON("settings", settings)]);
     }
@@ -284,7 +304,7 @@ export default async (req) => {
 
   if (route === "ai") {
     const recipes = (await store.get("recipes", { type: "json" })) || [];
-    const library = recipes.map((r) => `${r.id}: ${r.title} [${(r.meals || []).join("/")}]`).join("\n");
+    const library = recipes.map((r) => `${r.id}: ${r.title} [${(r.meals || []).join("/")}]${r.sides?.length ? ` (serve with: ${r.sides.join(", ")})` : ""}`).join("\n");
     const analysis = clip(body.analysis, 12000);
     const focus = clip(body.focus, 400);
     const today = DATE_RE.test(body.today || "") ? body.today : new Date().toISOString().slice(0, 10);
@@ -303,7 +323,7 @@ ${RECIPE_SHAPE.split("\n").slice(1).join("\n")}`;
     if (body.task === "plan") {
       const week = DATE_RE.test(body.weekStart || "") ? body.weekStart : today;
       const system = `You plan a week of toddler meals. ${ABOUT}
-Plan breakfast, lunch, snack and dinner for 7 days starting ${week}. Breakfast is fixed: use recipe "spanakbreakfast" (3 spanakopita triangles and a carrot cookie) every day unless the parent's request says otherwise. By default, lunch and dinner should not repeat breakfast: avoid spanakopita of any kind (ids "spanakopita", "frittata") at lunch or dinner while breakfast is spanakopita, unless the parent asks for it. The family can always choose it themselves. Each slot must use a recipe whose meals include that slot (breakfast recipes at breakfast, snack recipes at snack, and so on). Roast chicken with potatoes and sweet potatoes (id "roastchicken") is a family staple: include it once, usually Sunday, and use the leftovers the next day. For sides, prefer the names of side recipes in the library, written as plain words exactly as the family would say them (e.g. "broccoli trees"), never with an id or anything in brackets. Mostly use library recipes she has loved or eaten well; avoid ones she keeps rejecting (offer a rejected food again only in a different format). Never use any recipe listed as resting in the analysis. Add exactly 2 or 3 NEW recipes across the week that fill the nutrition gaps in the analysis. Reuse ingredients and leftovers across days (e.g. Sunday's roast chicken becomes Monday's chicken bites). Include oily fish twice, red meat or lentils most days for iron. Every lunch and every dinner must be a complete plate: a protein, a carb (rice, potato, pasta, bread, grains) and a vegetable (hidden veg counts). If the recipe lacks one, add it as the side. A "side" is a short extra such as "orange segments" or "cucumber sticks"; use it for fruit and visible veg. Put new foods at breakfast or lunch, not dinner.
+Plan breakfast, lunch, snack and dinner for 7 days starting ${week}. Breakfast is fixed: use recipe "spanakbreakfast" (3 spanakopita triangles and a carrot cookie) every day unless the parent's request says otherwise. By default, lunch and dinner should not repeat breakfast: avoid spanakopita of any kind (ids "spanakopita", "frittata") at lunch or dinner while breakfast is spanakopita, unless the parent asks for it. The family can always choose it themselves. Each slot must use a recipe whose meals include that slot (breakfast recipes at breakfast, snack recipes at snack, and so on). Roast chicken with potatoes and sweet potatoes (id "roastchicken") is a family staple: include it once, usually Sunday, and use the leftovers the next day. For sides, prefer the names of side recipes in the library, written as plain words exactly as the family would say them (e.g. "broccoli trees"), never with an id or anything in brackets. Mostly use library recipes she has loved or eaten well; avoid ones she keeps rejecting (offer a rejected food again only in a different format). Never use any recipe listed as resting in the analysis. Add exactly 2 or 3 NEW recipes across the week that fill the nutrition gaps in the analysis. Reuse ingredients and leftovers across days (e.g. Sunday's roast chicken becomes Monday's chicken bites). Include oily fish twice, red meat or lentils most days for iron. Every lunch and every dinner must be a complete plate: a protein, a carb (rice, potato, pasta, bread, grains) and a vegetable (hidden veg counts). If the recipe lacks one, add it as the side. When a recipe lists "serve with" sides, include them in the side. A "side" is a short extra such as "orange segments" or "cucumber sticks"; use it for fruit and visible veg. Put new foods at breakfast or lunch, not dinner.
 Reply with ONLY JSON, no markdown:
 {"note":"one sentence on the thinking behind the week","newRecipes":[{"ref":"new1", ...recipe fields}],"days":[{"date":"YYYY-MM-DD","breakfast":{"recipe":"library id or new1","side":""},"lunch":{...},"snack":{...},"dinner":{...}}]}
 Each new recipe has these fields: ${RECIPE_SHAPE}`;

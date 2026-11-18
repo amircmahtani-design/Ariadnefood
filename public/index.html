@@ -666,6 +666,7 @@ label.f>span,.lbl{font-weight:600}
 .pcv{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 2px}
 .pcv i{font-style:normal;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sage-soft);color:var(--good)}
 .pcv i.miss{background:var(--terra-soft);color:var(--terra-ink)}
+.serve-with{margin-top:14px;padding:12px 14px;border-radius:var(--r);background:var(--sage-mist);font-size:15px}.serve-with b{font-weight:600;margin-right:6px}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -820,7 +821,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="4.1";
+const APP_VERSION="4.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1036,7 +1037,7 @@ function renderRList(){
 function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"],["calcium","Calcium","mg"],["protein","Protein","g"],["fibre","Fibre","g"],["vitA","Vitamin A","µg"],["vitC","Vitamin C","mg"]];
   if(!Object.keys(n).length)return "";return `<h4>Per portion, estimated</h4><div class="nutri">${show.map(([k,l,u])=>`<div><b class="num">${r1(n[k]||0)}<small> ${u}</small></b><span>${l}</span></div>`).join("")}</div>`}
 function recipeBody(r,withNutri=true){
-  return `${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${esc(r.sides.join(", "))}</p>`:""}${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
   ${r.method?.length?`<h4>Method</h4><ol class="method">${r.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}
   ${r.tip?`<p class="tip">${I.leaf}<span>${esc(r.tip)}</span></p>`:""}
   ${r.parts?.length>1?`<h4>On her plate</h4><div class="plate-list">${r.parts.map(p=>`<span>${esc(p.name)}</span>`).join("")}</div>`:""}
@@ -1339,6 +1340,7 @@ const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo(0,y)};
 function setMeal(k,slot,val,side,custom){
   const cur=S.days[k]?.meals?.[slot]||{};
   const p=val==="__custom"?{recipeId:null,custom:custom??cur.custom??"",side:side??cur.side??null}:val?{recipeId:val,custom:null,side:side??cur.side??null}:{recipeId:null,custom:null,side:null};
+  if(val&&val!=="__custom"&&val!==cur.recipeId){const nr=recipeById(val);if(nr?.sides?.length){const have=String(p.side||"").split(/\s*\+\s*/).filter(Boolean);const out=[...nr.sides];have.forEach(h=>{if(!out.some(o=>o.toLowerCase()===h.toLowerCase()))out.push(h)});p.side=out.join(" + ")}}
   const changed=(p.recipeId||null)!==(cur.recipeId||null)||(p.custom||null)!==(cur.custom||null)||(p.side||null)!==(cur.side||null);
   if(changed&&cur.log)p.log=null; // parts changed, old log no longer matches
   patchDay(k,{meals:{[slot]:p}});
