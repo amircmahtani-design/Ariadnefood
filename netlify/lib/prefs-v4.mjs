@@ -25,4 +25,4 @@ export function applyV4(recipes) {
     return r;
   });
 }
-export const PLAN_SWAPS = [[/^banana \+ cheese cubes$/i, "Apple slices + cheese cubes"], [/banana/i, "apple"]];
+export const PLAN_SWAPS = [[/^banana \+ cheese cubes$/i, "Courgette & cheese muffins"], [/banana/i, "apple"]];

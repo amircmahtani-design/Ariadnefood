@@ -855,7 +855,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.1";
+const APP_VERSION="5.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1081,7 +1081,7 @@ function renderRList(){
 }
 function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"],["calcium","Calcium","mg"],["protein","Protein","g"],["fibre","Fibre","g"],["vitA","Vitamin A","µg"],["vitC","Vitamin C","mg"]];
   if(!Object.keys(n).length)return "";return `<h4>Per portion, estimated</h4><div class="nutri">${show.map(([k,l,u])=>`<div><b class="num">${r1(n[k]||0)}<small> ${u}</small></b><span>${l}</span></div>`).join("")}</div>`}
-const SAFE_CUT=[[/cucumber/i,"Cucumber: peel it and cut long thin spears she can hold and bite, not rounds or cubes."],[/\bapples?\b(?!.*(grated|cookie|pancake|bites|bars|fingers))/i,"Raw apple: grate it or cut paper-thin slices, never chunks or wedges."],[/cherry tomato|\bgrapes?\b|\bolives?\b(?! oil)|fresh blueberr/i,"Round foods: quarter lengthwise; squash blueberries."],[/carrot (stick|baton)s?|raw (carrot|pepper)|celery/i,"Raw veg: grate it or cook it soft; no hard raw sticks yet."],[/(hard |cheddar |halloumi )?cheese cubes|cubes? of cheese/i,"Cheese: thin slices or grated, not cubes."]];
+const SAFE_CUT=[[/cucumber/i,"Cucumber: peel it and cut long thin spears she can hold and bite, not rounds or cubes."],[/\bapples?\b(?!.*(grated|cookie|pancake|bites|bars|fingers))/i,"Raw apple: grated only, no slices, wedges or chunks."],[/cherry tomato|\bgrapes?\b|\bolives?\b(?! oil)|fresh blueberr/i,"Round foods: quarter lengthwise; squash blueberries."],[/carrot (stick|baton)s?|raw (carrot|pepper)|celery/i,"Raw veg: grate it or cook it soft; no hard raw sticks yet."],[/(hard |cheddar |halloumi )?cheese cubes|cubes? of cheese/i,"Cheese: thin slices or grated, not cubes."]];
 function safeCut(m,r){const t=[m?.side,m?.custom,r?.title,...(r?.sides||[]),...(r?.ingredients||[])].filter(Boolean).join(" | ");return SAFE_CUT.filter(([re])=>re.test(t)).map(([,n])=>n)}
 function safeHtml(m,r){const n=safeCut(m,r);return n.length?`<p class="safe-cut">${I.alert}<span><b>Safe cut</b> ${n.map(esc).join(" ")}</span></p>`:""}
 function recipeBody(r,withNutri=true){
