@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..650,100&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="/foods.js?v=3"></script>
+<script src="/foods.js?v=4"></script>
 <script src="/engine.js?v=3"></script>
 <style>
 [hidden]{display:none!important}
@@ -815,7 +815,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.9";
+const APP_VERSION="4.0";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -862,7 +862,7 @@ const ART_BG={fish:"#DDE7E2",chicken:"#F5DCC7",beef:"#F0D5CB",egg:"#F6EBC9",legu
 function artKind(r,text){
   const t=((r&&r.title)||text||"").toLowerCase();
   if(/cookie/.test(t))return "cookie";if(/pancake|muffin|oat finger|eggy bread/.test(t))return /muffin/.test(t)?"bake":"pancake";if(/soup|youvarlakia/.test(t))return "soup";
-  const w={};const add=(k,g)=>{const f=FOODS[k];if(!f)return;let c=/salmon|cod|sardine/.test(k)?"fish":/chicken/.test(k)?"chicken":/beef|lamb/.test(k)?"beef":k==="egg"?"egg":/lentil|chickpea|hummus/.test(k)?"legume":/oats|flour|filo|bread|pitta|breadcrumbs|pasta|rice|quinoa|bulgur|couscous/.test(k)?"bake":f.group==="dairy"?"dairy":f.group==="fruit"?"fruit":f.group==="veg"||k==="potato"?"veg":null;
+  const w={};const add=(k,g)=>{const f=FOODS[k];if(!f)return;let c=/salmon|cod|sardine/.test(k)?"fish":/chicken|turkey/.test(k)?"chicken":/beef|lamb/.test(k)?"beef":k==="egg"?"egg":/lentil|chickpea|hummus/.test(k)?"legume":/oats|flour|filo|bread|pitta|breadcrumbs|pasta|rice|quinoa|bulgur|couscous/.test(k)?"bake":f.group==="dairy"?"dairy":f.group==="fruit"?"fruit":f.group==="veg"||k==="potato"?"veg":null;
     if(/passata|tomato_paste|onion|garlic|lemon|parsley/.test(k))return;if(c==="veg"&&/broccoli|green_beans|peas|courgette|spinach|cucumber|cauliflower/.test(k))c="greens";if(c)w[c]=(w[c]||0)+g*(c==="veg"||c==="greens"||c==="fruit"?.6:1)};
   if(r&&r.parts)r.parts.forEach(p=>(p.items||[]).forEach(([k,g])=>add(k,g)));
   else if(text){const k=E.matchFood(text);if(k)add(k,FOODS[k].portion)}
@@ -1125,9 +1125,9 @@ function openPhoto(){
 /* ---------- Nutrition: food groups, portions and a weekly score ---------- */
 const GROUP_TARGET={protein:2,veg:3,fruit:2,grain:3,dairy:1}; // typical toddler portions a day
 const GROUP_NAME={protein:"Protein",veg:"Vegetables",fruit:"Fruit",grain:"Starch & grains",dairy:"Dairy"};
-function foodLabel(k){if(/^chicken/.test(k))return "Chicken";if(k==="beef_mince")return "Beef";if(k==="lamb_mince")return "Lamb";if(/^lentils/.test(k))return "Lentils";if(k==="chickpeas"||k==="hummus")return "Chickpeas & hummus";if(k==="egg")return "Eggs";if(/salmon|cod|sardines/.test(k))return FOODS[k].name.replace(" / white fish","").replace(" (tinned)","");return FOODS[k].name.replace(/ \(dry\)| \(tinned\)| \(no salt\)/,"").replace("Cheddar / mild cheese","Cheese").replace("Pasta / orzo","Pasta & orzo")}
+function foodLabel(k){if(/^chicken/.test(k))return "Chicken";if(k==="turkey_mince")return "Turkey";if(k==="beef_mince")return "Beef";if(k==="lamb_mince")return "Lamb";if(/^lentils/.test(k))return "Lentils";if(k==="chickpeas"||k==="hummus")return "Chickpeas & hummus";if(k==="egg")return "Eggs";if(/salmon|cod|sardines/.test(k))return FOODS[k].name.replace(" / white fish","").replace(" (tinned)","");return FOODS[k].name.replace(/ \(dry\)| \(tinned\)| \(no salt\)/,"").replace("Cheddar / mild cheese","Cheese").replace("Pasta / orzo","Pasta & orzo")}
 const SUBS={
-  protein:[["Chicken",/^chicken/],["Red meat",/^(beef_mince|lamb_mince)$/],["Fish",/^(salmon|cod|sardines)$/],["Eggs",/^egg$/],["Beans & lentils",/^(lentils_red|lentils_brown|chickpeas|hummus)$/]],
+  protein:[["Chicken & turkey",/^(chicken|turkey)/],["Red meat",/^(beef_mince|lamb_mince)$/],["Fish",/^(salmon|cod|sardines)$/],["Eggs",/^egg$/],["Beans & lentils",/^(lentils_red|lentils_brown|chickpeas|hummus)$/]],
   veg:[["Orange veg",/^(carrot|sweet_potato|pumpkin|red_pepper)$/],["Green veg",/^(spinach|broccoli|courgette|peas|green_beans|cucumber)$/],["Other veg",/./]],
   fruit:[["Berries",/^(blueberries|strawberries|raspberries)$/],["Citrus & tropical",/^(orange|kiwi|mango)$/],["Everyday fruit",/./]],
   grain:[["Oats",/^oats$/],["Bread & pastry",/^(bread|pitta|filo|breadcrumbs|flour|sr_flour)$/],["Rice & pasta",/^(rice|pasta|quinoa|bulgur|couscous)$/],["Potatoes",/^potato$/]],
