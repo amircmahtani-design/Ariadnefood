@@ -661,6 +661,11 @@ label.f>span,.lbl{font-weight:600}
 .meal .seg{width:100%}
 .meal .seg button{min-height:40px}
 .vd-dose{display:block;font-size:13px;color:var(--ink-2);font-weight:500}
+
+/* plate check (v4.1) */
+.pcv{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 2px}
+.pcv i{font-style:normal;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sage-soft);color:var(--good)}
+.pcv i.miss{background:var(--terra-soft);color:var(--terra-ink)}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -815,7 +820,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="4.0";
+const APP_VERSION="4.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -998,6 +1003,7 @@ function viewWeek(){
           <div class="wfields"><span class="wl">${SLOT_ICON[s]}${l}</span>
           <span class="selwrap"><select class="bare" data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel,m.custom)}</select>${I.down}</span>
           ${sel==="__custom"?`<input class="cust" data-wcustom value="${esc(m.custom)}" placeholder="What is it?" aria-label="Custom ${l.toLowerCase()} on ${shortDay(k)}">`:""}
+          ${(s==="lunch"||s==="dinner")&&(m.recipeId||m.custom)?plateTags(m):""}
           <input class="side" data-wside value="${esc(m.side)}" placeholder="+ add a side" aria-label="Side for ${l.toLowerCase()} on ${shortDay(k)}"></div></div>`}).join("")}
     </section>`;
   }
@@ -1190,6 +1196,9 @@ function viewHer(){
 
 
 const FED=[["self","By herself"],["help","With help"],["fed","We fed her"]];
+/* ---------- balanced plate: protein + carb + veg for lunch and dinner ---------- */
+function plateCheck(m){const g={};partsFor(m).forEach(p=>(p.items||[]).forEach(([k,gr])=>{const f=FOODS[k];if(f&&gr>=8)g[f.group]=true}));return {protein:!!g.protein,carb:!!g.grain,veg:!!g.veg}}
+function plateTags(m){const c=plateCheck(m);return `<span class="pcv">${[["protein","Protein"],["carb","Carb"],["veg","Veg"]].map(([k,l])=>`<i class="${c[k]?"ok":"miss"}">${c[k]?"":"+ "}${l}</i>`).join("")}</span>`}
 /* ---------- resting recipes: rejected ones step back for 3 weeks; a reaction rests until cleared ---------- */
 const REST_DAYS=21;
 function restingMap(){
