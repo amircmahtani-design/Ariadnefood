@@ -5,11 +5,11 @@ const R = (id, title, meals, time, serves, ingredients, method, tip, parts, tags
 
 export const MORE_RECIPES = [
   /* ---------- Her everyday breakfast and family staples ---------- */
-  R("spanakbreakfast", "Spanakopita triangles & carrot cookie", ["breakfast"], "40 min (batch)", 6,
-    ["For 18 triangles: 300 g spinach, wilted and squeezed dry", "120 g ricotta", "40 g feta, rinsed", "1 egg", "Fresh dill, 1 spring onion", "6 sheets filo", "Olive oil for brushing", "Plus 1 homemade carrot & oat cookie per breakfast"],
-    ["Mix the spinach, ricotta, feta, egg, dill and spring onion.", "Cut the filo into strips, brush with oil, add a spoon of filling and fold into triangles.", "Bake at 190°C for 20 min until crisp. Serve 3 triangles with one carrot cookie."],
-    "Her breakfast every day. Freeze the triangles before baking and cook from frozen at 190°C for 25 min.",
-    [["Spanakopita triangles", [["spinach", 25], ["ricotta", 10], ["feta", 3], ["egg", 4], ["filo", 15], ["olive_oil", 3]]],
+  R("spanakbreakfast", "Spanakopita triangles & carrot cookie", ["breakfast"], "15 min", 1,
+    ["3 frozen spanakopita triangles", "1 homemade carrot & oat cookie"],
+    ["Air fry the triangles straight from frozen at 180°C for about 12 to 15 minutes, turning once, until golden and crisp.", "Let them cool for a few minutes and check the filling is warm, not hot, before serving.", "Serve the 3 triangles with one carrot cookie."],
+    "Her breakfast every day. She mostly eats the filling, so log the triangles as Most when she leaves the pastry. Keep a bag in the freezer and a tin of carrot cookies ready.",
+    [["Spanakopita triangles", [["spinach", 25], ["feta", 10], ["egg", 3], ["filo", 20], ["olive_oil", 4]]],
      ["Carrot cookie", [["carrot", 4], ["egg", 4], ["greek_yoghurt", 4], ["banana", 8], ["oats", 6], ["olive_oil", 1]]]]),
   R("roastchicken", "Roast chicken with potatoes & sweet potatoes", ["lunch", "dinner"], "1 h 30 min", 8,
     ["1 whole chicken (about 1.5 kg)", "4 potatoes, in wedges", "2 sweet potatoes, in wedges", "1 lemon, olive oil, oregano"],
