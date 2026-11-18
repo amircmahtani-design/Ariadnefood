@@ -667,6 +667,8 @@ label.f>span,.lbl{font-weight:600}
 .pcv i{font-style:normal;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sage-soft);color:var(--good)}
 .pcv i.miss{background:var(--terra-soft);color:var(--terra-ink)}
 .serve-with{margin-top:14px;padding:12px 14px;border-radius:var(--r);background:var(--sage-mist);font-size:15px}.serve-with b{font-weight:600;margin-right:6px}
+.safe-cut{display:flex;gap:8px;align-items:flex-start;margin:12px 0 14px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:14.5px;line-height:1.45;color:var(--ink-2)}.safe-cut svg{flex:none;width:16px;height:16px;margin-top:2px;color:var(--ink-3)}.safe-cut b{font-weight:600;color:var(--ink);margin-right:4px}
+@media print{.safe-cut{display:none}}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -821,7 +823,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="4.2";
+const APP_VERSION="4.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -957,6 +959,7 @@ function viewDay(){
           <div class="row"><button class="btn sm" data-act="doneChange">Done</button></div>
         </div>
         ${parts.length?`<div class="parts">${parts.map(p=>`<div class="part" data-part="${esc(p.name)}"><span class="pn">${esc(p.name.trim())}</span><span class="seg" role="group" aria-label="${esc(p.name.trim())}">${AMOUNTS.map(([v,l])=>`<button data-act="amt" data-val="${v}" aria-pressed="${log[p.name]===v}">${l}</button>`).join("")}</span></div>`).join("")}</div>`:""}
+        ${title?safeHtml(m,r):""}
         ${title?`<div class="took"><span class="took-l">How she took it</span><div class="seg likes" role="group" aria-label="How she took it">${LIKES.map(([v,l])=>`<button class="${v==="rejected"||v==="reaction"?"bad":""}" data-act="like" data-val="${v}" aria-pressed="${m.like===v}">${LIKE_ICON[v]}<span>${v==="loved"?"Loved":l}</span></button>`).join("")}</div></div>`:""}
         ${title?`<div class="took"><span class="took-l">Who fed her</span><div class="seg fed" role="group" aria-label="Who fed her">${FED.map(([v,l])=>`<button data-act="fed" data-val="${v}" aria-pressed="${m.fed===v}">${l}</button>`).join("")}</div></div>`:""}
         ${m.like==="reaction"?`<p class="alert">${I.alert}<span>Note what you saw (rash, swelling, vomiting) and when, and tell her paediatrician. If her lips or face swell or she has any trouble breathing, call 998 now.</span></p>`:""}
@@ -1036,8 +1039,11 @@ function renderRList(){
 }
 function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"],["calcium","Calcium","mg"],["protein","Protein","g"],["fibre","Fibre","g"],["vitA","Vitamin A","µg"],["vitC","Vitamin C","mg"]];
   if(!Object.keys(n).length)return "";return `<h4>Per portion, estimated</h4><div class="nutri">${show.map(([k,l,u])=>`<div><b class="num">${r1(n[k]||0)}<small> ${u}</small></b><span>${l}</span></div>`).join("")}</div>`}
+const SAFE_CUT=[[/cucumber/i,"Cucumber: peel it and cut long thin spears she can hold and bite, not rounds or cubes."],[/\bapples?\b(?!.*(grated|cookie|pancake|bites|bars|fingers))/i,"Raw apple: grate it or cut paper-thin slices, never chunks or wedges."],[/cherry tomato|\bgrapes?\b|\bolives?\b(?! oil)|fresh blueberr/i,"Round foods: quarter lengthwise; squash blueberries."],[/carrot (stick|baton)s?|raw (carrot|pepper)|celery/i,"Raw veg: grate it or cook it soft; no hard raw sticks yet."],[/(hard |cheddar |halloumi )?cheese cubes|cubes? of cheese/i,"Cheese: thin slices or grated, not cubes."]];
+function safeCut(m,r){const t=[m?.side,m?.custom,r?.title,...(r?.sides||[]),...(r?.ingredients||[])].filter(Boolean).join(" | ");return SAFE_CUT.filter(([re])=>re.test(t)).map(([,n])=>n)}
+function safeHtml(m,r){const n=safeCut(m,r);return n.length?`<p class="safe-cut">${I.alert}<span><b>Safe cut</b> ${n.map(esc).join(" ")}</span></p>`:""}
 function recipeBody(r,withNutri=true){
-  return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${esc(r.sides.join(", "))}</p>`:""}${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${esc(r.sides.join(", "))}</p>`:""}${safeHtml(null,r)}${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
   ${r.method?.length?`<h4>Method</h4><ol class="method">${r.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}
   ${r.tip?`<p class="tip">${I.leaf}<span>${esc(r.tip)}</span></p>`:""}
   ${r.parts?.length>1?`<h4>On her plate</h4><div class="plate-list">${r.parts.map(p=>`<span>${esc(p.name)}</span>`).join("")}</div>`:""}
