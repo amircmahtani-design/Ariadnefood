@@ -854,7 +854,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="4.6";
+const APP_VERSION="4.7";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1388,7 +1388,10 @@ function buildRecipes(ids){
 }
 /* shopping quantities: recipes are batch-cooked (a dish used for lunch and dinner is cooked once, up to its portions) */
 const EACH={potato:170,sweet_potato:200,carrot:60,courgette:200,apple:150,pear:170,onion:110,spring_onion:15,cucumber:300,beetroot:120,red_pepper:150,lemon:100,orange:130,kiwi:75,mango:300,avocado:170,banana:120,strawberries:12,dates:8,tomato:15,egg:50,pitta:60,bread:36,chicken_thigh:100,chicken_breast:200,broccoli:300,cauliflower:500,watermelon:280,melon:40,filo:20,peach:150,pumpkin:1000};
-const COUNT_ONLY=new Set(["egg","pitta","filo","lemon","spring_onion"]),PANTRY=new Set(["olive_oil","butter"]);
+// how produce is actually sold: [grams per unit, one, many, allow a half]
+const BUY={broccoli:[300,"head","heads"],cauliflower:[600,"head","heads",1],spinach:[200,"bag","bags"],green_beans:[250,"pack","packs"],blueberries:[125,"punnet","punnets"],strawberries:[250,"punnet","punnets"],raspberries:[125,"punnet","punnets"],grapes:[500,"bunch","bunches"],tomato:[250,"punnet","punnets"],parsley:[100,"bunch","bunches"],spring_onion:[100,"bunch","bunches"],watermelon:[2500,"small watermelon","small watermelons",1],melon:[1200,"melon","melons",1],pumpkin:[1500,"small pumpkin","small pumpkins",1],dates:[250,"pack","packs"],peas:[500,"frozen bag","frozen bags"],mango:[300,"mango","mangoes"],avocado:[170,"avocado","avocados"]};
+const BUY_TIP={sardines:"Ortiz in olive oil (Spinneys)"};
+const COUNT_ONLY=new Set(["egg","pitta","filo","lemon"]),CNAME={egg:["egg","eggs"],pitta:["pitta","pittas"],filo:["sheet","sheets"],lemon:["lemon","lemons"]},PANTRY=new Set(["olive_oil","butter"]);
 const QU={g:1,kg:1000,ml:1,litre:1000,l:1000,tbsp:15,tsp:5,cup:90,handful:30};
 const NUMV=x=>({"½":.5,"¼":.25,"¾":.75}[x]??parseFloat(x));
 const FWORDS=Object.entries(FOODS).flatMap(([k,f])=>(f.words||[]).map(w=>[w,k]));
@@ -1434,11 +1437,15 @@ function buildShopping(mon){
       else if(!/salt|pepper|cinnamon|cumin|paprika|oregano|water|spice|turmeric|zest|^mint|^dill|^fresh|^lemon|^squeeze|^juice|^optional/i.test(line)){
         const m=line.match(/^(\d+)\s+(.*)$/);const key=(m?m[2]:line).replace(/\(about ([^)]*)\)/,"· $1").trim();const o=(other[key]??={n:cap(key),c:0,q:!!m});if(m)o.c+=(+m[1])*b}})}
   const qty=x=>{if(PANTRY.has(x.k))return "";if(x.tins)return `${x.tins} ${x.tins==1?"tin":"tins"}`;
-    if(COUNT_ONLY.has(x.k)){const n=Math.ceil(x.c||x.g/(EACH[x.k]||1));return n?`× ${n}`:""}
-    if(!x.g)return "";const e=EACH[x.k];return `${fmtG(x.g)}${e&&x.g>=e*.8&&!["dates","strawberries","tomato"].includes(x.k)?` · about ${Math.max(1,Math.round(x.g/e))}`:""}`};
+    if(COUNT_ONLY.has(x.k)){const n=Math.max(1,Math.ceil(x.c||x.g/(EACH[x.k]||1)));return `${n} ${CNAME[x.k][n==1?0:1]}`}
+    if(!x.g)return BUY[x.k]?`1 ${BUY[x.k][1]}`:"";
+    if(x.k==="milk")return `${Math.ceil(x.g/10)*10} ml`;
+    const bu=BUY[x.k];if(bu){const [g,one,many,frac]=bu,r=x.g/g;if(frac&&r<=.55)return `½ ${one}`;const n=Math.max(1,Math.ceil(r-.15));return `${n} ${n==1?one:many}`}
+    const e=EACH[x.k];if(e&&FOODS[x.k].aisle==="Fruit & veg"){const n=Math.max(1,Math.ceil(x.g/e-.15));return `${n} medium`}
+    return fmtG(x.g)};
   const aisles={};Object.values(map).forEach(x=>{const a=FOODS[x.k].aisle||"Other";(aisles[a]??=[]).push(x)});
   const order=["Fruit & veg","Meat & fish","Dairy & eggs","Bakery","Fridge","Freezer","Tins & dry"];
-  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");return {n:FOODS[x.k].name,f,q:qty(x)}})}));
+  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");return {n:x.k==="lemon"?"Lemon":FOODS[x.k].name,f:BUY_TIP[x.k]||f,q:qty(x)}})}));
   const oth=Object.values(other);if(oth.length)secs.push({h:"Other",items:oth.map(o=>({n:o.n,f:"",q:o.c?`× ${o.c}`:""}))});
   const rows=[];secs.forEach(sc=>{rows.push({h:sc.h,n:sc.items.length});sc.items.forEach(x=>rows.push(x))});
   const fill=per=>{const cols=[];let cur=[],last=null;
