@@ -681,6 +681,7 @@ body.pmode>.top,body.pmode>nav,body.pmode>main,body.pmode .status,body.pmode .sh
 body.pmode #print{display:block;padding:12px 10px 40px}
 body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:center;gap:10px;padding:10px max(12px,env(safe-area-inset-left));padding-top:max(10px,env(safe-area-inset-top));background:rgba(255,248,238,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
 #ptools .pt-t{flex:1;min-width:0}#ptools .pt-t strong{display:block;font:600 17px/1.2 var(--serif)}#ptools .pt-t small{color:var(--ink-3);font-size:13px}
+#ptools .btn:disabled{opacity:.6}
 #ptools .btn{min-height:44px;white-space:nowrap;text-decoration:none;padding:0 18px}
 .opt-btns{display:flex;gap:8px;flex:none}
 .pt-hint{text-align:center;color:var(--ink-3);font-size:14px;margin:4px 16px 0}
@@ -855,7 +856,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.3";
+const APP_VERSION="5.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1470,9 +1471,45 @@ function renderPrintPage(){
   const mon=/^\d{4}-\d{2}-\d{2}$/.test(PM.get("w")||"")?PM.get("w"):mondayOf(todayKey());
   const ids=(PM.get("ids")||"").split(",").filter(Boolean);ui.week=mon;
   const [title,html]=PMODE==="shop"?["Shopping list",buildShopping(mon)]:PMODE==="recipes"?[ids.length===1?(recipeById(ids[0])?.title||"Recipe"):"Recipes",buildRecipes(ids)]:["Week plan",buildWeek(mon)];
-  document.title=`${title} · Ariadne's Table`;$("#ptTitle").textContent=title;$("#print").innerHTML=(html||'<div class="errbox">Nothing to print.</div>')+'<p class="pt-hint">A4 landscape. On iPhone, Share then Print also works.</p>';fitPages();
+  document.title=`${title} · Ariadne's Table`;$("#ptTitle").textContent=title;$("#print").innerHTML=(html||'<div class="errbox">Nothing to print.</div>')+`<p class="pt-hint">${TOUCH?"A4 landscape. The button opens your phone's share sheet: choose Print, or Save to Files.":"A4 landscape."}</p>`;fitPages();
+  PDF_NAME=`${title} ${dmy(mon).replace(/\//g,"-")}.pdf`;
+  if(TOUCH)preparePdf();
 }
-if(PMODE){addEventListener("resize",fitPages);$("#ptGo").addEventListener("click",()=>window.print());$("#ptBack").addEventListener("click",e=>{if(history.length<2&&window.opener){e.preventDefault();window.close()}})}
+/* On phones (and inside the home-screen app) window.print() does nothing, so build a real PDF and hand it to the share sheet. */
+const TOUCH=matchMedia("(pointer:coarse)").matches||navigator.standalone===true;
+let PDF_NAME="Ariadne's Table.pdf",pdfFile=null,pdfBusy=null;
+const loadJs=src=>new Promise((ok,no)=>{const t=document.createElement("script");t.src=src;t.onload=ok;t.onerror=no;document.head.appendChild(t)});
+function ptButton(label,busy){const b=$("#ptGo");b.textContent=label;b.disabled=!!busy}
+function preparePdf(){
+  if(pdfBusy)return pdfBusy;
+  ptButton("Preparing PDF…",true);
+  pdfBusy=(async()=>{
+    await Promise.all([window.jspdf?0:loadJs("https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"),window.html2canvas?0:loadJs("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js")]);
+    try{await document.fonts.ready}catch(e){}
+    const host=document.createElement("div");host.style.cssText="position:fixed;left:-20000px;top:0;width:1123px;pointer-events:none";
+    host.innerHTML=[...document.querySelectorAll("#print .page")].map(p=>p.outerHTML).join("");document.body.appendChild(host);
+    host.querySelectorAll(".page").forEach(p=>{p.style.zoom=1;p.style.margin="0";p.style.boxShadow="none"});
+    await Promise.all([...host.querySelectorAll("img")].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+    const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    const pages=[...host.querySelectorAll(".page")];
+    for(let i=0;i<pages.length;i++){
+      const c=await window.html2canvas(pages[i],{scale:2,backgroundColor:"#FFFDF8",useCORS:true,logging:false});
+      let w=297,h=c.height*297/c.width,x=0;if(h>210){w=297*210/h;h=210;x=(297-w)/2}
+      if(i)doc.addPage();doc.addImage(c.toDataURL("image/jpeg",.92),"JPEG",x,0,w,h);
+    }
+    host.remove();
+    pdfFile=new File([doc.output("blob")],PDF_NAME,{type:"application/pdf"});
+    ptButton("Print or save PDF");
+  })().catch(e=>{console.warn(e);pdfFile=null;ptButton("Print or save PDF")});
+  return pdfBusy;
+}
+async function doPrintAction(){
+  if(!TOUCH){window.print();return}
+  if(!pdfFile){await preparePdf();if(!pdfFile){window.print();return}}
+  try{if(navigator.canShare?.({files:[pdfFile]})){await navigator.share({files:[pdfFile],title:PDF_NAME.replace(/\.pdf$/,"")});return}}catch(e){if(e?.name==="AbortError")return}
+  const u=URL.createObjectURL(pdfFile);location.href=u;
+}
+if(PMODE){addEventListener("resize",fitPages);$("#ptGo").addEventListener("click",doPrintAction);$("#ptBack").addEventListener("click",e=>{if(history.length<2&&window.opener){e.preventDefault();window.close()}})}
 
 /* ---------- events ---------- */
 $("#tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;ui.view=t.dataset.view;ls.set("ari-view",ui.view);render();window.scrollTo(0,0)});
