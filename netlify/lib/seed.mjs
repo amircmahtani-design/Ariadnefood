@@ -1,4 +1,5 @@
 import { MORE_RECIPES, SCRAMBLED, STAPLES } from "./seed-more.mjs";
+import { applyBreakfast } from "./breakfast.mjs";
 import { applyV4 } from "./prefs-v4.mjs";
 import { completeSide } from "./plate.mjs";
 import { applySides, withSides } from "./sides.mjs";
@@ -125,26 +126,26 @@ const BASE_RECIPES = [
     ["Toss everything in the lemon, oil and oregano.", "Roast at 200°C for 45 min.", "Take her meat off the bone and cut it into strips."],
     "Her favourite done the Greek way. Always take the meat off the bone for her, wings especially, because their bones are small.", []),
 ];
-export const SEED_RECIPES = applySafety(applySides(applyV4([...BASE_RECIPES, ...MORE_RECIPES, SCRAMBLED, ...STAPLES])));
+export const SEED_RECIPES = applyBreakfast(applySafety(applySides(applyV4([...BASE_RECIPES, ...MORE_RECIPES, SCRAMBLED, ...STAPLES]))));
 
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 // [breakfast, lunch, snack, dinner, newFood, slot for new food]
 const PLAN = [
-  ["Spanakopita triangles & carrot cookie", "Youvarlakia (meatball soup)", "Watermelon fingers", "Salmon bites with potato wedges & peas", "", ""],
-  ["Spanakopita triangles & carrot cookie", "Beef & lentil keftedes + orange segments", "Carrot & oat cookies + pear slices", "Lemon-oregano chicken thighs with potatoes", "Lentils", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Chicken & spinach meatballs + cucumber sticks", "Apple slices + cheese cubes", "Turkey meatballs with veggies inside + rice", "Filo & ricotta", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Chicken & orzo with tomato (kritharaki)", "Courgette & cheese muffins", "Beef & lentil bolognese", "Avocado", "breakfast"],
-  ["Spanakopita triangles & carrot cookie", "Chicken souvlaki with pitta & cucumber", "Carrot & oat cookies + halved blueberries", "Salmon bites with potato wedges & peas", "Chickpeas & tahini", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Sardine & potato fishcakes", "Courgette & cheese muffins + strawberries", "Lemon-oregano chicken thighs with potatoes", "Sardines", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Chicken & sweet potato bites + green beans", "Broccoli cheese bites", "Roast chicken with potatoes & sweet potatoes", "Sweet potato", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Yoghurt-marinated chicken strips + tzatziki", "Apple slices (thin) + cheese", "Turkey meatballs with veggies inside + roast potatoes", "Tzatziki", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Lemon cod bites with rice", "Courgette & cheese muffins + apple", "Beef & lentil keftedes", "Cod", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Beef & lentil bolognese", "Carrot & oat cookies", "Salmon bites with potato wedges & peas", "Kiwi", "breakfast"],
-  ["Spanakopita triangles & carrot cookie", "Chicken & broccoli pasta bake squares", "Chickpea & courgette fritters", "Chicken & spinach meatballs", "Broccoli", "lunch"],
-  ["Spanakopita triangles & carrot cookie", "Chicken & orzo with tomato (kritharaki)", "Mango fingers", "Sardine & potato fishcakes", "Mango", "snack"],
-  ["Spanakopita triangles & carrot cookie", "Chicken & sweet potato bites + roast veg fries", "Watermelon fingers + peach", "Youvarlakia (meatball soup)", "Peach", "snack"],
-  ["Spanakopita triangles & carrot cookie", "Lemon-oregano chicken thighs with potatoes + cherry tomatoes", "Carrot & oat cookies", "Roast chicken with potatoes & sweet potatoes", "Cherry tomatoes (quartered)", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Youvarlakia (meatball soup)", "Watermelon fingers", "Salmon bites with potato wedges & peas", "", ""],
+  ["Spanakopita triangles, carrot cookie & fruit", "Beef & lentil keftedes + orange segments", "Carrot & oat cookies + pear slices", "Lemon-oregano chicken thighs with potatoes", "Lentils", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Chicken & spinach meatballs + cucumber sticks", "Apple slices + cheese cubes", "Turkey meatballs with veggies inside + rice", "Filo & ricotta", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Chicken & orzo with tomato (kritharaki)", "Courgette & cheese muffins", "Beef & lentil bolognese", "Avocado", "breakfast"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Chicken souvlaki with pitta & cucumber", "Carrot & oat cookies + halved blueberries", "Salmon bites with potato wedges & peas", "Chickpeas & tahini", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Sardine & potato fishcakes", "Courgette & cheese muffins + strawberries", "Lemon-oregano chicken thighs with potatoes", "Sardines", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Chicken & sweet potato bites + green beans", "Broccoli cheese bites", "Roast chicken with potatoes & sweet potatoes", "Sweet potato", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Yoghurt-marinated chicken strips + tzatziki", "Apple slices (thin) + cheese", "Turkey meatballs with veggies inside + roast potatoes", "Tzatziki", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Lemon cod bites with rice", "Courgette & cheese muffins + apple", "Beef & lentil keftedes", "Cod", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Beef & lentil bolognese", "Carrot & oat cookies", "Salmon bites with potato wedges & peas", "Kiwi", "breakfast"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Chicken & broccoli pasta bake squares", "Chickpea & courgette fritters", "Chicken & spinach meatballs", "Broccoli", "lunch"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Chicken & orzo with tomato (kritharaki)", "Mango fingers", "Sardine & potato fishcakes", "Mango", "snack"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Chicken & sweet potato bites + roast veg fries", "Watermelon fingers + peach", "Youvarlakia (meatball soup)", "Peach", "snack"],
+  ["Spanakopita triangles, carrot cookie & fruit", "Lemon-oregano chicken thighs with potatoes + cherry tomatoes", "Carrot & oat cookies", "Roast chicken with potatoes & sweet potatoes", "Cherry tomatoes (quartered)", "lunch"],
 ];
 
 export function seedDays(recipes = SEED_RECIPES) {

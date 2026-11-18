@@ -855,7 +855,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="4.8";
+const APP_VERSION="4.9";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1430,8 +1430,8 @@ function buildShopping(mon){
       [m.side,m.custom].filter(Boolean).forEach(t=>sideParts(t).forEach(p=>p.items.forEach(([k,g])=>add(k,cap(t),g))))})}
   // homemade items inside another recipe (the carrot cookie at breakfast) count towards that recipe
   for(const [id,n] of Object.entries({...uses})){const r=recipeById(id);const b=Math.ceil(n/(+r.serves||1));
-    (r.ingredients||[]).forEach(line=>{const h=line.match(/^(\d+)\s+homemade\s+(.+)$/i);if(!h)return;const name=h[2].toLowerCase().replace(/s$/,"");
-      const hr=S.recipes.find(x=>x.title.toLowerCase().includes(name));if(hr)uses[hr.id]=(uses[hr.id]||0)+(+h[1])*b})}
+    (r.ingredients||[]).forEach(line=>{const h=line.match(/^(\d+|½)\s+homemade\s+(.+)$/i);if(!h)return;const name=h[2].toLowerCase().replace(/s$/,"");
+      const hr=S.recipes.find(x=>x.title.toLowerCase().includes(name));if(hr)uses[hr.id]=(uses[hr.id]||0)+NUMV(h[1])*b})}
   for(const [id,n] of Object.entries(uses)){const r=recipeById(id);if(!r)continue;const b=Math.ceil(n/(+r.serves||1));
     (r.ingredients||[]).forEach(line=>{if(/homemade/i.test(line))return;const q=lineQty(line);
       if(q.length)q.forEach(x=>add(x.k,r.title,x.g*b,x.c*b,x.tin));
