@@ -719,7 +719,7 @@ body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:cent
 .rp .tip{margin-top:auto;padding-top:3mm}.rp .tip p{background:#FBEFC8;border-radius:2.5mm;padding:2.2mm 3mm;font-size:8.4pt;margin:0}.rp .tip b{margin-right:1.5mm}
 /* shopping */
 .sp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7mm;align-items:start}
-.sp>div>h2:not(:first-child){margin-top:4mm}.sp .si{display:flex;gap:2.4mm;align-items:flex-start;padding:1.3mm 0;margin:0;border-bottom:.4pt solid #F2ECE2}.sp .si>span:last-child{min-width:0;flex:1}.sp .si b{display:block;font-weight:600;font-size:9.2pt}.sp .si small{display:block;color:#7D8274;font-size:7.3pt;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sp{gap:6mm}
+.sp>div>h2:not(:first-child){margin-top:4mm}.sp .si{display:flex;gap:2.4mm;align-items:flex-start;padding:1.3mm 0;margin:0;border-bottom:.4pt solid #F2ECE2}.sp .si>span:nth-child(2){min-width:0;flex:1}.sp .si .q{flex:none;font-style:normal;font-weight:700;font-size:8.6pt;color:#526447;white-space:nowrap;padding-top:.2mm}.sp .si b{display:block;font-weight:600;font-size:9.2pt}.sp .si small{display:block;color:#7D8274;font-size:7.3pt;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sp{gap:6mm}
 .sp h2{display:flex;justify-content:space-between;font-size:8.2pt;letter-spacing:.12em;text-transform:uppercase;color:#5E7451;font-weight:700;margin:0 0 1.5mm;padding-bottom:1.2mm;border-bottom:.8pt solid #D9E1CF}.sp h2 span{color:#A7B89C}
 .sp ul{list-style:none;margin:0;padding:0}
 .sp li{display:flex;gap:2.4mm;align-items:flex-start;padding:1.4mm 0;border-bottom:.4pt solid #F2ECE2;break-inside:avoid}
@@ -854,7 +854,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="4.5";
+const APP_VERSION="4.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -1386,24 +1386,68 @@ function buildRecipes(ids){
     ${r.tip?`<div class="tip"><p><b>Tip</b>${esc(r.tip)}</p></div>`:""}</article>`}).join("")}</div>
   <footer class="pg-f"><span>Firm finger-food textures, no mush</span><span>Ariadne's Table</span></footer></section>`).join("");
 }
+/* shopping quantities: recipes are batch-cooked (a dish used for lunch and dinner is cooked once, up to its portions) */
+const EACH={potato:170,sweet_potato:200,carrot:60,courgette:200,apple:150,pear:170,onion:110,spring_onion:15,cucumber:300,beetroot:120,red_pepper:150,lemon:100,orange:130,kiwi:75,mango:300,avocado:170,banana:120,strawberries:12,dates:8,tomato:15,egg:50,pitta:60,bread:36,chicken_thigh:100,chicken_breast:200,broccoli:300,cauliflower:500,watermelon:280,melon:40,filo:20,peach:150,pumpkin:1000};
+const COUNT_ONLY=new Set(["egg","pitta","filo","lemon","spring_onion"]),PANTRY=new Set(["olive_oil","butter"]);
+const QU={g:1,kg:1000,ml:1,litre:1000,l:1000,tbsp:15,tsp:5,cup:90,handful:30};
+const NUMV=x=>({"½":.5,"¼":.25,"¾":.75}[x]??parseFloat(x));
+const FWORDS=Object.entries(FOODS).flatMap(([k,f])=>(f.words||[]).map(w=>[w,k]));
+function foodAt(text){const t=" "+String(text||"").toLowerCase().replace(/[^a-z\s-]/g," ")+" ";let best=null;
+  for(const [w,k] of FWORDS){const re=new RegExp("[\\s-]"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(e?s)?\\s");const m=re.exec(t);if(m&&(!best||m.index<best.i||(m.index===best.i&&w.length>best.l)))best={i:m.index,l:w.length,k}}
+  return best?.k||null}
+function lineQty(line){
+  const out=[];let t=String(line).replace(/^[^:]{1,20}:\s*/,"");
+  if(/whole chicken/i.test(t))return [];
+  t.split(/,\s*(?=\d|½|¼)|\s+and\s+(?=\d|½|¼)|\s*\+\s*/).forEach(seg=>{
+    seg=seg.split(/\s+or\s+/)[0].trim();if(/^juice of/i.test(seg))return;const k=foodAt(seg.split(/[,(]/)[0])||foodAt(seg);if(!k)return;
+    const m=seg.match(/^(\d+(?:\.\d+)?|½|¼|¾)\s*(kg|g|ml|litre|l|tbsp|tsp|cups?|cm|tins?|slices?|sheets?|heads?|handfuls?|fingers?)?\b\s*(.*)$/i);
+    if(!m){if(/^(big )?handful/i.test(seg))out.push({k,g:30*(/big/i.test(seg)?1.5:1)});else out.push({k,g:0});return}
+    const n=NUMV(m[1]),u=(m[2]||"").toLowerCase().replace(/s$/,""),rest=m[3]||"";
+    const par=rest.match(/\((?:about\s*)?(\d+(?:\.\d+)?)\s*(kg|g)\b/i);
+    const each=(EACH[k]||0)*(/\blarge\b/i.test(rest)?1.5:/\bsmall\b/i.test(rest)?.65:1);
+    let g=0,c=0;
+    if(QU[u])g=n*QU[u];
+    else if(u==="cm")g=n*10;
+    else if(u==="tin"){c=n;g=n*(par?NUMV(par[1])*(par[2].toLowerCase()==="kg"?1000:1):k==="sardines"?90:240)}
+    else if(par){g=n*NUMV(par[1])*(par[2].toLowerCase()==="kg"?1000:1);c=n}
+    else if(u==="head")g=n*(EACH[k]||300);
+    else if(u==="slice"||u==="sheet"||u==="finger"||!u){g=n*(each||0);c=n}
+    out.push({k,g,c,tin:u==="tin"});
+  });
+  return out;
+}
+const fmtG=g=>g>=1000?`${(Math.ceil(g/100)/10).toString().replace(/\.0$/,"")} kg`:g>=100?`${Math.ceil(g/50)*50} g`:`${Math.max(10,Math.ceil(g/10)*10)} g`;
 function buildShopping(mon){
-  const map={},other=[];
+  const map={},other={},uses={},src={};
+  const add=(k,from,g,c,tin)=>{const x=(map[k]??={k,uses:{},g:0,c:0,tins:0});x.uses[from]=(x.uses[from]||0)+1;x.g+=g||0;if(tin)x.tins+=c||0;else x.c+=c||0};
   for(let i=0;i<7;i++){const ms=S.days[addDays(mon,i)]?.meals||{};
     SLOTS.forEach(([s])=>{const m=ms[s];if(!m)return;const r=m.recipeId&&recipeById(m.recipeId);
-      const add=(k,src)=>{(map[k]??={k,uses:{}});map[k].uses[src]=(map[k].uses[src]||0)+1};
-      if(r)(r.ingredients||[]).forEach(line=>{const k=matchFood(line);if(k)add(k,r.title);else if(!/salt|pepper|cinnamon|cumin|paprika|oregano|water|spice/i.test(line))other.push(line)});
-      [m.side,m.custom].filter(Boolean).forEach(t=>sideParts(t).forEach(p=>p.items.forEach(([k])=>add(k,cap(t)))))})}
+      if(r){uses[r.id]=(uses[r.id]||0)+1;(src[r.id]??=new Set()).add(r.title)}
+      [m.side,m.custom].filter(Boolean).forEach(t=>sideParts(t).forEach(p=>p.items.forEach(([k,g])=>add(k,cap(t),g))))})}
+  // homemade items inside another recipe (the carrot cookie at breakfast) count towards that recipe
+  for(const [id,n] of Object.entries({...uses})){const r=recipeById(id);const b=Math.ceil(n/(+r.serves||1));
+    (r.ingredients||[]).forEach(line=>{const h=line.match(/^(\d+)\s+homemade\s+(.+)$/i);if(!h)return;const name=h[2].toLowerCase().replace(/s$/,"");
+      const hr=S.recipes.find(x=>x.title.toLowerCase().includes(name));if(hr)uses[hr.id]=(uses[hr.id]||0)+(+h[1])*b})}
+  for(const [id,n] of Object.entries(uses)){const r=recipeById(id);if(!r)continue;const b=Math.ceil(n/(+r.serves||1));
+    (r.ingredients||[]).forEach(line=>{if(/homemade/i.test(line))return;const q=lineQty(line);
+      if(q.length)q.forEach(x=>add(x.k,r.title,x.g*b,x.c*b,x.tin));
+      else if(!/salt|pepper|cinnamon|cumin|paprika|oregano|water|spice|turmeric|zest|^mint|^dill|^fresh|^lemon|^squeeze|^juice|^optional/i.test(line)){
+        const m=line.match(/^(\d+)\s+(.*)$/);const key=(m?m[2]:line).replace(/\(about ([^)]*)\)/,"· $1").trim();const o=(other[key]??={n:cap(key),c:0,q:!!m});if(m)o.c+=(+m[1])*b}})}
+  const qty=x=>{if(PANTRY.has(x.k))return "";if(x.tins)return `${x.tins} ${x.tins==1?"tin":"tins"}`;
+    if(COUNT_ONLY.has(x.k)){const n=Math.ceil(x.c||x.g/(EACH[x.k]||1));return n?`× ${n}`:""}
+    if(!x.g)return "";const e=EACH[x.k];return `${fmtG(x.g)}${e&&x.g>=e*.8&&!["dates","strawberries","tomato"].includes(x.k)?` · about ${Math.max(1,Math.round(x.g/e))}`:""}`};
   const aisles={};Object.values(map).forEach(x=>{const a=FOODS[x.k].aisle||"Other";(aisles[a]??=[]).push(x)});
   const order=["Fruit & veg","Meat & fish","Dairy & eggs","Bakery","Fridge","Freezer","Tins & dry"];
-  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");return {n:FOODS[x.k].name,f}})}));
-  if(other.length)secs.push({h:"Other",items:[...new Set(other)].map(l=>({n:l,f:""}))});
+  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");return {n:FOODS[x.k].name,f,q:qty(x)}})}));
+  const oth=Object.values(other);if(oth.length)secs.push({h:"Other",items:oth.map(o=>({n:o.n,f:"",q:o.c?`× ${o.c}`:""}))});
   const rows=[];secs.forEach(sc=>{rows.push({h:sc.h,n:sc.items.length});sc.items.forEach(x=>rows.push(x))});
-  const per=Math.ceil(rows.length/4),cols=[];let cur=[],last=null;
-  rows.forEach(r=>{if(r.h)last=r;if(cur.length>=per&&!(r.h&&false)){cols.push(cur);cur=[];if(!r.h&&last)cur.push({h:last.h,n:last.n,cont:1})}
-    if(r.h&&cur.length>=per-1&&cur.length){cols.push(cur);cur=[]}cur.push(r)});
-  if(cur.length)cols.push(cur);
-  return `<section class="page flow">${pgHead("Shopping list",`Week of ${shortRange(mon)}`)}<div class="sp" style="grid-template-columns:repeat(${Math.max(cols.length,3)},minmax(0,1fr))">${cols.map(c=>`<div>${c.map(r=>r.h?`<h2${r.cont?' class="cont"':""}>${esc(r.h)}${r.cont?" (cont.)":""}<span>${r.n}</span></h2>`:`<p class="si"><span class="box"></span><span><b>${esc(r.n)}</b>${r.f?`<small>${esc(r.f)}</small>`:""}</span></p>`).join("")}</div>`).join("")}</div>
-  <footer class="pg-f"><span>From this week's planned meals and sides</span><span>Ariadne's Table</span></footer></section>`;
+  const fill=per=>{const cols=[];let cur=[],last=null;
+    rows.forEach(r=>{if(r.h){last=r;if(cur.length&&cur.length>per-2){cols.push(cur);cur=[]}}
+      else if(cur.length>=per){cols.push(cur);cur=[{h:last.h,n:last.n,cont:1}]}cur.push(r)});
+    if(cur.length)cols.push(cur);return cols};
+  let per=Math.ceil(rows.length/4),cols=fill(per);while(cols.length>4)cols=fill(++per);
+  return `<section class="page flow">${pgHead("Shopping list",`Week of ${shortRange(mon)}`)}<div class="sp" style="grid-template-columns:repeat(${Math.max(cols.length,3)},minmax(0,1fr))">${cols.map(c=>`<div>${c.map(r=>r.h?`<h2${r.cont?' class="cont"':""}>${esc(r.h)}${r.cont?" (cont.)":""}<span>${r.n}</span></h2>`:`<p class="si"><span class="box"></span><span><b>${esc(r.n)}</b>${r.f?`<small>${esc(r.f)}</small>`:""}</span>${r.q?`<em class="q">${esc(r.q)}</em>`:""}</p>`).join("")}</div>`).join("")}</div>
+  <footer class="pg-f"><span>Amounts for her portions from this week's plan. A dish used for lunch and dinner is cooked once; round up to what the shop sells.</span><span>Ariadne's Table</span></footer></section>`;
 }
 function fitPages(){const z=Math.min(1,(innerWidth-20)/1123);document.querySelectorAll("#print .page").forEach(p=>p.style.zoom=z)}
 function renderPrintPage(){
