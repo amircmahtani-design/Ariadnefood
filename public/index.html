@@ -660,6 +660,7 @@ label.f>span,.lbl{font-weight:600}
 .meal .took-l{margin-bottom:7px}
 .meal .seg{width:100%}
 .meal .seg button{min-height:40px}
+.vd-dose{display:block;font-size:13px;color:var(--ink-2);font-weight:500}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -814,7 +815,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="3.7";
+const APP_VERSION="3.8";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -925,7 +926,7 @@ function viewDay(){
   <div class="essentials">
     <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}">
       <span class="tile-top"><span class="tile-ic">${I.sun}</span><span class="box">${I.check}</span></span>
-      <strong>Vitamin D</strong><small class="vd-by">${vd.done?`${vd.by?avatar(vd.by,18):""}Given${vd.by?" by "+esc(vd.by):""}${vd.at?" · "+esc(vd.at):""}`:"Tap once given"}</small></button>
+      <strong>Vitamin D</strong><small class="vd-dose">${(+S.settings.drops||3)} drops · ${(+S.settings.drops||3)*(+S.settings.iuPerDrop||200)} IU</small><small class="vd-by">${vd.done?`${vd.by?avatar(vd.by,18):""}Given${vd.by?" by "+esc(vd.by):""}${vd.at?" · "+esc(vd.at):""}`:"Tap once given"}</small></button>
     <div class="tile milk">
       <span class="tile-top"><span class="tile-ic">${I.bottle}</span><small class="tile-tag">${day.milk!=null?"Logged":"Usual"}</small></span>
       <strong>Milk</strong>
@@ -1090,7 +1091,8 @@ function openSettings(){
     <label class="f"><span>Who's using this phone</span><select name="me">${ppl.map(p=>`<option${p===me?" selected":""}>${esc(p)}</option>`).join("")}</select></label>
     <div class="card-soft"><p class="micro">Profile pictures</p><ul class="av-list">${ppl.map(p=>`<li>${avatar(p,44)}<span class="av-n">${esc(p)}</span><label class="btn ghost sm">${S.settings?.avatars?.[p]?"Change":"Add photo"}<input type="file" accept="image/*" data-avfile="${esc(p)}" hidden></label>${S.settings?.avatars?.[p]?`<button type="button" class="link" data-avremove="${esc(p)}">Remove</button>`:""}</li>`).join("")}</ul></div>
     <div class="grid2"><label class="f"><span>Usual milk a day (ml)</span><input name="milkDefault" type="number" min="0" step="10" value="${esc(s.milkDefault)}"></label>
-    <label class="f"><span>Vitamin D drops (µg)</span><input name="dropUg" type="number" min="0" step="0.5" value="${esc(s.dropUg)}"></label></div>
+    <label class="f"><span>Vitamin D drops a day</span><input name="drops" type="number" min="0" step="1" value="${esc(s.drops??3)}"></label></div>
+    <label class="f"><span>Vitamin D per drop (IU)</span><input name="iuPerDrop" type="number" min="0" step="50" value="${esc(s.iuPerDrop??200)}"><em class="hint">${esc(s.dropName||"D3 Fix Drops 200 IU")}: 200 IU (5 µg) per drop. 40 IU = 1 µg.</em></label>
     <label class="f"><span>Vitamin D daily target (µg)</span><input name="vitDTarget" type="number" min="0" step="0.5" value="${esc(s.vitDTarget)}"><em class="hint">15 µg (600 IU) is the US reference for ages 1 to 3; the NHS uses 10 µg. Follow her paediatrician. 400 IU = 10 µg.</em></label>
     <div class="card-soft"><p class="micro">Her milk, per 100 ml (from the tin)</p>
       <div class="grid2"><label class="f"><span>Vitamin D (µg)</span><input name="f_vitD" type="number" step="0.1" value="${esc(f.vitD)}"></label><label class="f"><span>Iron (mg)</span><input name="f_iron" type="number" step="0.01" value="${esc(f.iron)}"></label>
@@ -1433,7 +1435,7 @@ $("#sheet").addEventListener("submit",async e=>{
   if(f.id==="rform")return submitRecipe(f);
   if(f.id==="sform"){const fd=new FormData(f);me=fd.get("me")||me;ls.set("ari-me",me);setWho();
     const num=n=>{const v=fd.get(n);return v===""||v==null?null:+v};
-    const settings={milkDefault:num("milkDefault"),dropUg:num("dropUg"),vitDTarget:num("vitDTarget"),formula:{vitD:num("f_vitD"),iron:num("f_iron"),calcium:num("f_calcium"),kcal:num("f_kcal")}};
+    const dr=num("drops")??3,iu=num("iuPerDrop")??200;const settings={milkDefault:num("milkDefault"),drops:dr,iuPerDrop:iu,dropUg:Math.round(dr*iu/40*10)/10,vitDTarget:num("vitDTarget"),formula:{vitD:num("f_vitD"),iron:num("f_iron"),calcium:num("f_calcium"),kcal:num("f_kcal")}};
     try{const d=await post("settings",{settings});S.settings=d.settings;closeSheet();render();status("Saved",true)}catch{status("Couldn't save. Try again.",false,true)}}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet()});
