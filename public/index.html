@@ -669,6 +669,10 @@ label.f>span,.lbl{font-weight:600}
 .serve-with{margin-top:14px;padding:12px 14px;border-radius:var(--r);background:var(--sage-mist);font-size:15px}.serve-with b{font-weight:600;margin-right:6px}
 .safe-cut{display:flex;gap:8px;align-items:flex-start;margin:12px 0 14px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:14.5px;line-height:1.45;color:var(--ink-2)}.safe-cut svg{flex:none;width:16px;height:16px;margin-top:2px;color:var(--ink-3)}.safe-cut b{font-weight:600;color:var(--ink);margin-right:4px}
 @media print{.safe-cut{display:none}}
+.daylog{margin-top:12px;padding:14px 16px}.daylog h2{font-size:17px;font-weight:600;margin:0}
+.dl-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.seg.yn{display:grid;grid-template-columns:1fr 1fr;width:150px;margin:0}.seg.yn button{min-height:44px}
+.daylog .notes{margin-top:10px}.daylog .meta.by{margin-top:8px}
 /* print: A4 landscape */
 @page{size:A4 landscape;margin:10mm}
 @media print{
@@ -823,7 +827,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="4.3";
+const APP_VERSION="4.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   left:sv('<path d="M14.5 5.5 8 12l6.5 6.5"/>',2),
@@ -977,6 +981,16 @@ function viewDay(){
       ${gauges(rows)}
       <p class="note">An estimate from USDA food data, not a medical measurement. The 7-day picture is in Recipes.</p></section>`;
   }
+  const pp=day.poop||{};
+  h+=`<section class="card daylog">
+    <div class="dl-row"><h2>Pooped today?</h2><div class="seg yn" role="group" aria-label="Pooped today?">${[["yes","Yes"],["no","No"]].map(([v,l])=>`<button data-act="poop" data-val="${v}" aria-pressed="${pp.v===v}">${l}</button>`).join("")}</div></div>
+    ${pp.v&&pp.by?`<p class="meta by">${avatar(pp.by,22)}<span>${esc(pp.by)}${pp.at?" · "+esc(pp.at):""}</span></p>`:""}
+    <label class="notes"><textarea data-daynote="poopNotes" rows="2" placeholder="Poop notes, if needed" aria-label="Poop notes">${esc(day.poopNotes)}</textarea></label>
+  </section>
+  <section class="card daylog">
+    <h2>Other notes</h2>
+    <label class="notes"><textarea data-daynote="notes" rows="3" placeholder="Anything else about her day" aria-label="Other notes">${esc(day.notes)}</textarea></label>
+  </section>`;
   return h;
 }
 
@@ -1369,6 +1383,7 @@ $("#view").addEventListener("click",async e=>{
   else if(act==="prevDay"){ui.date=addDays(ui.date,-1);render()}
   else if(act==="nextDay"){ui.date=addDays(ui.date,1);render()}
   else if(act==="today"){ui.date=todayKey();render()}
+  else if(act==="poop"){const cur=S.days[ui.date]?.poop?.v;patchDay(ui.date,{poop:cur===a.dataset.val?null:{v:a.dataset.val,by:me||"",at:timeNow()}});keepScroll(render)}
   else if(act==="vitd"){const on=S.days[ui.date]?.vitD?.done;patchDay(ui.date,{vitD:on?null:{done:true,by:me||"",at:timeNow()}});keepScroll(render)}
   else if(act==="milk"){const day=S.days[ui.date]||{};const cur=day.milk!=null?+day.milk:+S.settings.milkDefault||0;patchDay(ui.date,{milk:Math.max(0,cur+ +a.dataset.d)});keepScroll(render)}
   else if(act==="change"){const p=slotEl.querySelector(".change");p.hidden=!p.hidden}
@@ -1404,6 +1419,7 @@ const typing={};
 $("#view").addEventListener("input",e=>{
   const el=e.target;
   if(el.matches("[data-rsearch]")){ui.rq=el.value;renderRList();return}
+  if(el.matches("[data-daynote]")){const f=el.dataset.daynote,id="d"+f;clearTimeout(typing[id]);typing[id]=setTimeout(()=>patchDay(ui.date,{[f]:el.value.trim()?el.value:null}),500);return}
   if(el.matches("[data-notes]")){const slot=el.closest("[data-slot]").dataset.slot;clearTimeout(typing[slot]);typing[slot]=setTimeout(()=>patchDay(ui.date,{meals:{[slot]:{notes:el.value,by:me||null,at:timeNow()}}}),500);return}
   if(el.matches("[data-pickcustom],[data-pickside]")){const slot=el.closest("[data-slot]").dataset.slot,box=el.closest(".change");const id="p"+slot;clearTimeout(typing[id]);
     typing[id]=setTimeout(()=>setMeal(ui.date,slot,box.querySelector("[data-pick]").value,box.querySelector("[data-pickside]").value.trim()||null,box.querySelector("[data-pickcustom]").value.trim()),500);return}

@@ -222,7 +222,8 @@ export default async (req) => {
     const A = E.analyse(today, n);
     const planLine = (k) => {
       const d = st.days[k] || {}, ms = d.meals || {};
-      return `${E.dayTitle(k)} (${k})${d.vitD?.done ? " · vitamin D given" : ""}\n` + E.SLOTS.map(([s, l]) => `  ${l}: ${E.mealTitle(ms[s]) || "-"}${ms[s]?.recipeId ? ` [${ms[s].recipeId}]` : ""}`).join("\n");
+      return `${E.dayTitle(k)} (${k})${d.vitD?.done ? " · vitamin D given" : ""}${d.poop?.v ? ` · pooped: ${d.poop.v}` : ""}\n` + E.SLOTS.map(([s, l]) => `  ${l}: ${E.mealTitle(ms[s]) || "-"}${ms[s]?.recipeId ? ` [${ms[s].recipeId}]` : ""}`).join("\n")
+        + (d.poopNotes ? `\n  Poop notes: ${d.poopNotes}` : "") + (d.notes ? `\n  Other notes: ${d.notes}` : "");
     };
     const out = [
       `# Ariadne's Table: report for ${E.dayTitle(today)} ${today.slice(0, 4)}`,
