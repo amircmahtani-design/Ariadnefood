@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="9.2";
+const APP_VERSION="9.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1164,7 +1164,7 @@ function weekBakes(mon){
     for(const sl of ["breakfast","snack"]){const id=ms[sl]?.recipeId;if(!id)continue;
       if(COOKIE_OF[id]){add(COOKIE_OF[id],k,.5,"at breakfast");continue}
       const r=recipeById(id),fruitOnly=r&&(r.parts||[]).flatMap(p=>p.items||[]).every(([k])=>FOODS[k]?.group==="fruit");if(r&&!fruitOnly&&(+r.serves||6)>1&&(r.freezes||/cookie|muffin|bar|finger|bites|fritter|pancake/i.test(r.title)))add(id,k,1,sl==="snack"?"for snack":"at breakfast")}}
-  return Object.entries(need).map(([id,x])=>{const r=recipeById(id);if(!r)return null;const sv=+r.serves||6,half=x.n<=sv/2;
+  return Object.entries(need).map(([id,x])=>{const r=recipeById(id);if(!r)return null;const sv=+r.serves||6,half=x.n+1<=sv/2;
     const makes=half?sv/2:Math.ceil(x.n/sv)*sv,spare=Math.floor(makes-x.n);
     // When to make it: the morning it's first eaten, or the afternoon before if it's first needed at breakfast. Never on Sunday (Catherine's day off).
     // Pick the lightest day: never Saturday (the weekend cook) or Sunday (day off), and prefer days with fewer fresh dishes to cook.
@@ -1335,7 +1335,8 @@ function scaleFor(id,k){
   const r=recipeById(id);if(!r)return 1;const sv=+r.serves||1;if(sv<=1)return 1;
   for(const w of [mondayOf(k),addDays(mondayOf(k),7),addDays(mondayOf(k),-7)]){const x=weekBakes(w).find(x=>x.r.id===id&&(x.mk===k||x.days.includes(k)));if(x)return /half/i.test(x.make)?.5:(+((x.make.match(/(\d+) times/)||[])[1])||1)}
   let n=0;for(let i=-1;i<=2;i++){const ms=S.days[addDays(k,i)]?.meals||{};["lunch","dinner"].forEach(s=>{if(ms[s]?.recipeId===id)n++})}
-  if(!n)return 1;return n<=sv/2?.5:n<=sv?1:Math.ceil(n/sv);
+  // Half a recipe only when it still leaves a spare portion; otherwise make the full recipe and freeze the rest.
+  if(!n)return 1;return n+(r.freezes?1:0)<=sv/2?.5:n<=sv?1:Math.ceil(n/sv);
 }
 function madeToday(id,k){const r=recipeById(id);if(!r||(+r.serves||1)<=1)return false;const prev=S.days[addDays(k,-1)]?.meals||{};
   if(["lunch","dinner"].some(s=>(S.days[k]?.meals||{})[s]?.recipeId===id))return parse(k).getDay()!==0&&!["lunch","dinner"].some(s=>prev[s]?.recipeId===id);
