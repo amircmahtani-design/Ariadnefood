@@ -812,7 +812,9 @@ body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:cent
 "use strict";
 const FOODS=window.FOODS||{};
 const E=makeEngine(FOODS,()=>S);
-const {SLOTS,SLOT_LABEL,AMOUNTS,FRAC,LIKES,LIKE_LABEL,GROUPS,DOW,MONTHS,NKEYS,pad,key,parse,addDays,mondayOf,dayTitle,shortDay,dmy,clone,cap,r1,
+const {SLOTS,SLOT_LABEL,AMOUNTS,FRAC,LIKES,LIKE_LABEL,GROUPS,DOW,MONTHS,NKEYS,pad,key,parse,addDays,mondayOf:_monOf,dayTitle,shortDay,dmy,clone,cap,r1,
+// Weeks run Saturday to Friday: the family shops and cooks from Saturday.
+const mondayOf=k=>{const d=parse(k);d.setDate(d.getDate()-((d.getDay()+1)%7));return key(d)};
   matchFood,TARGETS,addItems,recipeById,sideParts,partsFor,mealTitle,recipeNutrition,dayNutrition,analyse,analysisText,rankRecipes}=E;
 /* ---------- helpers ---------- */
 const $=(s,r=document)=>r.querySelector(s);
@@ -898,7 +900,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="6.6";
+const APP_VERSION="6.7";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
