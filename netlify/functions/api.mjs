@@ -216,7 +216,8 @@ export default async (req) => {
       await Promise.all([store.setJSON("recipes", recipes), daysTouched ? store.setJSON("days", days) : null, store.setJSON("settings", settings)]);
     }
     const shop = (await store.get("shop", { type: "json" })) || {};
-    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop });
+    const pantry = (await store.get("pantry", { type: "json" })) || {};
+    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry });
   }
 
   // Plain-text report for Claude (or anyone) to read: what she ate, gaps, plan, recipes, and how to write back.
@@ -300,6 +301,20 @@ export default async (req) => {
     for (const k of Object.keys(shop).sort().slice(0, -8)) delete shop[k];
     await store.setJSON("shop", shop);
     return json({ ok: true, shop });
+  }
+  // Kitchen check before shopping: what's already at home, and who confirmed the list is ready.
+  if (route === "pantry-tick" || route === "pantry-done") {
+    const w = String(body.w || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) return json({ error: "Bad request" }, 400);
+    const pantry = (await store.get("pantry", { type: "json" })) || {};
+    const p = pantry[w] || { have: [] };
+    if (route === "pantry-tick") { const k = clip(body.k, 80); if (!k) return json({ error: "Bad request" }, 400); const set = new Set(p.have || []); body.on ? set.add(k) : set.delete(k); p.have = [...set]; }
+    else if (body.undo) { delete p.by; delete p.at; }
+    else { p.by = clip(body.by, 40); p.at = new Date().toISOString(); }
+    pantry[w] = p;
+    for (const k of Object.keys(pantry).sort().slice(0, -8)) delete pantry[k];
+    await store.setJSON("pantry", pantry);
+    return json({ ok: true, pantry });
   }
 
   // Kitchen helper questions: saved Q&A, and Amir's replies (which become house rules for the helper).
