@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="8.4";
+const APP_VERSION="8.5";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1696,6 +1696,7 @@ function shopKey(x){return x.n}
 function openShopList(mon){
   mon=mon||ui.week;buildShopping(mon);const secs=window.__shop||[],got=new Set(S.shop?.[mon]||[]);
   const all=secs.flatMap(sc=>sc.items),n=all.length,done=all.filter(x=>got.has(shopKey(x))).length;
+  if(!n){openSheet(`<div class="sh-h"><div><p class="eyebrow">Shopping list</p><h2 class="display">${esc(shortRange(mon))}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div><p class="shop-prog" style="margin:8px 0 6px">This week isn't planned yet.</p><p class="muted">Plan the week in My Week first. The shopping list then fills in by itself and follows any change to the plan.</p>`);return}
   openSheet(`<div class="sh-h"><div><p class="eyebrow">Shopping list</p><h2 class="display">${esc(shortRange(mon))}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <div class="shop-top"><p class="shop-prog" id="shopProg" data-n="${n}">${done} of ${n} in the bag</p><button class="btn sm" data-sact="shopsend">${I.share||""}Share the list</button></div>
   <div class="shoplist" data-w="${mon}">${secs.map(sc=>`<h3>${esc(sc.h)}</h3>${sc.items.map(x=>{const k=shopKey(x),on=got.has(k);return `<button class="shop-it${on?" got":""}" data-sact="shoptick" data-k="${esc(k)}" aria-pressed="${on}"><span class="tk">${I.check}</span><span class="nm">${esc(x.n)}${/Spinneys/.test(x.f||"")?`<small>${esc(x.f)}</small>`:""}</span>${x.q?`<span class="qt">${esc(x.q)}</span>`:""}</button>`}).join("")}`).join("")}</div>
