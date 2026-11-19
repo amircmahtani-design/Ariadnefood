@@ -88,11 +88,12 @@ export default async (req) => {
   }
 
   if (req.method === "GET" && route === "state") {
-    let [days, recipes, settings, insight] = await Promise.all([
+    let [days, recipes, settings, insight, asks] = await Promise.all([
       store.get("days", { type: "json" }),
       store.get("recipes", { type: "json" }),
       store.get("settings", { type: "json" }),
       store.get("insight", { type: "json" }),
+      store.get("asks", { type: "json" }),
     ]);
     // One-off data upgrades. v2: recipes carry their plate parts; plan stores recipeId + side.
     // Seed recipes are refreshed, family-added recipes kept, and any day with something logged is left alone.
@@ -214,7 +215,7 @@ export default async (req) => {
       // Never rewrite days unless a migration changed them: a write here could undo a tick made during a deploy.
       await Promise.all([store.setJSON("recipes", recipes), daysTouched ? store.setJSON("days", days) : null, store.setJSON("settings", settings)]);
     }
-    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight });
+    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60) });
   }
 
   // Plain-text report for Claude (or anyone) to read: what she ate, gaps, plan, recipes, and how to write back.
@@ -286,6 +287,28 @@ export default async (req) => {
     return json({ ok: true, recipes });
   }
 
+  // Kitchen helper questions: saved Q&A, and Amir's replies (which become house rules for the helper).
+  if (route === "ask-save") {
+    const it = body.item;
+    if (!isObj(it) || !String(it.q || "").trim()) return json({ error: "Bad request" }, 400);
+    const asks = (await store.get("asks", { type: "json" })) || [];
+    const item = { id: "q" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), q: clip(it.q, 1500), who: clip(it.who, 40), at: new Date().toISOString(),
+      answer: clip(it.answer, 4000), escalate: ["yes", "urgent"].includes(it.escalate) ? it.escalate : "no", toAmir: clip(it.toAmir, 600) };
+    asks.push(item);
+    await store.setJSON("asks", asks.slice(-300));
+    return json({ ok: true, item, asks: asks.slice(-60) });
+  }
+  if (route === "ask-reply") {
+    const asks = (await store.get("asks", { type: "json" })) || [];
+    const it = asks.find((x) => x.id === body.id);
+    if (!it) return json({ error: "Not found" }, 404);
+    if (body.reply === null) { delete it.reply; delete it.replyBy; delete it.replyAt; }
+    else { it.reply = clip(body.reply, 2000); it.replyBy = clip(body.by, 40); it.replyAt = new Date().toISOString(); }
+    if (body.done) it.done = true;
+    await store.setJSON("asks", asks);
+    return json({ ok: true, asks: asks.slice(-60) });
+  }
+
   if (route === "insight") {
     if (!isObj(body.insight)) return json({ error: "Bad request" }, 400);
     await store.setJSON("insight", body.insight);
@@ -324,6 +347,29 @@ export default async (req) => {
     const analysis = clip(body.analysis, 12000);
     const focus = clip(body.focus, 400);
     const today = DATE_RE.test(body.today || "") ? body.today : new Date().toISOString().slice(0, 10);
+
+    if (body.task === "ask") {
+      const q = clip(body.q, 1500).trim();
+      if (!q) return json({ error: "Type a question first." }, 400);
+      const [days, settings, asks] = await Promise.all([store.get("days", { type: "json" }), store.get("settings", { type: "json" }), store.get("asks", { type: "json" })]);
+      const st = { days: days || {}, recipes, settings: { ...DEFAULT_SETTINGS, ...(settings || {}) } };
+      const E = makeEngine(FOODS, () => st);
+      const title = (m) => (m?.recipeId && recipes.find((r) => r.id === m.recipeId)?.title) || m?.custom || "nothing planned";
+      const line = (k) => { const d = st.days[k] || {}, ms = d.meals || {};
+        return `${E.dayTitle(k)} ${k}: ` + E.SLOTS.map(([sl, l]) => `${l}: ${title(ms[sl])}${ms[sl]?.side ? " + " + ms[sl].side : ""}${ms[sl]?.like ? ` (${ms[sl].like})` : ""}`).join("; ") + (d.notes ? ` · notes: ${d.notes}` : ""); };
+      const plan = [...Array(10)].map((_, i) => line(E.addDays(today, i - 2))).join("\n");
+      const rules = (asks || []).filter((a) => a.reply).slice(-40).map((a) => `- Q: ${a.q}\n  Amir/Lia: ${a.reply}`).join("\n") || "- none yet";
+      const recent = (asks || []).slice(-8).map((a) => `- ${a.who || "?"} asked: ${a.q}\n  helper said: ${a.answer}`).join("\n") || "- none";
+      const system = `You are the kitchen helper inside Ariadne's Table, the family's toddler meal app. You answer questions from the people caring for Ariadne, mostly Catherine, the live-in nanny, so that Amir (the dad) is only asked when it is truly needed. ${ABOUT}
+House rules: each week has two fresh bakes (the breakfast cookie plus one baked snack) and up to two snacks from the freezer stash; lunch and dinner follow the leftovers rhythm (day 1 lunch A, dinner B; day 2 swapped); breakfast alternates spanakopita days with other breakfasts. Recipes marked "freezes well" can go in the freezer. Standard food safety applies (defrost in the fridge, cooked food cooled and frozen within 2 hours, eat frozen cooked food within about 3 months, reheat until steaming hot then cool for her, never refreeze defrosted cooked food).
+Decide things yourself whenever a sensible parent would: freezing, defrosting, storage, using up leftovers or freezer food, swapping a planned meal for another from the library or the freezer, portions, timing, substitutions, recipe steps, what to do if she refuses something, what to cook next. Be decisive: give ONE clear answer and the next step, not a list of options. Where it helps, say which app screen to change (e.g. "swap Thursday's snack to broccoli bites in My Week").
+Escalate to Amir only when: a decision needs the parents' authority (spending beyond normal groceries, changing a family rule, new foods that are common allergens she has not had before, anything outside food), or the answer depends on something only the parents know, or you are genuinely unsure. For any sign of illness, an allergic reaction, choking, injury, or anything urgent: escalate as "urgent", tell her to call Amir or Lia right away, and in an emergency to call 998 (UAE ambulance).
+Earlier answers from Amir or Lia (follow them; they are house rules):
+${rules}
+Reply with ONLY JSON, no markdown: {"answer":"plain, warm, short (2-6 sentences), written to the person asking","escalate":"no" or "yes" or "urgent","toAmir":"if escalating: the question for Amir in one sentence, otherwise empty"}`;
+      const content = `Today is ${today}. Asked by: ${clip(body.who, 40) || "someone"}.\n\nPlan (2 days back to 7 ahead):\n${plan}\n\nRecipe library:\n${library}\n\nRecent questions:\n${recent}\n\nQuestion: ${q}`;
+      return callAI(system, content, 900);
+    }
 
     if (body.task === "suggest") {
       const system = `You help a family feed their toddler well. ${ABOUT}

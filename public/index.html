@@ -67,7 +67,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none}
 
 /* tab bar */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tabs .wrap{display:grid;grid-template-columns:repeat(4,1fr);padding:6px 12px 4px}
+.tabs .wrap{display:grid;grid-template-columns:repeat(5,1fr);padding:6px 12px 4px}
 .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 6px;color:var(--ink-3);font-size:12.5px;font-weight:600;min-height:58px;transition:color var(--fast)}
 .tab .ti{width:58px;height:32px;border-radius:999px;display:grid;place-items:center;transition:background var(--med) var(--ease)}
 .tab svg{width:23px;height:23px}
@@ -672,6 +672,25 @@ label.f>span,.lbl{font-weight:600}
 .dl-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .seg.yn{display:grid;grid-template-columns:1fr 1fr;width:150px;margin:0}.seg.yn button{min-height:44px}
 .daylog .notes{margin-top:10px}.daylog .meta.by{margin-top:8px}
+/* ask tab v5.8 */
+.tab .ti{position:relative}.tbadge{position:absolute;top:0;right:8px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--terra,#C2643F);color:#fff;font:700 11px/17px var(--sans);font-style:normal;text-align:center}
+.ask-hero{padding:18px 16px}.ask-hero h2{font:600 22px/1.15 var(--serif);margin:0 0 6px}.ask-hero p{margin:0 0 12px;font-size:15px}
+.ask-hero textarea,.areply textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:16px/1.4 var(--sans);background:var(--surface);color:var(--ink);resize:vertical;margin-bottom:10px}
+.btn.wide{width:100%}
+.ask-h{font:600 17px/1.2 var(--serif);margin:22px 4px 10px}
+.acard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:10px}
+.acard.esc{border-color:#E7B9A3;background:#FFF8F3}
+.aq-meta{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:13px;color:var(--ink-3);flex-wrap:wrap}
+.achip{margin-left:auto;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--sage-soft);color:var(--sage)}
+.achip.wait{background:#FCEDE5;color:#A65A3D}.achip.urgent{background:#B4432A;color:#fff}.achip.done{background:#E9EFE2;color:#526447}
+.aq{font-weight:600;font-size:16px;margin:0 0 6px;line-height:1.35}
+.aa{margin:0;font-size:15.5px;line-height:1.5;color:var(--ink-2);white-space:pre-wrap}
+.aa.live{margin-top:12px}
+.ato{margin:10px 0 0;font-size:14.5px;padding:8px 12px;border-radius:12px;background:#FCEDE5}.ato b,.arep b{margin-right:4px}
+.arep{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;font-size:15px;padding:10px 12px;border-radius:12px;background:#EEF3E8}
+.areply{margin-top:12px}.arow{display:flex;gap:8px;justify-content:flex-end}
+.center{text-align:center}
+
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -772,6 +791,7 @@ body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:cent
     <button class="tab" data-view="week"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.3h.01M12 17.3h.01" stroke-width="2.4"/></svg></span>My Week</button>
     <button class="tab" data-view="her"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/><path d="M8.5 12h2l1-2 1.5 4 1-2h1.5"/></svg></span>Nutrition</button>
     <button class="tab" data-view="recipes"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></svg></span>Recipes</button>
+    <button class="tab" data-view="ask"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.3 2.2c-.6.3-.9.8-.9 1.4v.3M12 16.4h.01" stroke-width="1.9"/></svg><i class="tbadge" id="askBadge" hidden></i></span>Ask</button>
   </div>
 </nav>
 
@@ -802,7 +822,7 @@ const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v)
 /* ---------- state ---------- */
 let S={days:{},recipes:[],settings:{people:["Amir","Catherine","Lia"],milkDefault:600,dropUg:10,vitDTarget:15,formula:{}},insight:null};
 const ui={view:ls.get("ari-view")||"day",date:todayKey(),week:mondayOf(todayKey()),rq:"",rf:"all"};
-if(!["day","week","her","recipes"].includes(ui.view))ui.view="day";
+if(!["day","week","her","recipes","ask"].includes(ui.view))ui.view="day";
 let me=ls.get("ari-me")||"";
 let pending={},timer=null,saving=false,loaded=false,busy=false,photos=[];
 
@@ -873,7 +893,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.7";
+const APP_VERSION="5.8";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -961,7 +981,55 @@ function render(){
   if(ui.view==="day")v.innerHTML=viewDay();
   else if(ui.view==="week")v.innerHTML=viewWeek();
   else if(ui.view==="her")v.innerHTML=viewHer();
+  else if(ui.view==="ask")v.innerHTML=viewAsk();
   else{v.innerHTML=viewRecipes();renderRList()}
+  askBadge();
+}
+/* ---------- Ask: the kitchen helper answers; only what it can't settle goes to Amir ---------- */
+const isParent=()=>/^(amir|lia)$/i.test(me||"");
+const waitingAsks=()=>(S.asks||[]).filter(a=>a.escalate!=="no"&&!a.reply&&!a.done);
+function askBadge(){const b=$("#askBadge");if(!b)return;const n=isParent()?waitingAsks().length:0;b.hidden=!n;b.textContent=n||""}
+const whenTxt=iso=>{const d=new Date(iso),k=key(d);return `${k===todayKey()?"Today":dmy(k)} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+function askCard(a,reply){
+  const chip=a.escalate==="urgent"?'<span class="achip urgent">Urgent: call Amir or Lia</span>':a.escalate==="yes"?(a.reply?'<span class="achip done">Amir answered</span>':'<span class="achip wait">Sent to Amir</span>'):'<span class="achip ok">Answered</span>';
+  return `<article class="acard${a.escalate!=="no"&&!a.reply?" esc":""}">
+    <p class="aq-meta">${avatar(a.who,22)}<span>${esc(a.who||"Someone")} · ${whenTxt(a.at)}</span>${chip}</p>
+    <p class="aq">${esc(a.q)}</p>
+    <p class="aa">${esc(a.answer)}</p>
+    ${a.toAmir&&a.escalate!=="no"?`<p class="ato"><b>For Amir</b> ${esc(a.toAmir)}</p>`:""}
+    ${a.reply?`<p class="arep">${avatar(a.replyBy,20)}<span><b>${esc(a.replyBy||"Amir")}</b> ${esc(a.reply)}</span></p>`:""}
+    ${reply?`<div class="areply"><textarea rows="2" data-areply="${esc(a.id)}" placeholder="Your answer for ${esc(a.who||"them")}"></textarea><div class="arow"><button class="btn sm ghost" data-act="adone" data-id="${esc(a.id)}">Handled in person</button><button class="btn sm" data-act="areply" data-id="${esc(a.id)}">Send</button></div></div>`:""}
+  </article>`;
+}
+function viewAsk(){
+  const all=(S.asks||[]).slice().reverse(),wait=waitingAsks().reverse();
+  return `<section class="ask-hero card">
+    <h2>Ask the kitchen helper</h2>
+    <p class="muted">Food, freezing, leftovers, swaps, recipes. It answers straight away, and only sends the question to Amir when it can't decide.</p>
+    <textarea id="askQ" rows="3" placeholder="e.g. We have a lot of frozen food. What should we use first?" aria-label="Your question">${esc(ui.askDraft||"")}</textarea>
+    <button class="btn wide" data-act="ask" ${busy?"disabled":""}>${busy?"Thinking…":"Ask"}</button>
+    <div id="askLive"></div>
+  </section>
+  ${isParent()&&wait.length?`<h3 class="ask-h">Waiting for you</h3>${wait.map(a=>askCard(a,true)).join("")}`:""}
+  ${all.length?`<h3 class="ask-h">Questions so far</h3>${all.filter(a=>!(isParent()&&wait.includes(a))).slice(0,30).map(a=>askCard(a,false)).join("")}`:`<p class="muted center">No questions yet.</p>`}
+  <p class="muted small center">Amir's answers become house rules: the helper follows them next time.</p>`;
+}
+async function doAsk(){
+  const q=($("#askQ")?.value||"").trim();if(!q||busy)return;
+  if(!me){askWho();return}
+  ui.askDraft=q;busy=true;render();
+  const live=$("#askLive");live.innerHTML='<p class="aa live">…</p>';
+  try{
+    const out=await streamAI({task:"ask",q,who:me,today:todayKey()},t=>{const m=t.match(/"answer"\s*:\s*"((?:[^"\\]|\\.)*)/);if(m)live.querySelector(".aa").textContent=m[1].replace(/\\n/g," ").replace(/\\"/g,'"')});
+    const j=await post("ask-save",{item:{q,who:me,answer:String(out.answer||""),escalate:String(out.escalate||"no"),toAmir:String(out.toAmir||"")}});
+    S.asks=j.asks;ui.askDraft="";
+  }catch(e){status(e.message||"The helper didn't answer. Try again.",true,true)}
+  busy=false;render();
+}
+async function askReply(id,done){
+  const el=document.querySelector(`[data-areply="${CSS.escape(id)}"]`),txt=(el?.value||"").trim();
+  if(!done&&!txt){el?.focus();return}
+  try{const j=await post("ask-reply",done?{id,done:true}:{id,reply:txt,by:me||"Amir"});S.asks=j.asks;render();status(done?"Marked as handled":"Sent",true)}catch(e){status("Couldn't send. Try again.",true,true)}
 }
 function bars(rows){return gauges(rows)}
 function recipeOptions(slot,selected,custom){
@@ -1550,6 +1618,9 @@ function setMeal(k,slot,val,side,custom){
 $("#view").addEventListener("click",async e=>{
   const rf=e.target.closest("[data-rf]");if(rf){ui.rf=rf.dataset.rf;document.querySelectorAll("[data-rf]").forEach(b=>b.setAttribute("aria-pressed",b===rf));renderRList();return}
   const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
+  if(act==="ask"){doAsk();return}
+  if(act==="areply"){askReply(a.dataset.id);return}
+  if(act==="adone"){askReply(a.dataset.id,true);return}
   const slotEl=a.closest("[data-slot]"),slot=slotEl?.dataset.slot;
   if(act==="grp"){ui.openGroups=ui.openGroups||{};ui.openGroups[a.dataset.g]=!ui.openGroups[a.dataset.g];keepScroll(render);return}
   if(act==="hPrev"){ui.hweek=addDays(ui.hweek||mondayOf(todayKey()),-7);render();return}
