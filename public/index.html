@@ -696,6 +696,8 @@ label.f>span,.lbl{font-weight:600}
 .freeze-note{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#E9F1F3;font-size:14.5px;line-height:1.45;color:var(--ink-2)}.freeze-note svg{flex:none;width:16px;height:16px;margin-top:2px;color:#3F6E7A}.freeze-note b{color:var(--ink);margin-right:4px}
 .bakes{padding:14px 16px;margin:0 0 14px}.bakes h2{font:600 18px/1.2 var(--serif);margin:0 0 4px}.bakes ul{list-style:none;margin:10px 0 0;padding:0}.bakes li{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid var(--line)}.bakes li .link{font-weight:600;text-align:left;padding:0;font-size:15.5px;color:var(--ink)}.bakes li span{font-size:14px;color:var(--ink-2)}.bakes li .bk-when{font-size:14px;color:var(--ink-2)}.bakes li .bk-when svg{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px}.bakes li .bk-when b{color:#A65A3D}.dayoff.make{background:#FBEFC8;color:#4A3F1E}.dayoff.make svg{color:#8A6D1E}
 .bakes li .bk-make{color:var(--sage);font-weight:600;font-size:15px}.bakes li .bk-make em{font-style:normal;font-weight:400;color:var(--ink-2)}
+.cookrow{display:flex;gap:8px;align-items:flex-start;margin:4px 0 6px;padding:9px 12px;border-radius:12px;background:#FBEFC8;font-size:14.5px;line-height:1.45;color:#4A3F1E}.cookrow svg{flex:none;width:16px;height:16px;margin-top:2px;color:#8A6D1E}.cookrow b{color:#3A3115;margin-right:3px}.cookrow.off{background:#EEF3E8;color:#3F4A38}.cookrow.off svg{color:#526447}
+.wk .c.ck{min-height:14mm;background:#FFF8E1}.wk .c.ck b{font-size:8pt}.wk .c.ck i{display:block;font-style:normal;font-size:7.3pt;color:#8A6D1E;margin-top:.8mm}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -900,7 +902,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="6.7";
+const APP_VERSION="6.8";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1157,6 +1159,25 @@ function weekBakes(mon){
     return {r,n:x.n,uses:x.uses,mk:md,when:dayName(md),part,days:x.days,thaw,make:half?"Make half the recipe":x.n<=sv?"Make the full recipe":`Make the recipe ${Math.ceil(x.n/sv)} times`,makes,spare}}).filter(Boolean);
 }
 const halfTxt=n=>`${Math.floor(n)||""}${n%1?"½":""}`||"0";
+/* What to cook on a given day: fresh lunch/dinner dishes (not yesterday's leftovers), made-to-order breakfast, and any baking due that day. */
+function cookPlan(k){
+  const dow=parse(k).getDay(),ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]?.meals||{},T=id=>recipeById(id)?.title||"";
+  if(dow===0)return {off:true,cook:[],bake:[]};
+  const yIds=new Set(["lunch","dinner"].map(s=>prev[s]?.recipeId).filter(Boolean));
+  const cook=[...new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!yIds.has(id)))].map(T);
+  const bf=ms.breakfast?.recipeId,bfr=bf&&recipeById(bf);
+  if(bfr&&!COOKIE_OF[bf]&&(+bfr.serves||1)<=1)cook.unshift(`${bfr.title} (breakfast)`);
+  if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>{const id=sun[s]?.recipeId;if(id&&!["lunch","dinner"].some(x=>ms[x]?.recipeId===id))cook.push(`${T(id)} (for Sunday)`)})}
+  const seen=new Set(),bake=[];
+  for(const w of [mondayOf(k),addDays(mondayOf(k),7)])for(const x of weekBakes(w))if(x.mk===k&&!seen.has(x.r.id)){seen.add(x.r.id);bake.push(`${x.make.replace(/^Make /,"").replace(/^the /,"")} of ${x.r.title}, ${x.part==="as soon as you can"?"as soon as you can":"in the "+x.part}`)}
+  return {off:false,cook:cook.filter(Boolean),bake,left:!cook.length&&yIds.size>0};
+}
+function cookRow(k){
+  const c=cookPlan(k);
+  if(c.off)return `<div class="cookrow off">${I.alert}<span><b>Day off.</b> Everything is ready from Saturday: reheat and serve.</span></div>`;
+  if(!c.cook.length&&!c.bake.length)return `<div class="cookrow">${I.check}<span><b>Nothing to cook.</b> ${c.left?"Lunch and dinner are yesterday's leftovers.":""}</span></div>`;
+  return `<div class="cookrow">${I.clock}<span>${c.cook.length?`<b>Cook:</b> ${c.cook.map(esc).join(", ")}${c.left?"":""}`:""}${c.cook.length&&c.bake.length?"<br>":""}${c.bake.length?`<b>Bake:</b> ${c.bake.map(esc).join("; ")}. Check the freezer first.`:""}</span></div>`;
+}
 function bakesCard(mon){
   const L=weekBakes(mon),cur=mon===mondayOf(todayKey());if(!L.length)return "";
   return `<section class="card bakes"><h2>${cur?"Baking for the rest of the week":"Baking for this week"}</h2>
@@ -1189,6 +1210,7 @@ function viewWeek(){
     h+=`<section class="wday card${k===t?" today":""}" id="d-${k}" data-date="${k}">
       <div class="wd-h"><button class="wd-title" data-act="openDay"><span class="wd-dow">${DOW[d.getDay()]}</span><span class="wd-date">${d.getDate()} ${MONTHS[d.getMonth()]}</span></button>
       <span class="wd-meta">${k===t?'<span class="pill acc">Today</span>':""}<span class="pill${day.vitD?.done?" on":""}">${day.vitD?.done?I.check:I.sun}Vit D</span><span class="pill${logged===4?" on":""}">${logged}/4</span></span></div>
+      ${cookRow(k)}
       ${SLOTS.map(([s,l])=>{const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom?"__custom":"");
         return `<div class="wrow" data-slot="${s}">${pic(r,"wthumb",m.custom||"")}
           <div class="wfields"><span class="wl">${SLOT_ICON[s]}${l}</span>
@@ -1515,6 +1537,7 @@ function buildWeek(mon){
   return `<section class="page">${pgHead("Week plan",`Week of ${shortRange(mon)}`)}
   <div class="wk"><div></div>${ks.map(k=>{const d=parse(k),we=d.getDay()===0||d.getDay()===6;return `<div class="dh${we?" we":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</span></div>`}).join("")}
   ${SLOTS.map(([s,l])=>`<div class="sl">${SLOT_ICON[s]}${l}</div>${ks.map(k=>cell(k,s)).join("")}`).join("")}
+  <div class="sl">To cook</div>${ks.map(k=>{const c=cookPlan(k);return `<div class="c ck">${c.off?"<i>Day off: reheat</i>":[...c.cook.map(x=>`<b>${esc(x)}</b>`),...c.bake.map(x=>`<i>Bake: ${esc(x)}</i>`)].join("")||"<i>Leftovers</i>"}</div>`}).join("")}
   <div class="sl">Vitamin D</div>${ks.map(k=>tick(k,d=>d.vitD?.done)).join("")}
   <div class="sl">Pooped</div>${ks.map(k=>tick(k,d=>d.poop?.v==="yes")).join("")}
   <div class="sl">Notes</div>${ks.map(()=>`<div class="c nt"></div>`).join("")}</div>
