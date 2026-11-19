@@ -813,9 +813,9 @@ body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:cent
 const FOODS=window.FOODS||{};
 const E=makeEngine(FOODS,()=>S);
 const {SLOTS,SLOT_LABEL,AMOUNTS,FRAC,LIKES,LIKE_LABEL,GROUPS,DOW,MONTHS,NKEYS,pad,key,parse,addDays,mondayOf:_monOf,dayTitle,shortDay,dmy,clone,cap,r1,
+  matchFood,TARGETS,addItems,recipeById,sideParts,partsFor,mealTitle,recipeNutrition,dayNutrition,analyse,analysisText,rankRecipes}=E;
 // Weeks run Saturday to Friday: the family shops and cooks from Saturday.
 const mondayOf=k=>{const d=parse(k);d.setDate(d.getDate()-((d.getDay()+1)%7));return key(d)};
-  matchFood,TARGETS,addItems,recipeById,sideParts,partsFor,mealTitle,recipeNutrition,dayNutrition,analyse,analysisText,rankRecipes}=E;
 /* ---------- helpers ---------- */
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
