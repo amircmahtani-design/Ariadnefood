@@ -898,7 +898,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="6.5";
+const APP_VERSION="6.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1580,7 +1580,7 @@ function buildShopping(mon){
     (r.ingredients||[]).forEach(line=>{if(/homemade/i.test(line))return;const q=lineQty(line);
       if(q.length)q.forEach(x=>add(x.k,r.title,x.g*b,x.c*b,x.tin));
       else if(!/salt|pepper|cinnamon|cumin|paprika|oregano|water|spice|turmeric|zest|^mint|^dill|^fresh|^lemon|^squeeze|^juice|^optional/i.test(line)){
-        const m=line.match(/^(\d+)\s+(.*)$/);const key=(m?m[2]:line).replace(/\(about ([^)]*)\)/,"· $1").trim();const o=(other[key]??={n:cap(key),c:0,q:!!m});if(m)o.c+=(+m[1])*b}})}
+        const u=line.match(/^[\d½¼¾⅛\/.\s]*(tsp|tbsp|teaspoons?|tablespoons?|pinch|ml|g)\b\s*(.*)$/i);if(u){const key=cap(u[2].replace(/\(.*?\)/g,"").trim());if(key)other[key]??={n:key,c:0};return}const m=line.match(/^(\d+)\s+(.*)$/);const key=(m?m[2]:line).replace(/\(about ([^)]*)\)/,"· $1").trim();const o=(other[key]??={n:cap(key),c:0,q:!!m});if(m)o.c+=(+m[1])*b}})}
   const qty=x=>{if(PANTRY.has(x.k))return "";if(x.tins)return `${x.tins} ${x.tins==1?"tin":"tins"}`;
     if(COUNT_ONLY.has(x.k)){const n=Math.max(1,Math.ceil(x.c||x.g/(EACH[x.k]||1)));return `${n} ${CNAME[x.k][n==1?0:1]}`}
     if(!x.g)return BUY[x.k]?`1 ${BUY[x.k][1]}`:"";
