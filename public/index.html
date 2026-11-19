@@ -696,7 +696,7 @@ label.f>span,.lbl{font-weight:600}
 .freeze-note{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#E9F1F3;font-size:14.5px;line-height:1.45;color:var(--ink-2)}.freeze-note svg{flex:none;width:16px;height:16px;margin-top:2px;color:#3F6E7A}.freeze-note b{color:var(--ink);margin-right:4px}
 .bakes{padding:14px 16px;margin:0 0 14px}.bakes h2{font:600 18px/1.2 var(--serif);margin:0 0 4px}.bakes ul{list-style:none;margin:10px 0 0;padding:0}.bakes li{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid var(--line)}.bakes li .link{font-weight:600;text-align:left;padding:0;font-size:15.5px;color:var(--ink)}.bakes li span{font-size:14px;color:var(--ink-2)}.bakes li .bk-when{font-size:14px;color:var(--ink-2)}.bakes li .bk-when svg{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px}.bakes li .bk-when b{color:#A65A3D}.dayoff.make{background:#FBEFC8;color:#4A3F1E}.dayoff.make svg{color:#8A6D1E}
 .bakes li .bk-make{color:var(--sage);font-weight:600;font-size:15px}.bakes li .bk-make em{font-style:normal;font-weight:400;color:var(--ink-2)}
-.cookrow{display:flex;gap:8px;align-items:flex-start;margin:4px 0 6px;padding:9px 12px;border-radius:12px;background:#FBEFC8;font-size:14.5px;line-height:1.45;color:#4A3F1E}.cookrow svg{flex:none;width:16px;height:16px;margin-top:2px;color:#8A6D1E}.cookrow b{color:#3A3115;margin-right:3px}.cookrow.off{background:#EEF3E8;color:#3F4A38}.cookrow.off svg{color:#526447}
+.cookrow{display:flex;gap:8px;align-items:flex-start;margin:4px 0 6px;padding:9px 12px;border-radius:12px;background:#FBEFC8;font-size:14.5px;line-height:1.45;color:#4A3F1E}.cookrow svg{flex:none;width:16px;height:16px;margin-top:2px;color:#8A6D1E}.cookrow b{color:#3A3115;margin-right:3px}.cookrow.bad{background:#FBE3DC;color:#6B2A1A}.cookrow b.miss{color:#B4432A}.cookrow.off{background:#EEF3E8;color:#3F4A38}.cookrow.off svg{color:#526447}
 .wk .c.ck{min-height:10mm;background:#FFF8E1}.wk .c.ck b{font-size:7.6pt;line-height:1.2;margin-bottom:.6mm}.wk .c.ck i{display:block;font-style:normal;font-size:7.3pt;color:#8A6D1E;margin-top:.8mm}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
@@ -902,7 +902,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="7.3";
+const APP_VERSION="7.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1177,11 +1177,29 @@ function cookPlan(k){
   for(const w of [mondayOf(k),addDays(mondayOf(k),7)])for(const x of weekBakes(w))if(x.mk===k&&!seen.has(x.r.id)){seen.add(x.r.id);bakeShort.push(`${/half/i.test(x.make)?"½ ":""}${x.r.title}${x.part==="morning"?" (am)":x.part==="afternoon"?" (pm)":""}`);bake.push(`${x.make.replace(/^Make /,"").replace(/^the /,"")} of ${x.r.title}, ${x.part==="as soon as you can"?"as soon as you can":"in the "+x.part}`)}
   return {off:false,cook:cook.filter(Boolean),bake,bakeShort,left:!cook.length&&yIds.size>0};
 }
+/* Check that everything on the day's menu exists by the time she eats it. */
+function bakeFor(id,k){for(const w of [mondayOf(k),addDays(mondayOf(k),-7)]){const x=weekBakes(w).find(x=>x.r.id===id&&x.days.includes(k));if(x)return x}return null}
+function dayCheck(k){
+  const ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]?.meals||{},sat=S.days[addDays(k,-1)]?.meals||{},dow=parse(k).getDay(),c=cookPlan(k),ready=[],missing=[];
+  const madeOn=(id,slot)=>{const x=bakeFor(id,k);if(!x)return null;const before=x.mk<k||(x.mk===k&&slot!=="breakfast"&&x.part==="morning");return {x,ok:before}};
+  for(const [sl] of SLOTS){const m=ms[sl];if(!m||(!m.recipeId&&!m.custom))continue;const id=m.recipeId,r=id&&recipeById(id);if(!r)continue;
+    if(sl==="lunch"||sl==="dinner"){
+      const cookedToday=dow!==0&&c.cook.some(t=>t===r.title||t.startsWith(r.title+" ("));
+      const leftover=["lunch","dinner"].some(s=>prev[s]?.recipeId===id);
+      if(!cookedToday&&!leftover)missing.push(`${r.title} (${SLOT_LABEL[sl].toLowerCase()}) isn't cooked the day before or on the day`);
+      continue}
+    const cid=COOKIE_OF[id];
+    if(cid){const mm=madeOn(cid,"breakfast");if(mm&&mm.ok)ready.push(`${recipeById(cid).title.replace(/s$/,"")} (made ${DOW[parse(mm.x.mk).getDay()].slice(0,3)} ${dmy(mm.x.mk).slice(0,5)})`);else missing.push(`${recipeById(cid).title} for breakfast: not baked yet`);continue}
+    const mm=madeOn(id,sl);
+    if(mm){if(mm.ok)ready.push(`${r.title} (made ${DOW[parse(mm.x.mk).getDay()].slice(0,3)} ${dmy(mm.x.mk).slice(0,5)})`);else missing.push(`${r.title} (${SLOT_LABEL[sl].toLowerCase()}): not made in time`)}
+  }
+  return {ready:[...new Set(ready)],missing};
+}
 function cookRow(k){
-  const c=cookPlan(k);
-  if(c.off)return `<div class="cookrow off">${I.alert}<span><b>Day off.</b> Everything is ready from Saturday: reheat and serve.</span></div>`;
-  if(!c.cook.length&&!c.bake.length)return `<div class="cookrow">${I.check}<span><b>Nothing to cook.</b> ${c.left?"Lunch and dinner are yesterday's leftovers.":""}</span></div>`;
-  return `<div class="cookrow">${I.clock}<span>${c.cook.length?`<b>Cook:</b> ${c.cook.map(esc).join(", ")}${c.left?"":""}`:""}${c.cook.length&&c.bake.length?"<br>":""}${c.bake.length?`<b>Bake:</b> ${c.bake.map(esc).join("; ")}. Check the freezer first.`:""}</span></div>`;
+  const c=cookPlan(k),chk=dayCheck(k),rd=chk.ready.length?`<br><b>Already made:</b> ${chk.ready.map(esc).join(", ")}`:"",ms=chk.missing.length?`<br><b class="miss">Not ready:</b> ${chk.missing.map(esc).join("; ")}`:"";
+  if(c.off)return `<div class="cookrow off">${I.alert}<span><b>Day off.</b> Everything is ready from Saturday: reheat and serve.${rd}${ms}</span></div>`;
+  if(!c.cook.length&&!c.bake.length)return `<div class="cookrow${chk.missing.length?" bad":""}">${I.check}<span><b>Nothing to cook.</b> ${c.left?"Lunch and dinner are yesterday's leftovers.":""}${rd}${ms}</span></div>`;
+  return `<div class="cookrow${chk.missing.length?" bad":""}">${I.clock}<span>${c.cook.length?`<b>Cook:</b> ${c.cook.map(esc).join(", ")}`:""}${c.cook.length&&c.bake.length?"<br>":""}${c.bake.length?`<b>Bake:</b> ${c.bake.map(esc).join("; ")}. Check the freezer first.`:""}${rd}${ms}</span></div>`;
 }
 function bakesCard(mon){
   const L=weekBakes(mon),cur=mon===mondayOf(todayKey());if(!L.length)return "";
