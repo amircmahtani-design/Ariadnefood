@@ -873,7 +873,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.6";
+const APP_VERSION="5.7";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -989,7 +989,7 @@ function viewDay(){
       <span class="tile-mid"><span class="box">${I.check}</span><small>${(+S.settings.drops||3)} drops</small></span>
       <small class="vd-by">${vd.done?`${vd.by?avatar(vd.by,16):""}${vd.at?esc(vd.at):"Given"}`:"Not yet"}</small></button>
     <div class="tile milk">
-      <span class="tile-top"><span class="tile-ic">${I.bottle}</span><strong>Milk</strong></span>
+      <span class="tile-top"><span class="tile-ic">${I.bottle}</span><strong>Formula</strong></span>
       <span class="ctl"><button data-act="milk" data-d="-50" aria-label="50 ml less">−</button><output class="num">${ml}</output><button data-act="milk" data-d="50" aria-label="50 ml more">+</button></span>
       <small>ml${day.milk!=null?"":" · usual"}</small></div>
     <div class="tile water">
@@ -1028,7 +1028,7 @@ function viewDay(){
   if(d.logged){
     const rows=TARGETS().filter(x=>["iron","calcium","vitD","vitA"].includes(x.k)).map(x=>({...x,v:d.tot[x.k]||0,pct:Math.round(100*(d.tot[x.k]||0)/x.t)}));
     h+=`<section class="nutri-card card">
-      <div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>${k===t?"Today so far":"That day"}</h2><p class="muted small">From the meals logged, plus milk and drops</p></div></div>
+      <div class="nc-h"><span class="nc-ic">${I.leaf}</span><div><h2>${k===t?"Today so far":"That day"}</h2><p class="muted small">From the meals logged, plus formula and drops</p></div></div>
       ${groupChips(d.groups)}
       ${d.missed.length?`<p class="missed"><b>Didn't eat</b> ${esc(d.missed.map(m=>m.name).join(", "))}</p>`:""}
       ${gauges(rows)}
@@ -1170,11 +1170,11 @@ function openSettings(){
     <div class="sh-h"><div><p class="eyebrow">Ariadne's Table</p><h2 class="display">Settings</h2></div><button type="button" class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
     <label class="f"><span>Who's using this phone</span><select name="me">${ppl.map(p=>`<option${p===me?" selected":""}>${esc(p)}</option>`).join("")}</select></label>
     <div class="card-soft"><p class="micro">Profile pictures</p><ul class="av-list">${ppl.map(p=>`<li>${avatar(p,44)}<span class="av-n">${esc(p)}</span><label class="btn ghost sm">${S.settings?.avatars?.[p]?"Change":"Add photo"}<input type="file" accept="image/*" data-avfile="${esc(p)}" hidden></label>${S.settings?.avatars?.[p]?`<button type="button" class="link" data-avremove="${esc(p)}">Remove</button>`:""}</li>`).join("")}</ul></div>
-    <div class="grid2"><label class="f"><span>Usual milk a day (ml)</span><input name="milkDefault" type="number" min="0" step="10" value="${esc(s.milkDefault)}"></label>
+    <div class="grid2"><label class="f"><span>Usual formula a day (ml)</span><input name="milkDefault" type="number" min="0" step="10" value="${esc(s.milkDefault)}"></label>
     <label class="f"><span>Vitamin D drops a day</span><input name="drops" type="number" min="0" step="1" value="${esc(s.drops??3)}"></label></div>
     <label class="f"><span>Vitamin D per drop (IU)</span><input name="iuPerDrop" type="number" min="0" step="50" value="${esc(s.iuPerDrop??200)}"><em class="hint">${esc(s.dropName||"D3 Fix Drops 200 IU")}: 200 IU (5 µg) per drop. 40 IU = 1 µg.</em></label>
     <label class="f"><span>Vitamin D daily target (µg)</span><input name="vitDTarget" type="number" min="0" step="0.5" value="${esc(s.vitDTarget)}"><em class="hint">15 µg (600 IU) is the US reference for ages 1 to 3; the NHS uses 10 µg. Follow her paediatrician. 400 IU = 10 µg.</em></label>
-    <div class="card-soft"><p class="micro">Her milk, per 100 ml (from the tin)</p>
+    <div class="card-soft"><p class="micro">Her formula, per 100 ml (from the tin)</p>
       <div class="grid2"><label class="f"><span>Vitamin D (µg)</span><input name="f_vitD" type="number" step="0.1" value="${esc(f.vitD)}"></label><label class="f"><span>Iron (mg)</span><input name="f_iron" type="number" step="0.01" value="${esc(f.iron)}"></label>
       <label class="f"><span>Calcium (mg)</span><input name="f_calcium" type="number" step="1" value="${esc(f.calcium)}"></label><label class="f"><span>Energy (kcal)</span><input name="f_kcal" type="number" step="1" value="${esc(f.kcal)}"></label></div>
       <p class="note">Defaults are a typical toddler formula from USDA. Her own tin's numbers make the estimates more accurate.</p></div>
@@ -1398,7 +1398,7 @@ function buildWeek(mon){
   <div class="sl">Pooped</div>${ks.map(k=>tick(k,d=>d.poop?.v==="yes")).join("")}
   <div class="sl">Notes</div>${ks.map(()=>`<div class="c nt"></div>`).join("")}</div>
   ${safe.size?`<p class="p-safe"><b>Safe cuts</b>${[...safe].map(esc).join(" ")}</p>`:""}
-  <footer class="pg-f"><span>${(+S.settings.drops||3)} drops of vitamin D a day · about ${+S.settings.milkDefault||600} ml milk</span><span>Log each part of the meal in the app: All, Most, Some or None</span></footer></section>`;
+  <footer class="pg-f"><span>${(+S.settings.drops||3)} drops of vitamin D a day · about ${+S.settings.milkDefault||600} ml formula</span><span>Log each part of the meal in the app: All, Most, Some or None</span></footer></section>`;
 }
 function buildRecipes(ids){
   const rs=ids.map(recipeById).filter(Boolean),pages=[];
