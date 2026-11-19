@@ -893,7 +893,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.8";
+const APP_VERSION="5.9";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1004,15 +1004,15 @@ function askCard(a,reply){
 function viewAsk(){
   const all=(S.asks||[]).slice().reverse(),wait=waitingAsks().reverse();
   return `<section class="ask-hero card">
-    <h2>Ask the kitchen helper</h2>
-    <p class="muted">Food, freezing, leftovers, swaps, recipes. It answers straight away, and only sends the question to Amir when it can't decide.</p>
+    <h2>Catherine's questions</h2>
+    <p class="muted">Ask about food, freezing, leftovers, swaps or recipes. You get an answer straight away, and only the questions the app can't settle go to Amir.</p>
     <textarea id="askQ" rows="3" placeholder="e.g. We have a lot of frozen food. What should we use first?" aria-label="Your question">${esc(ui.askDraft||"")}</textarea>
     <button class="btn wide" data-act="ask" ${busy?"disabled":""}>${busy?"Thinking…":"Ask"}</button>
     <div id="askLive"></div>
   </section>
   ${isParent()&&wait.length?`<h3 class="ask-h">Waiting for you</h3>${wait.map(a=>askCard(a,true)).join("")}`:""}
   ${all.length?`<h3 class="ask-h">Questions so far</h3>${all.filter(a=>!(isParent()&&wait.includes(a))).slice(0,30).map(a=>askCard(a,false)).join("")}`:`<p class="muted center">No questions yet.</p>`}
-  <p class="muted small center">Amir's answers become house rules: the helper follows them next time.</p>`;
+  <p class="muted small center">Amir's answers become house rules, so the next answers follow them.</p>`;
 }
 async function doAsk(){
   const q=($("#askQ")?.value||"").trim();if(!q||busy)return;
@@ -1023,7 +1023,7 @@ async function doAsk(){
     const out=await streamAI({task:"ask",q,who:me,today:todayKey()},t=>{const m=t.match(/"answer"\s*:\s*"((?:[^"\\]|\\.)*)/);if(m)live.querySelector(".aa").textContent=m[1].replace(/\\n/g," ").replace(/\\"/g,'"')});
     const j=await post("ask-save",{item:{q,who:me,answer:String(out.answer||""),escalate:String(out.escalate||"no"),toAmir:String(out.toAmir||"")}});
     S.asks=j.asks;ui.askDraft="";
-  }catch(e){status(e.message||"The helper didn't answer. Try again.",true,true)}
+  }catch(e){status(e.message||"No answer came back. Try again.",true,true)}
   busy=false;render();
 }
 async function askReply(id,done){
