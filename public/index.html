@@ -691,6 +691,7 @@ label.f>span,.lbl{font-weight:600}
 .areply{margin-top:12px}.arow{display:flex;gap:8px;justify-content:flex-end}
 .center{text-align:center}
 
+.dayoff{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;border-radius:16px;background:#FCEDE5;color:#5A3A2C;font-size:15px;line-height:1.45}.dayoff svg{flex:none;width:18px;height:18px;margin-top:2px;color:#A65A3D}.dayoff b{margin-right:4px;color:#3E2A20}.dayoff.off{background:#EEF3E8;color:#3F4A38}.dayoff.off svg{color:#526447}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -893,7 +894,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.9";
+const APP_VERSION="6.0";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1040,6 +1041,14 @@ function recipeOptions(slot,selected,custom){
 }
 
 /* Today */
+/* Catherine's day off is Sunday: Saturday she cooks for both days; Sunday is reheat only. */
+function dayOffNote(k){
+  const dow=parse(k).getDay(),T=m=>(m?.recipeId&&recipeById(m.recipeId)?.title)||m?.custom||"";
+  if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{},list=[...new Set(SLOTS.map(([s])=>T(sun[s])).filter(Boolean))];
+    return `<p class="dayoff">${I.alert}<span><b>Cook for tomorrow too.</b> Sunday is Catherine's day off. ${list.length?`Sunday is: ${list.map(esc).join(", ")}. Make enough today, cool it and put it in the fridge, labelled.`:"Plan Sunday's meals in My Week."}</span></p>`}
+  if(dow===0){const bf=S.days[k]?.meals?.breakfast?.recipeId||"";return `<p class="dayoff off">${I.alert}<span><b>Catherine's day off.</b> Everything was cooked yesterday: reheat until steaming hot, let it cool, then serve.${bf.startsWith("spanakbreakfast")?" The triangles go straight from the freezer into the air fryer.":""}</span></p>`}
+  return "";
+}
 function viewDay(){
   const k=ui.date,t=todayKey(),day=S.days[k]||{},meals=day.meals||{},vd=day.vitD||{};
   const rel=k===t?"Today":k===addDays(t,-1)?"Yesterday":k===addDays(t,1)?"Tomorrow":String(parse(k).getFullYear());
@@ -1051,6 +1060,7 @@ function viewDay(){
     
     ${k!==t?`<button class="link center-link" data-act="today">Back to today</button>`:""}
   </header>
+  ${dayOffNote(k)}
   <div class="essentials">
     <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}" aria-label="Vitamin D, ${vd.done?"given":"tap once given"}">
       <span class="tile-top"><span class="tile-ic">${I.sun}</span><strong>Vitamin D</strong></span>
