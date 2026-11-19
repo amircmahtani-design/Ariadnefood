@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="8.1";
+const APP_VERSION="8.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1393,7 +1393,7 @@ function openPrint(){
   openSheet(`<div class="sh-h"><div><p class="eyebrow">A4 landscape</p><h2 class="display">Print ${weekRange(mon).replace(/ \d{4}$/,"")}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <div class="opts">
     <div class="opt"><span class="opt-ic">${I.copy}</span><span class="opt-t"><strong>Week plan</strong><small>All 7 days, with vitamin D boxes</small></span><button class="btn sm" data-sact="pweek">Print</button></div>
-    <div class="opt"><span class="opt-ic">${I.note}</span><span class="opt-t"><strong>Shopping list</strong><small>With amounts for the week</small></span><span class="opt-btns"><button class="btn sm ghost" data-sact="shoplist">Tick list</button><button class="btn sm" data-sact="pshop">Print</button></span></div>
+    <div class="opt"><span class="opt-ic">${I.note}</span><span class="opt-t"><strong>Shopping list</strong><small>Share: big tick list for Lia's phone. Print: PDF for the supermarket</small></span><span class="opt-btns"><button class="btn sm ghost" data-sact="shopsendw">Share</button><button class="btn sm" data-sact="pshop">Print</button></span></div>
     <div class="opt col"><div class="opt-row"><span class="opt-ic">${I.bowl}</span><span class="opt-t"><strong>Recipes</strong><small>Tick the ones you're cooking</small></span></div>
       ${ids.length?`<ul class="picklist">${ids.map(id=>`<li><label><input type="checkbox" data-prid="${esc(id)}" checked><span>${esc(recipeById(id).title)}</span></label></li>`).join("")}</ul><button class="btn wide" data-sact="precipes">Print recipes</button>`:`<p class="muted">No recipes planned this week yet.</p>`}</div>
   </div>`);
@@ -1875,6 +1875,7 @@ $("#sheet").addEventListener("click",async e=>{
   else if(act==="shopclear")shopClear(s);
   else if(act==="shopsend")sendShop($(".shoplist").dataset.w);
   else if(act==="shoplist")openShopList();
+  else if(act==="shopsendw")sendShop(ui.week);
   else if(act==="print1")openPrintPage("recipes",[s.dataset.id]);
   else if(act==="pweek")openPrintPage("week");
   else if(act==="pshop")openPrintPage("shop");
