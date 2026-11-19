@@ -694,7 +694,8 @@ label.f>span,.lbl{font-weight:600}
 .dayoff{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;border-radius:16px;background:#FCEDE5;color:#5A3A2C;font-size:15px;line-height:1.45}.dayoff svg{flex:none;width:18px;height:18px;margin-top:2px;color:#A65A3D}.dayoff b{margin-right:4px;color:#3E2A20}.dayoff.off{background:#EEF3E8;color:#3F4A38}.dayoff.off svg{color:#526447}
 .addside{justify-self:start;border:0;background:none;padding:6px 2px;min-height:32px;font:600 13.5px var(--sans);color:var(--sage);opacity:.85}
 .freeze-note{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#E9F1F3;font-size:14.5px;line-height:1.45;color:var(--ink-2)}.freeze-note svg{flex:none;width:16px;height:16px;margin-top:2px;color:#3F6E7A}.freeze-note b{color:var(--ink);margin-right:4px}
-.bakes{padding:14px 16px;margin:0 0 14px}.bakes h2{font:600 18px/1.2 var(--serif);margin:0 0 4px}.bakes ul{list-style:none;margin:10px 0 0;padding:0}.bakes li{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid var(--line)}.bakes li .link{font-weight:600;text-align:left;padding:0;font-size:15.5px;color:var(--ink)}.bakes li span{font-size:14px;color:var(--ink-2)}.bakes li .bk-make{color:var(--sage);font-weight:600;font-size:15px}.bakes li .bk-make em{font-style:normal;font-weight:400;color:var(--ink-2)}
+.bakes{padding:14px 16px;margin:0 0 14px}.bakes h2{font:600 18px/1.2 var(--serif);margin:0 0 4px}.bakes ul{list-style:none;margin:10px 0 0;padding:0}.bakes li{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid var(--line)}.bakes li .link{font-weight:600;text-align:left;padding:0;font-size:15.5px;color:var(--ink)}.bakes li span{font-size:14px;color:var(--ink-2)}.bakes li .bk-when{font-size:14px;color:var(--ink-2)}.bakes li .bk-when svg{width:14px;height:14px;vertical-align:-2px;margin-right:4px}.bakes li .bk-when b{color:#A65A3D}.dayoff.make{background:#FBEFC8;color:#4A3F1E}.dayoff.make svg{color:#8A6D1E}
+.bakes li .bk-make{color:var(--sage);font-weight:600;font-size:15px}.bakes li .bk-make em{font-style:normal;font-weight:400;color:var(--ink-2)}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -897,7 +898,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="6.3";
+const APP_VERSION="6.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1052,6 +1053,10 @@ function dayOffNote(k){
   if(dow===0){const bf=S.days[k]?.meals?.breakfast?.recipeId||"";return `<p class="dayoff off">${I.alert}<span><b>Catherine's day off.</b> Everything was cooked yesterday: reheat until steaming hot, let it cool, then serve.${bf.startsWith("spanakbreakfast")?" The triangles go straight from the freezer into the air fryer.":""}</span></p>`}
   return "";
 }
+function makeTodayNote(k){
+  const L=weekBakes(mondayOf(k)).filter(x=>x.mk===k);if(!L.length)return "";
+  return `<p class="dayoff make">${I.alert}<span><b>To make today.</b> ${L.map(x=>`${esc(x.r.title)}: ${x.make.toLowerCase()}, ${x.part==="morning"?"in the morning":x.part==="afternoon"?"in the afternoon":"as soon as you can"}.`).join(" ")} Check the freezer first.</span></p>`;
+}
 function viewDay(){
   const k=ui.date,t=todayKey(),day=S.days[k]||{},meals=day.meals||{},vd=day.vitD||{};
   const rel=k===t?"Today":k===addDays(t,-1)?"Yesterday":k===addDays(t,1)?"Tomorrow":String(parse(k).getFullYear());
@@ -1063,7 +1068,7 @@ function viewDay(){
     
     ${k!==t?`<button class="link center-link" data-act="today">Back to today</button>`:""}
   </header>
-  ${dayOffNote(k)}
+  ${dayOffNote(k)}${makeTodayNote(k)}
   <div class="essentials">
     <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}" aria-label="Vitamin D, ${vd.done?"given":"tap once given"}">
       <span class="tile-top"><span class="tile-ic">${I.sun}</span><strong>Vitamin D</strong></span>
@@ -1133,14 +1138,21 @@ function viewDay(){
 const COOKIE_OF={spanakbreakfast:"carrotcookies",spanakbreakfast2:"courgettecookies"};
 function weekBakes(mon){
   const need={},from=mon===mondayOf(todayKey())?todayKey():mon;
-  const add=(id,k,amt,where)=>{(need[id]??={n:0,uses:[]});need[id].n+=amt;need[id].uses.push(`${amt===.5?"½":"1"} ${where} ${DOW[parse(k).getDay()].slice(0,3)}`)};
+  const add=(id,k,amt,where)=>{(need[id]??={n:0,uses:[],first:null,days:[]});need[id].n+=amt;need[id].days.push(k);need[id].uses.push(`${amt===.5?"½":"1"} ${where} ${DOW[parse(k).getDay()].slice(0,3)}`);if(!need[id].first)need[id].first={k,bf:where==="at breakfast"}};
   for(let i=0;i<7;i++){const k=addDays(mon,i);if(k<from)continue;const ms=S.days[k]?.meals||{};
     for(const sl of ["breakfast","snack"]){const id=ms[sl]?.recipeId;if(!id)continue;
       if(COOKIE_OF[id]){add(COOKIE_OF[id],k,.5,"at breakfast");continue}
       const r=recipeById(id);if(r&&(+r.serves||6)>1&&(r.freezes||/cookie|muffin|bar|finger|bites|fritter|pancake/i.test(r.title)))add(id,k,1,sl==="snack"?"for snack":"at breakfast")}}
   return Object.entries(need).map(([id,x])=>{const r=recipeById(id);if(!r)return null;const sv=+r.serves||6,half=x.n<=sv/2;
     const makes=half?sv/2:Math.ceil(x.n/sv)*sv,spare=Math.floor(makes-x.n);
-    return {r,n:x.n,uses:x.uses,make:half?"Make half the recipe":x.n<=sv?"Make the full recipe":`Make the recipe ${Math.ceil(x.n/sv)} times`,makes,spare}}).filter(Boolean);
+    // When to make it: the morning it's first eaten, or the afternoon before if it's first needed at breakfast. Never on Sunday (Catherine's day off).
+    let md=x.first.bf?addDays(x.first.k,-1):x.first.k,part=x.first.bf?"afternoon":"morning";
+    if(parse(md).getDay()===0){md=addDays(md,-1);part="afternoon"}
+    const t=todayKey();if(md<t){md=t;part="as soon as you can"}
+    const dayName=d=>d===t?(part==="morning"?"This morning":part==="afternoon"?"This afternoon":"Today, as soon as you can"):`${DOW[parse(d).getDay()]} ${dmy(d).slice(0,5)} ${part}`;
+    // Baked things stay fresh about 3 days: if the last one is eaten more than 3 days after making, freeze part of the batch straight away.
+    const late=x.days.filter(d=>d>addDays(md,3)),thaw=late.length?addDays(late[0],-1):null;
+    return {r,n:x.n,uses:x.uses,mk:md,when:dayName(md),part,days:x.days,thaw,make:half?"Make half the recipe":x.n<=sv?"Make the full recipe":`Make the recipe ${Math.ceil(x.n/sv)} times`,makes,spare}}).filter(Boolean);
 }
 const halfTxt=n=>`${Math.floor(n)||""}${n%1?"½":""}`||"0";
 function bakesCard(mon){
@@ -1148,8 +1160,10 @@ function bakesCard(mon){
   return `<section class="card bakes"><h2>${cur?"Baking for the rest of the week":"Baking for this week"}</h2>
   <p class="muted small">How much of each recipe to make, so she eats it fresh and almost nothing goes in the freezer.</p>
   <ul>${L.map(x=>`<li><button class="link" data-act="recipe" data-id="${esc(x.r.id)}">${esc(x.r.title)}</button>
+    <span class="bk-when">${I.clock||""}Make it: <b>${x.when}</b>. Check the freezer first: if there are some with a sticker, use those instead.</span>
     <span class="bk-make">${x.make} <em>(${halfTxt(x.makes)} of her portions)</em></span>
     <span>She eats: ${x.uses.map(esc).join(", ")}</span>
+    ${x.thaw?`<span class="bk-when">To keep it fresh: freeze the ones for ${[...new Set(x.days.filter(d=>d>addDays(x.mk,3)).map(d=>DOW[parse(d).getDay()].slice(0,3)))].join(", ")} on the day you make them, and take each one out the evening before.</span>`:""}
     <span>${x.spare>=1?`Leftover: ${x.spare} to freeze, with a sticker: name and date made`:"Nothing left over"}</span></li>`).join("")}</ul></section>`;
 }
 function viewWeek(){
