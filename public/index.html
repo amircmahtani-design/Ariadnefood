@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="9.6";
+const APP_VERSION="9.7";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1702,7 +1702,7 @@ function buildShopping(mon){
     (r.ingredients||[]).forEach(line=>{const h=line.match(/^(\d+|½)\s+homemade\s+(.+)$/i);if(!h)return;const name=h[2].toLowerCase().replace(/s$/,"");
       const hr=S.recipes.find(x=>x.title.toLowerCase().includes(name));if(hr)uses[hr.id]=(uses[hr.id]||0)+NUMV(h[1])*b})}
   for(const [id,n] of Object.entries(uses)){const r=recipeById(id);if(!r)continue;const b=Math.ceil(n/(+r.serves||1));
-    (r.ingredients||[]).forEach(line=>{if(/homemade/i.test(line))return;const q=lineQty(line);
+    (r.ingredients||[]).forEach(line=>{if(/homemade/i.test(line))return;if(/dinosaur/i.test(line)){const g=(parseFloat(line)||150)*b;const d=(other.Dino??={n:"Dinosaur pasta",g:0,dino:1});d.g+=g;return}const q=lineQty(line);
       if(q.length)q.forEach(x=>add(x.k,r.title,x.g*b,x.c*b,x.tin));
       else if(!/salt|pepper|cinnamon|cumin|paprika|oregano|water|spice|turmeric|zest|^mint|^dill|^fresh|^lemon|^squeeze|^juice|^optional|^fruit/i.test(line)){
         const u=line.match(/^[\d½¼¾⅛\/.\s]*(tsp|tbsp|teaspoons?|tablespoons?|pinch|ml|g)\b\s*(.*)$/i);if(u){const key=cap(u[2].replace(/\(.*?\)/g,"").trim());if(key)other[key]??={n:key,c:0};return}const m=line.match(/^(\d+)\s+(.*)$/);let key=(m?m[2]:line).replace(/\(about ([^)]*)\)/,"· $1").replace(/,.*$/,"").trim();if(/garlic/i.test(key)){other.Garlic??={n:"Garlic",c:0};return}const o=(other[key]??={n:cap(key),c:0,q:!!m});if(m)o.c+=(+m[1])*b}})}
@@ -1715,8 +1715,8 @@ function buildShopping(mon){
     return fmtG(x.g)};
   const aisles={};Object.values(map).forEach(x=>{const a=FOODS[x.k].aisle||"Other";(aisles[a]??=[]).push(x)});
   const order=["Fruit & veg","Meat & fish","Dairy & eggs","Bakery","Fridge","Freezer","Tins & dry"];
-  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");const tip=BUY_TIP[x.k]||(x.k==="pasta"&&Object.keys(x.uses).some(t=>/bolognese/i.test(t))?"Dinosaur shapes for the bolognese (Dalla Costa Dinosauri, Amazon.ae)":"");return {n:x.k==="lemon"?"Lemon":FOODS[x.k].name,f:tip||f,tip:!!tip,q:qty(x)}})}));
-  const oth=Object.values(other);if(oth.length)secs.push({h:"Other",items:oth.map(o=>({n:o.n,f:"",q:o.c?`× ${o.c}`:""}))});
+  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");const tip=BUY_TIP[x.k]||"";return {n:x.k==="lemon"?"Lemon":FOODS[x.k].name,f:tip||f,tip:!!tip,q:qty(x)}})}));
+  const oth=Object.values(other);if(oth.length)secs.push({h:"Other",items:oth.map(o=>o.dino?{n:o.n,f:"Dalla Costa Dinosauri, 250 g bag (Amazon.ae)",tip:true,q:`${Math.max(1,Math.ceil(o.g/250))} ${Math.ceil(o.g/250)>1?"bags":"bag"}`}:({n:o.n,f:"",q:o.c?`× ${o.c}`:""}))});
   window.__shop=secs;
   const PH=new Set(pantryOf(mon).at?pantryOf(mon).have||[]:[]),psecs=secs.map(sc=>({...sc,items:sc.items.filter(x=>!PH.has(shopKey(x)))})).filter(sc=>sc.items.length);
   const rows=[];psecs.forEach(sc=>{rows.push({h:sc.h,n:sc.items.length});sc.items.forEach(x=>rows.push(x))});
