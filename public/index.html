@@ -902,7 +902,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="7.0";
+const APP_VERSION="7.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1058,7 +1058,7 @@ function dayOffNote(k){
   return "";
 }
 function makeTodayNote(k){
-  const L=weekBakes(mondayOf(k)).filter(x=>x.mk===k);if(!L.length)return "";
+  const seen=new Set(),L=[...weekBakes(mondayOf(k)),...weekBakes(addDays(mondayOf(k),7))].filter(x=>x.mk===k&&!seen.has(x.r.id)&&seen.add(x.r.id));if(!L.length)return "";
   return `<p class="dayoff make">${I.alert}<span><b>To make today.</b> ${L.map(x=>`${esc(x.r.title)}: ${x.make.toLowerCase()}, ${x.part==="morning"?"in the morning":x.part==="afternoon"?"in the afternoon":"as soon as you can"}.`).join(" ")} Check the freezer first.</span></p>`;
 }
 function viewDay(){
