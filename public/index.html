@@ -830,7 +830,9 @@ const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v)
 
 /* ---------- state ---------- */
 let S={days:{},recipes:[],settings:{people:["Amir","Catherine","Lia"],milkDefault:600,dropUg:10,vitDTarget:15,formula:{}},insight:null};
-const ui={view:ls.get("ari-view")||"day",date:todayKey(),week:mondayOf(todayKey()),rq:"",rf:"all"};
+// My Week opens on the week you're planning: from Thursday, that's the one starting this coming Saturday.
+const planWeek=()=>{const t=todayKey(),d=parse(t).getDay();return [4,5].includes(d)?addDays(mondayOf(t),7):mondayOf(t)};
+const ui={view:ls.get("ari-view")||"day",date:todayKey(),week:planWeek(),rq:"",rf:"all"};
 if(!["day","week","her","recipes","ask"].includes(ui.view))ui.view="day";
 let me=ls.get("ari-me")||"";
 let pending={},timer=null,saving=false,loaded=false,busy=false,photos=[];
@@ -902,7 +904,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="7.4";
+const APP_VERSION="7.5";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1219,7 +1221,7 @@ function viewWeek(){
     <div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week of"}</p><h1 class="display">${weekRange(mon).replace(/ \d{4}$/,"")}</h1></div>
     <button class="iconbtn" data-act="nextWeek" aria-label="Next week">${I.right}</button></div>
     
-    ${mon!==mondayOf(t)?`<button class="link center-link" data-act="thisWeek">Back to this week</button>`:""}
+    ${mon!==planWeek()?`<button class="link center-link" data-act="thisWeek">${planWeek()===mondayOf(t)?"Back to this week":"Back to the coming week"}</button>`:""}
   </header>
   <nav class="daystrip" aria-label="Days">${[...Array(7)].map((_,i)=>{const k=addDays(mon,i),d=parse(k),ms=S.days[k]?.meals||{},logged=SLOTS.filter(([s])=>Object.keys(ms[s]?.log||{}).length).length;
     return `<a href="#d-${k}" class="dchip${k===t?" today":""}"><span>${DOW[d.getDay()].slice(0,3)}</span><b class="num">${d.getDate()}</b><i class="dots">${SLOTS.map(([s],j)=>`<em class="${j<logged?"on":""}"></em>`).join("")}</i></a>`}).join("")}</nav>
@@ -1745,7 +1747,7 @@ $("#view").addEventListener("click",async e=>{
   else if(act==="fav"){const r=recipeById(a.dataset.id);if(!r)return;r.fav=!r.fav;a.setAttribute("aria-pressed",r.fav);post("recipe",{recipe:r}).then(d=>{S.recipes=d.recipes}).catch(()=>status("Couldn't save. Try again.",false,true))}
   else if(act==="prevWeek"){ui.week=addDays(ui.week,-7);render()}
   else if(act==="nextWeek"){ui.week=addDays(ui.week,7);render()}
-  else if(act==="thisWeek"){ui.week=mondayOf(todayKey());render()}
+  else if(act==="thisWeek"){ui.week=planWeek();render()}
   else if(act==="openDay"){ui.date=a.closest("[data-date]").dataset.date;ui.view="day";ls.set("ari-view","day");render();window.scrollTo(0,0)}
   else if(act==="copyWeek"){
     const mon=ui.week;let any=false;const patches={};
