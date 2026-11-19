@@ -764,7 +764,7 @@ body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:cent
 .rp .tip{margin-top:auto;padding-top:3mm}.rp .tip p{background:#FBEFC8;border-radius:2.5mm;padding:2.2mm 3mm;font-size:8.4pt;margin:0}.rp .tip b{margin-right:1.5mm}
 /* shopping */
 .sp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7mm;align-items:start}
-.sp>div>h2:not(:first-child){margin-top:4mm}.sp .si{display:flex;gap:2.4mm;align-items:flex-start;padding:1.3mm 0;margin:0;border-bottom:.4pt solid #F2ECE2}.sp .si>span:nth-child(2){min-width:0;flex:1}.sp .si .q{flex:none;font-style:normal;font-weight:700;font-size:8.6pt;color:#526447;white-space:nowrap;padding-top:.2mm}.sp .si b{display:block;font-weight:600;font-size:9.2pt}.sp .si small{display:block;color:#7D8274;font-size:7.3pt;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sp{gap:6mm}
+.sp>div>h2:not(:first-child){margin-top:4mm}.sp .si{display:flex;gap:2.4mm;align-items:flex-start;padding:1mm 0;margin:0;border-bottom:.4pt solid #F2ECE2}.sp .si>span:nth-child(2){min-width:0;flex:1}.sp .si .q{flex:none;font-style:normal;font-weight:700;font-size:8.6pt;color:#526447;white-space:nowrap;padding-top:.2mm}.sp .si b{display:block;font-weight:600;font-size:9.2pt}.sp .si small{display:block;color:#7D8274;font-size:7.3pt;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sp{gap:6mm}
 .sp h2{display:flex;justify-content:space-between;font-size:8.2pt;letter-spacing:.12em;text-transform:uppercase;color:#5E7451;font-weight:700;margin:0 0 1.5mm;padding-bottom:1.2mm;border-bottom:.8pt solid #D9E1CF}.sp h2 span{color:#A7B89C}
 .sp ul{list-style:none;margin:0;padding:0}
 .sp li{display:flex;gap:2.4mm;align-items:flex-start;padding:1.4mm 0;border-bottom:.4pt solid #F2ECE2;break-inside:avoid}
@@ -902,7 +902,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="7.2";
+const APP_VERSION="7.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
