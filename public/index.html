@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="9.5";
+const APP_VERSION="9.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1715,7 +1715,7 @@ function buildShopping(mon){
     return fmtG(x.g)};
   const aisles={};Object.values(map).forEach(x=>{const a=FOODS[x.k].aisle||"Other";(aisles[a]??=[]).push(x)});
   const order=["Fruit & veg","Meat & fish","Dairy & eggs","Bakery","Fridge","Freezer","Tins & dry"];
-  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");return {n:x.k==="lemon"?"Lemon":FOODS[x.k].name,f:BUY_TIP[x.k]||f,q:qty(x)}})}));
+  const secs=order.filter(a=>aisles[a]).map(a=>({h:a,items:aisles[a].sort((x,y)=>FOODS[x.k].name.localeCompare(FOODS[y.k].name)).map(x=>{const u=Object.entries(x.uses).sort((p,q)=>q[1]-p[1]);const f=(u[0][1]>1?`${u[0][0]} ×${u[0][1]}`:u[0][0])+(u.length>1?` +${u.length-1} more`:"");const tip=BUY_TIP[x.k]||(x.k==="pasta"&&Object.keys(x.uses).some(t=>/bolognese/i.test(t))?"Dinosaur shapes for the bolognese (Dalla Costa Dinosauri, Amazon.ae)":"");return {n:x.k==="lemon"?"Lemon":FOODS[x.k].name,f:tip||f,tip:!!tip,q:qty(x)}})}));
   const oth=Object.values(other);if(oth.length)secs.push({h:"Other",items:oth.map(o=>({n:o.n,f:"",q:o.c?`× ${o.c}`:""}))});
   window.__shop=secs;
   const PH=new Set(pantryOf(mon).at?pantryOf(mon).have||[]:[]),psecs=secs.map(sc=>({...sc,items:sc.items.filter(x=>!PH.has(shopKey(x)))})).filter(sc=>sc.items.length);
@@ -1725,7 +1725,7 @@ function buildShopping(mon){
       else if(cur.length>=per){cols.push(cur);cur=[{h:last.h,n:last.n,cont:1}]}cur.push(r)});
     if(cur.length)cols.push(cur);return cols};
   const cols=fill(16),pages=[];for(let i=0;i<cols.length;i+=3)pages.push(cols.slice(i,i+3));
-  return pages.map((pc,pi)=>`<section class="page flow">${pgHead("Shopping list",`Week of ${shortRange(mon)}${pages.length>1?` · page ${pi+1} of ${pages.length}`:""}`)}<div class="sp big">${pc.map(c=>`<div>${c.map(r=>r.h?`<h2${r.cont?' class="cont"':""}>${esc(r.h)}${r.cont?" (cont.)":""}<span>${r.n}</span></h2>`:`<p class="si"><span class="box"></span><span><b>${esc(r.n)}</b>${/Spinneys/.test(r.f||"")?`<small>${esc(r.f)}</small>`:""}</span>${r.q?`<em class="q">${esc(r.q)}</em>`:""}</p>`).join("")}</div>`).join("")}</div>
+  return pages.map((pc,pi)=>`<section class="page flow">${pgHead("Shopping list",`Week of ${shortRange(mon)}${pages.length>1?` · page ${pi+1} of ${pages.length}`:""}`)}<div class="sp big">${pc.map(c=>`<div>${c.map(r=>r.h?`<h2${r.cont?' class="cont"':""}>${esc(r.h)}${r.cont?" (cont.)":""}<span>${r.n}</span></h2>`:`<p class="si"><span class="box"></span><span><b>${esc(r.n)}</b>${r.tip?`<small>${esc(r.f)}</small>`:""}</span>${r.q?`<em class="q">${esc(r.q)}</em>`:""}</p>`).join("")}</div>`).join("")}</div>
   <footer class="pg-f"><span>Amounts for her portions from this week's plan. Tick each item once it's in the bag.</span><span>Ariadne's Table</span></footer></section>`).join("");
 }
 /* Shopping tick list: big letters, tap to put an item in the bag. Ticks are shared between phones. */
@@ -1744,7 +1744,7 @@ function openShopList(mon){
   const head=`<div class="sh-h"><div><p class="eyebrow">Shopping list</p><h2 class="display">${esc(shortRange(mon))}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>`;
   const all=secs.flatMap(sc=>sc.items);
   if(!all.length){openSheet(head+`<p class="shop-prog" style="margin:8px 0 6px">This week isn't planned yet.</p><p class="muted">Plan the week in My Week first. The shopping list then fills in by itself and follows any change to the plan.</p>`);return}
-  const nm=x=>`<span class="nm">${esc(x.n)}${/Spinneys/.test(x.f||"")?`<small>${esc(x.f)}</small>`:""}</span>${x.q?`<span class="qt">${esc(x.q)}</span>`:""}`;
+  const nm=x=>`<span class="nm">${esc(x.n)}${x.tip?`<small>${esc(x.f)}</small>`:""}</span>${x.q?`<span class="qt">${esc(x.q)}</span>`:""}`;
   if(!P.at){ // step 1: kitchen check
     const nh=all.filter(x=>have.has(shopKey(x))).length;
     openSheet(head+`<div class="shop-stage wait">${I.alert}<div><b>Not ready yet: kitchen check first</b><span>${me==="Lia"?"Catherine checks what's already at home, then the list is ready for you.":"Tap everything we already have at home, then tap Done at the bottom."}</span></div></div>
@@ -1796,7 +1796,7 @@ async function sendShop(w){
 }
 async function shareShopping(){
   const mon=ui.week;buildShopping(mon);
-  const txt=`Shopping list, week of ${shortRange(mon)}\n`+(window.__shop||[]).map(sc=>`\n${sc.h}\n`+sc.items.map(x=>`- ${x.n}${x.q?`: ${x.q}`:""}${/Spinneys/.test(x.f||"")?` (${x.f})`:""}`).join("\n")).join("\n");
+  const txt=`Shopping list, week of ${shortRange(mon)}\n`+(window.__shop||[]).map(sc=>`\n${sc.h}\n`+sc.items.map(x=>`- ${x.n}${x.q?`: ${x.q}`:""}${x.tip?` (${x.f})`:""}`).join("\n")).join("\n");
   try{if(navigator.share){await navigator.share({title:"Shopping list",text:txt});return}}catch(e){if(e?.name==="AbortError")return}
   try{await navigator.clipboard.writeText(txt);status("Shopping list copied",true)}catch(e){status("Couldn't copy",true,true)}
 }
