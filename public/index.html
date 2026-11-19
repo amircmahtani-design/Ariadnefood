@@ -698,7 +698,10 @@ label.f>span,.lbl{font-weight:600}
 .bakes li .bk-make{color:var(--sage);font-weight:600;font-size:15px}.bakes li .bk-make em{font-style:normal;font-weight:400;color:var(--ink-2)}
 .cookrow{display:flex;gap:8px;align-items:flex-start;margin:4px 0 6px;padding:9px 12px;border-radius:12px;background:#FBEFC8;font-size:14.5px;line-height:1.45;color:#4A3F1E}.cookrow svg{flex:none;width:16px;height:16px;margin-top:2px;color:#8A6D1E}.cookrow b{color:#3A3115;margin-right:3px}.cookrow.bad{background:#FBE3DC;color:#6B2A1A}.cookrow b.miss{color:#B4432A}.cookrow.off{background:#EEF3E8;color:#3F4A38}.cookrow.off svg{color:#526447}
 .wk .c.ck{min-height:10mm;background:#FFF8E1}.wk .c.ck b{font-size:7.6pt;line-height:1.2;margin-bottom:.6mm}.wk .c.ck i{display:block;font-style:normal;font-size:7.3pt;color:#8A6D1E;margin-top:.8mm}
-.kitchen{margin:0 0 14px;padding:12px 16px;border-radius:16px;background:#FBEFC8;color:#3A3115;font-size:15.5px;line-height:1.45}.kitchen b{display:block;font-weight:700}.kitchen span{display:block;color:#5A4E2A}.kitchen ul{margin:6px 0 0;padding-left:20px}.kitchen li{margin:2px 0}.kitchen em{font-style:normal;color:#8A6D1E;font-size:14px}.kitchen.off{background:#EEF3E8;color:#2F3A29}
+.kitchen{margin:0 0 14px;padding:12px 16px;border-radius:16px;background:#FBEFC8;color:#3A3115;font-size:15.5px;line-height:1.45}.kitchen b{display:block;font-weight:700}.kitchen span{display:block;color:#5A4E2A}.kitchen ul{margin:6px 0 0;padding-left:20px}.kitchen li{margin:2px 0}.kitchen .klink{padding:0;font:inherit;color:inherit;text-align:left;text-decoration:underline;text-decoration-color:rgba(0,0,0,.2);text-underline-offset:3px}.kitchen em{font-style:normal;color:#8A6D1E;font-size:14px}.kitchen.off{background:#EEF3E8;color:#2F3A29}
+.rscale{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 6px;background:var(--bg);padding:4px;border-radius:999px}.rscale button{min-height:40px;border:0;border-radius:999px;background:none;font:600 14.5px var(--sans);color:var(--ink-2)}.rscale button[aria-pressed="true"]{background:var(--surface);color:var(--sage);box-shadow:var(--sh-1)}
+.qchip{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:999px;background:#FBEFC8;color:#6B5418;font-size:13px;font-weight:700}
+.rscale-note{margin:0 0 8px;font-size:13.5px;color:var(--ink-3)}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -905,7 +908,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="7.6";
+const APP_VERSION="7.8";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1058,8 +1061,9 @@ function kitchenNote(k){
   const c=cookPlan(k),dow=parse(k).getDay(),sun=S.days[addDays(k,1)]?.meals||{},ms=S.days[k]?.meals||{};
   if(c.off){const bf=ms.breakfast?.recipeId||"";return `<div class="kitchen off"><b>Day off: reheat lunch and dinner.</b>${bf.startsWith("spanak")?"<span>Triangles: freezer → air fryer, 12–15 min.</span>":""}</div>`}
   const sunIds=new Set(["lunch","dinner"].map(s=>sun[s]?.recipeId).filter(Boolean));
-  const items=c.cook.map(t=>{const r=S.recipes.find(r=>t===r.title);return dow===6&&r&&sunIds.has(r.id)?`${t} <em>double it, for Sunday too</em>`:esc(t)});
-  const bakes=c.bakeShort.map(x=>`Bake ${esc(x.replace(/ \(am\)$/," (morning)").replace(/ \(pm\)$/," (afternoon)"))}`);
+  const link=(r,label)=>{const f=(+r.serves||1)>1?scaleFor(r.id,k):0;return `<button class="link klink" data-act="recipe" data-id="${esc(r.id)}"${f?` data-scale="${f}"`:""}>${label}${f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:""}</button>`};
+  const items=c.cook.map(t=>{const base=t.replace(/ \((breakfast|for Sunday)\)$/,""),r=S.recipes.find(r=>base===r.title);if(!r)return esc(t);return link(r,esc(t))+(dow===6&&sunIds.has(r.id)?` <em>also for Sunday</em>`:"")});
+  const bakes=[mondayOf(k),addDays(mondayOf(k),7)].flatMap(w=>weekBakes(w)).filter((x,i,a)=>x.mk===k&&a.findIndex(y=>y.r.id===x.r.id)===i).map(x=>link(x.r,`Bake ${esc(x.r.title)}`)+` <em>${x.part==="morning"?"morning":x.part==="afternoon"?"afternoon":"as soon as you can"}</em>`);
   if(!items.length&&!bakes.length)return `<div class="kitchen"><b>Nothing to cook today.</b>${c.left?"<span>Lunch and dinner are leftovers.</span>":""}</div>`;
   return `<div class="kitchen"><b>To cook today</b><ul>${[...items,...bakes].map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
 }
@@ -1100,7 +1104,7 @@ function viewDay(){
         <span class="mt-row">${title?`<span class="dish">${esc(title)}</span>`:`<span class="empty-t">Nothing planned yet</span>`}<span class="chev">${I.down}</span></span>
       </button>
       <div class="meal-body"${open?"":" hidden"}>
-        <div class="meal-acts">${r?`<button class="link" data-act="recipe" data-id="${esc(r.id)}">${I.bowl}See the recipe</button>`:"<span></span>"}<button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
+        <div class="meal-acts">${r?(()=>{const mk=madeToday(r.id,k),f=mk?scaleFor(r.id,k):0;return `<button class="link" data-act="recipe" data-id="${esc(r.id)}"${f?` data-scale="${f}"`:""}>${I.bowl}See the recipe${f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:""}</button>`})():"<span></span>"}<button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
         <div class="change" hidden>
           <label class="f"><span>Meal</span><select data-pick>${recipeOptions(s,sel,m.custom)}</select></label>
           <label class="f"${sel==="__custom"?"":" hidden"} data-custwrap><span>What is it?</span><input data-pickcustom value="${esc(m.custom)}" placeholder="e.g. Banana + cheese cubes"></label>
@@ -1277,8 +1281,39 @@ function nutriGrid(r){const n=recipeNutrition(r);const show=[["iron","Iron","mg"
 const SAFE_CUT=[[/cucumber/i,"Cucumber: peel it and cut long thin spears she can hold and bite, not rounds or cubes."],[/\bapples?\b(?!.*(grated|cookie|pancake|bites|bars|fingers))/i,"Raw apple: grated only, no slices, wedges or chunks."],[/cherry tomato|\bgrapes?\b|\bolives?\b(?! oil)|fresh blueberr/i,"Round foods: quarter lengthwise; squash blueberries."],[/carrot (stick|baton)s?|raw (carrot|pepper)|celery/i,"Raw veg: grate it or cook it soft; no hard raw sticks yet."],[/(hard |cheddar |halloumi )?cheese cubes|cubes? of cheese/i,"Cheese: thin slices or grated, not cubes."]];
 function safeCut(m,r){const t=[m?.side,m?.custom,r?.title,...(r?.sides||[]),...(r?.ingredients||[])].filter(Boolean).join(" | ");return SAFE_CUT.filter(([re])=>re.test(t)).map(([,n])=>n)}
 function safeHtml(m,r){const n=safeCut(m,r);return n.length?`<p class="safe-cut">${I.alert}<span><b>Safe cut</b> ${n.map(esc).join(" ")}</span></p>`:""}
+/* Scale a recipe: half batch, full, double. Quantities follow; cooking times stay the same. */
+const FRAC_V={"½":.5,"¼":.25,"¾":.75,"⅛":.125,"⅓":1/3,"⅔":2/3};
+function fmtQ(v){if(v>0&&v<.125)v=.125;if(v>=10)return String(Math.round(v));const w=Math.floor(v+1e-9),f=v-w,q=[[0,""],[.125,"⅛"],[.25,"¼"],[1/3,"⅓"],[.5,"½"],[2/3,"⅔"],[.75,"¾"],[1,""]].reduce((a,b)=>Math.abs(b[0]-f)<Math.abs(a[0]-f)?b:a);
+  const W=q[0]===1?w+1:w;return `${W||(q[1]?"":"0")}${q[1]}`}
+function readQ(t){const m=t.match(/^(\d+(?:\.\d+)?)?(?:\s?([½¼¾⅛⅓⅔]))?/);if(!m||(!m[1]&&!m[2]))return null;return {v:(m[1]?+m[1]:0)+(m[2]?FRAC_V[m[2]]:0),len:m[0].length}}
+function scaleLine(line,f){
+  if(f===1)return line;
+  let out=String(line);
+  const lead=out.match(/^(juice of |zest of |a |about )?/i)[0].length,q=readQ(out.slice(lead));
+  if(q&&q.v>0){const nv=q.v*f;out=out.slice(0,lead)+fmtQ(nv)+out.slice(lead+q.len);
+    if(/^\S+\s+(large |small |medium )?eggs?\b/i.test(out.slice(lead))){if(nv%1)out+=" (beat one, use half)";else if(nv>1)out=out.replace(/\begg\b/i,"eggs")}}
+  out=out.replace(/\((about\s*)?(\d+(?:\.\d+)?)\s*(g|kg|ml)\b/gi,(m,a,n,u)=>`(${a||""}${(()=>{const x=+n*f;return u.toLowerCase()==="kg"?(Math.round(x*10)/10):x>=10?Math.round(x/5)*5:Math.round(x)})()} ${u}`);
+  return out;
+}
+/* How much of a recipe the plan needs when it's cooked on day k. */
+function scaleFor(id,k){
+  const r=recipeById(id);if(!r)return 1;const sv=+r.serves||1;if(sv<=1)return 1;
+  for(const w of [mondayOf(k),addDays(mondayOf(k),7),addDays(mondayOf(k),-7)]){const x=weekBakes(w).find(x=>x.r.id===id&&(x.mk===k||x.days.includes(k)));if(x)return /half/i.test(x.make)?.5:(+((x.make.match(/(\d+) times/)||[])[1])||1)}
+  let n=0;for(let i=-1;i<=2;i++){const ms=S.days[addDays(k,i)]?.meals||{};["lunch","dinner"].forEach(s=>{if(ms[s]?.recipeId===id)n++})}
+  if(!n)return 1;return n<=sv/2?.5:n<=sv?1:Math.ceil(n/sv);
+}
+function madeToday(id,k){const r=recipeById(id);if(!r||(+r.serves||1)<=1)return false;const prev=S.days[addDays(k,-1)]?.meals||{};
+  if(["lunch","dinner"].some(s=>(S.days[k]?.meals||{})[s]?.recipeId===id))return parse(k).getDay()!==0&&!["lunch","dinner"].some(s=>prev[s]?.recipeId===id);
+  return [mondayOf(k),addDays(mondayOf(k),7)].some(w=>weekBakes(w).some(x=>x.r.id===id&&x.mk===k))}
+const scaleTxt=f=>f===.5?"½":f===1?"1":`×${f}`;
+function planScale(id){for(const w of [planWeek(),mondayOf(todayKey())]){const x=weekBakes(w).find(x=>x.r.id===id);if(x)return /half/i.test(x.make)?.5:(+((x.make.match(/(\d+) times/)||[])[1])||1)}return 1}
+ui.rscale=ui.rscale||{};
+function scaleBar(r){const f=ui.rscale[r.id]??planScale(r.id),pf=planScale(r.id),sv=+r.serves||0;
+  return `<div class="rscale" role="group" aria-label="How much to make">${[[.5,"½ recipe"],[1,"Full"],[2,"Double"]].map(([v,l])=>`<button data-sact="rscale" data-id="${esc(r.id)}" data-f="${v}" aria-pressed="${f===v}">${l}</button>`).join("")}</div>
+  <p class="rscale-note">${sv?`Makes ${fmtQ(sv*f)} of her portions.`:""}${pf!==1&&f===pf?" Set to this week's plan.":""}${f!==1?" Cooking times stay the same.":""}</p>`}
 function recipeBody(r,withNutri=true){
-  return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${esc(r.sides.join(", "))}</p>`:""}${safeHtml(null,r)}${r.freezes?`<p class="freeze-note">${I.snow}<span><b>Freezing</b> Make only what this week needs. Freeze any spare once cooled, with a sticker: the name and the date it was made. Use within 3 months, oldest first.</span></p>`:""}${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  const f=ui.rscale?.[r.id]??planScale(r.id);
+  return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${esc(r.sides.join(", "))}</p>`:""}${safeHtml(null,r)}${r.freezes?`<p class="freeze-note">${I.snow}<span><b>Freezing</b> Make only what this week needs. Freeze any spare once cooled, with a sticker: the name and the date it was made. Use within 3 months, oldest first.</span></p>`:""}${r.ingredients?.length?`<h4>Ingredients</h4>${(+r.serves||0)>1?scaleBar(r):""}<ul class="ing">${r.ingredients.map(x=>`<li>${esc(scaleLine(x,(+r.serves||0)>1?f:1))}</li>`).join("")}</ul>`:""}
   ${r.method?.length?`<h4>Method</h4><ol class="method">${r.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}
   ${r.tip?`<p class="tip">${I.leaf}<span>${esc(r.tip)}</span></p>`:""}
   ${r.parts?.length>1?`<h4>On her plate</h4><div class="plate-list">${r.parts.map(p=>`<span>${esc(p.name)}</span>`).join("")}</div>`:""}
@@ -1743,7 +1778,7 @@ $("#view").addEventListener("click",async e=>{
   else if(act==="milk"){const day=S.days[ui.date]||{};const cur=day.milk!=null?+day.milk:+S.settings.milkDefault||0;patchDay(ui.date,{milk:Math.max(0,cur+ +a.dataset.d)});keepScroll(render)}
   else if(act==="change"){const p=slotEl.querySelector(".change");p.hidden=!p.hidden}
   else if(act==="doneChange"){document.activeElement?.blur();keepScroll(render)}
-  else if(act==="recipe")openRecipe(a.dataset.id);
+  else if(act==="recipe"){if(a.dataset.scale){ui.rscale[a.dataset.id]=+a.dataset.scale}openRecipe(a.dataset.id)}
   else if(act==="fav"){const r=recipeById(a.dataset.id);if(!r)return;r.fav=!r.fav;a.setAttribute("aria-pressed",r.fav);post("recipe",{recipe:r}).then(d=>{S.recipes=d.recipes}).catch(()=>status("Couldn't save. Try again.",false,true))}
   else if(act==="prevWeek"){ui.week=addDays(ui.week,-7);render()}
   else if(act==="nextWeek"){ui.week=addDays(ui.week,7);render()}
@@ -1795,6 +1830,7 @@ $("#sheet").addEventListener("click",async e=>{
   const avr=e.target.closest("[data-avremove]");if(avr){try{const d=await post("avatar",{name:avr.dataset.avremove,data:null});S.settings=d.settings;setWho();openSettings();render();status("Photo removed",true)}catch{status("Couldn't remove it",false,true)}return}
   const w=e.target.closest("[data-who]");if(w){me=w.dataset.who;ls.set("ari-me",me);setWho();closeSheet();return}
   const s=e.target.closest("[data-sact]");if(!s)return;const act=s.dataset.sact;
+  if(act==="rscale"){ui.rscale[s.dataset.id]=+s.dataset.f;const sc=$("#sheetBody").scrollTop;openRecipe(s.dataset.id);$("#sheetBody").scrollTop=sc;return}
   if(act==="edit")editRecipe(s.dataset.id);
   else if(act==="delete"){if(!confirm("Delete this recipe? Meals already planned with it will show as empty."))return;
     try{const d=await post("recipe-delete",{id:s.dataset.id});S.recipes=d.recipes;closeSheet();render();status("Deleted",true)}catch{status("Couldn't delete. Try again.",false,true)}}
