@@ -698,6 +698,7 @@ label.f>span,.lbl{font-weight:600}
 .bakes li .bk-make{color:var(--sage);font-weight:600;font-size:15px}.bakes li .bk-make em{font-style:normal;font-weight:400;color:var(--ink-2)}
 .cookrow{display:flex;gap:8px;align-items:flex-start;margin:4px 0 6px;padding:9px 12px;border-radius:12px;background:#FBEFC8;font-size:14.5px;line-height:1.45;color:#4A3F1E}.cookrow svg{flex:none;width:16px;height:16px;margin-top:2px;color:#8A6D1E}.cookrow b{color:#3A3115;margin-right:3px}.cookrow.bad{background:#FBE3DC;color:#6B2A1A}.cookrow b.miss{color:#B4432A}.cookrow.off{background:#EEF3E8;color:#3F4A38}.cookrow.off svg{color:#526447}
 .wk .c.ck{min-height:10mm;background:#FFF8E1}.wk .c.ck b{font-size:7.6pt;line-height:1.2;margin-bottom:.6mm}.wk .c.ck i{display:block;font-style:normal;font-size:7.3pt;color:#8A6D1E;margin-top:.8mm}
+.kitchen{margin:0 0 14px;padding:12px 16px;border-radius:16px;background:#FBEFC8;color:#3A3115;font-size:15.5px;line-height:1.45}.kitchen b{display:block;font-weight:700}.kitchen span{display:block;color:#5A4E2A}.kitchen ul{margin:6px 0 0;padding-left:20px}.kitchen li{margin:2px 0}.kitchen em{font-style:normal;color:#8A6D1E;font-size:14px}.kitchen.off{background:#EEF3E8;color:#2F3A29}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -904,7 +905,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="7.5";
+const APP_VERSION="7.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1052,16 +1053,15 @@ function recipeOptions(slot,selected,custom){
 
 /* Today */
 /* Catherine's day off is Sunday: Saturday she cooks for both days; Sunday is reheat only. */
-function dayOffNote(k){
-  const dow=parse(k).getDay(),T=m=>(m?.recipeId&&recipeById(m.recipeId)?.title)||m?.custom||"";
-  if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{},list=[...new Set(SLOTS.map(([s])=>T(sun[s])).filter(Boolean))];
-    return `<p class="dayoff">${I.alert}<span><b>Cook for tomorrow too.</b> Sunday is Catherine's day off. ${list.length?`Sunday is: ${list.map(esc).join(", ")}. Make enough today, cool it and put it in the fridge, labelled.`:"Plan Sunday's meals in My Week."}</span></p>`}
-  if(dow===0){const bf=S.days[k]?.meals?.breakfast?.recipeId||"";return `<p class="dayoff off">${I.alert}<span><b>Catherine's day off.</b> Everything was cooked yesterday: reheat until steaming hot, let it cool, then serve.${bf.startsWith("spanakbreakfast")?" The triangles go straight from the freezer into the air fryer.":""}</span></p>`}
-  return "";
-}
-function makeTodayNote(k){
-  const seen=new Set(),L=[...weekBakes(mondayOf(k)),...weekBakes(addDays(mondayOf(k),7))].filter(x=>x.mk===k&&!seen.has(x.r.id)&&seen.add(x.r.id));if(!L.length)return "";
-  return `<p class="dayoff make">${I.alert}<span><b>To make today.</b> ${L.map(x=>`${esc(x.r.title)}: ${x.make.toLowerCase()}, ${x.part==="morning"?"in the morning":x.part==="afternoon"?"in the afternoon":"as soon as you can"}.`).join(" ")} Check the freezer first.</span></p>`;
+/* Today's kitchen: just what to cook, nothing else. */
+function kitchenNote(k){
+  const c=cookPlan(k),dow=parse(k).getDay(),sun=S.days[addDays(k,1)]?.meals||{},ms=S.days[k]?.meals||{};
+  if(c.off){const bf=ms.breakfast?.recipeId||"";return `<div class="kitchen off"><b>Day off: reheat lunch and dinner.</b>${bf.startsWith("spanak")?"<span>Triangles: freezer → air fryer, 12–15 min.</span>":""}</div>`}
+  const sunIds=new Set(["lunch","dinner"].map(s=>sun[s]?.recipeId).filter(Boolean));
+  const items=c.cook.map(t=>{const r=S.recipes.find(r=>t===r.title);return dow===6&&r&&sunIds.has(r.id)?`${t} <em>double it, for Sunday too</em>`:esc(t)});
+  const bakes=c.bakeShort.map(x=>`Bake ${esc(x.replace(/ \(am\)$/," (morning)").replace(/ \(pm\)$/," (afternoon)"))}`);
+  if(!items.length&&!bakes.length)return `<div class="kitchen"><b>Nothing to cook today.</b>${c.left?"<span>Lunch and dinner are leftovers.</span>":""}</div>`;
+  return `<div class="kitchen"><b>To cook today</b><ul>${[...items,...bakes].map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
 }
 function viewDay(){
   const k=ui.date,t=todayKey(),day=S.days[k]||{},meals=day.meals||{},vd=day.vitD||{};
@@ -1074,7 +1074,7 @@ function viewDay(){
     
     ${k!==t?`<button class="link center-link" data-act="today">Back to today</button>`:""}
   </header>
-  ${dayOffNote(k)}${makeTodayNote(k)}
+  ${kitchenNote(k)}
   <div class="essentials">
     <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}" aria-label="Vitamin D, ${vd.done?"given":"tap once given"}">
       <span class="tile-top"><span class="tile-ic">${I.sun}</span><strong>Vitamin D</strong></span>
@@ -1704,7 +1704,7 @@ async function doPrintAction(){
 if(PMODE){addEventListener("resize",fitPages);$("#ptGo").addEventListener("click",doPrintAction);$("#ptBack").addEventListener("click",e=>{if(history.length<2&&window.opener){e.preventDefault();window.close()}})}
 
 /* ---------- events ---------- */
-$("#tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;ui.view=t.dataset.view;ls.set("ari-view",ui.view);render();window.scrollTo(0,0)});
+$("#tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;ui.view=t.dataset.view;if(ui.view==="day")ui.date=todayKey();if(ui.view==="week")ui.week=planWeek();ls.set("ari-view",ui.view);render();window.scrollTo(0,0)});
 $("#whoBtn").addEventListener("click",()=>loaded&&openSettings());
 const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo(0,y)};
 function setMeal(k,slot,val,side,custom){
