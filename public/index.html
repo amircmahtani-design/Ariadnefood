@@ -692,6 +692,7 @@ label.f>span,.lbl{font-weight:600}
 .center{text-align:center}
 
 .dayoff{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;border-radius:16px;background:#FCEDE5;color:#5A3A2C;font-size:15px;line-height:1.45}.dayoff svg{flex:none;width:18px;height:18px;margin-top:2px;color:#A65A3D}.dayoff b{margin-right:4px;color:#3E2A20}.dayoff.off{background:#EEF3E8;color:#3F4A38}.dayoff.off svg{color:#526447}
+.addside{justify-self:start;border:0;background:none;padding:6px 2px;min-height:32px;font:600 13.5px var(--sans);color:var(--sage);opacity:.85}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -894,7 +895,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="6.0";
+const APP_VERSION="6.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1153,7 +1154,8 @@ function viewWeek(){
           <span class="selwrap"><select class="bare" data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel,m.custom)}</select>${I.down}</span>
           ${sel==="__custom"?`<input class="cust" data-wcustom value="${esc(m.custom)}" placeholder="What is it?" aria-label="Custom ${l.toLowerCase()} on ${shortDay(k)}">`:""}
           ${(s==="lunch"||s==="dinner")&&(m.recipeId||m.custom)?plateTags(m):""}
-          <input class="side" data-wside value="${esc(m.side)}" placeholder="+ add a side" aria-label="Side for ${l.toLowerCase()} on ${shortDay(k)}"></div></div>`}).join("")}
+          ${m.side?"":`<button class="addside" data-act="showSide" aria-label="Add a side for ${l.toLowerCase()} on ${shortDay(k)}">+ side</button>`}
+          <input class="side" data-wside value="${esc(m.side)}" placeholder="${s==="lunch"||s==="dinner"?"Side, e.g. rice + green beans":"Side, e.g. strawberries"}" aria-label="Side for ${l.toLowerCase()} on ${shortDay(k)}"${m.side?"":" hidden"}></div></div>`}).join("")}
     </section>`;
   }
   return h;
@@ -1629,6 +1631,7 @@ $("#view").addEventListener("click",async e=>{
   const rf=e.target.closest("[data-rf]");if(rf){ui.rf=rf.dataset.rf;document.querySelectorAll("[data-rf]").forEach(b=>b.setAttribute("aria-pressed",b===rf));renderRList();return}
   const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
   if(act==="ask"){doAsk();return}
+  if(act==="showSide"){const inp=a.parentElement.querySelector("[data-wside]");a.remove();inp.hidden=false;inp.focus();return}
   if(act==="areply"){askReply(a.dataset.id);return}
   if(act==="adone"){askReply(a.dataset.id,true);return}
   const slotEl=a.closest("[data-slot]"),slot=slotEl?.dataset.slot;
