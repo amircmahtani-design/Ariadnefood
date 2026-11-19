@@ -693,6 +693,8 @@ label.f>span,.lbl{font-weight:600}
 
 .dayoff{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;border-radius:16px;background:#FCEDE5;color:#5A3A2C;font-size:15px;line-height:1.45}.dayoff svg{flex:none;width:18px;height:18px;margin-top:2px;color:#A65A3D}.dayoff b{margin-right:4px;color:#3E2A20}.dayoff.off{background:#EEF3E8;color:#3F4A38}.dayoff.off svg{color:#526447}
 .addside{justify-self:start;border:0;background:none;padding:6px 2px;min-height:32px;font:600 13.5px var(--sans);color:var(--sage);opacity:.85}
+.freeze-note{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#E9F1F3;font-size:14.5px;line-height:1.45;color:var(--ink-2)}.freeze-note svg{flex:none;width:16px;height:16px;margin-top:2px;color:#3F6E7A}.freeze-note b{color:var(--ink);margin-right:4px}
+.bakes{padding:14px 16px;margin:0 0 14px}.bakes h2{font:600 18px/1.2 var(--serif);margin:0 0 4px}.bakes ul{list-style:none;margin:10px 0 0;padding:0}.bakes li{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid var(--line)}.bakes li .link{font-weight:600;text-align:left;padding:0;font-size:15.5px;color:var(--ink)}.bakes li span{font-size:14px;color:var(--ink-2)}.bakes li b{color:var(--sage)}
 /* essentials v5.6: three compact tiles (vitamin D, milk, water) */
 .essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
@@ -895,7 +897,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="6.1";
+const APP_VERSION="6.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1127,6 +1129,22 @@ function viewDay(){
 }
 
 /* My Week */
+/* Bake only what the week needs, so she mostly eats fresh. */
+const COOKIE_OF={spanakbreakfast:"carrotcookies",spanakbreakfast2:"courgettecookies"};
+function weekBakes(mon){
+  const need={};
+  for(let i=0;i<7;i++){const ms=S.days[addDays(mon,i)]?.meals||{};
+    for(const sl of ["breakfast","snack"]){const id=ms[sl]?.recipeId;if(!id)continue;
+      if(COOKIE_OF[id]){need[COOKIE_OF[id]]=(need[COOKIE_OF[id]]||0)+.5;continue}
+      const r=recipeById(id);if(r&&(+r.serves||6)>1&&(r.freezes||/cookie|muffin|bar|finger|bites|fritter|pancake/i.test(r.title)))need[id]=(need[id]||0)+1}}
+  return Object.entries(need).map(([id,n])=>{const r=recipeById(id);if(!r)return null;const sv=+r.serves||6,b=n/sv;
+    const make=b<=.5?"½ batch":b<=1?"1 batch":`${Math.ceil(b)} batches`;return {r,n,make,spare:Math.max(0,(b<=.5?sv/2:Math.ceil(b)*sv)-n)}}).filter(Boolean);
+}
+function bakesCard(mon){
+  const L=weekBakes(mon);if(!L.length)return "";
+  return `<section class="card bakes"><h2>To make this week</h2><p class="muted small">Only what the week needs, so she eats it fresh. Anything spare goes in the freezer with a sticker: name and date made.</p>
+  <ul>${L.map(x=>`<li><button class="link" data-act="recipe" data-id="${esc(x.r.id)}">${esc(x.r.title)}</button><span>${x.n} ${x.n===1?"portion":"portions"} needed · <b>${x.make}</b>${x.spare>=1?` · ${Math.floor(x.spare)} spare to freeze`:""}</span></li>`).join("")}</ul></section>`;
+}
 function viewWeek(){
   const mon=ui.week,t=todayKey();
   let h=`<header class="pagehead">
@@ -1141,7 +1159,7 @@ function viewWeek(){
   <div class="weekacts">
     <button class="btn wide" data-act="aiPlan"${busy?" disabled":""}>${I.spark}${busy==="plan"?"Planning…":"Plan this week with AI"}</button>
     <div class="pair"><button class="btn ghost" data-act="print">${I.print}Print</button><button class="btn ghost" data-act="copyWeek">${I.copy}Copy last week</button></div>
-  </div><div id="planlive"></div>`;
+  </div><div id="planlive"></div>${bakesCard(mon)}`;
   for(let i=0;i<7;i++){
     const k=addDays(mon,i),day=S.days[k]||{},meals=day.meals||{},d=parse(k);
     const logged=SLOTS.filter(([s])=>Object.keys(meals[s]?.log||{}).length).length;
@@ -1190,7 +1208,7 @@ const SAFE_CUT=[[/cucumber/i,"Cucumber: peel it and cut long thin spears she can
 function safeCut(m,r){const t=[m?.side,m?.custom,r?.title,...(r?.sides||[]),...(r?.ingredients||[])].filter(Boolean).join(" | ");return SAFE_CUT.filter(([re])=>re.test(t)).map(([,n])=>n)}
 function safeHtml(m,r){const n=safeCut(m,r);return n.length?`<p class="safe-cut">${I.alert}<span><b>Safe cut</b> ${n.map(esc).join(" ")}</span></p>`:""}
 function recipeBody(r,withNutri=true){
-  return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${esc(r.sides.join(", "))}</p>`:""}${safeHtml(null,r)}${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+  return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${esc(r.sides.join(", "))}</p>`:""}${safeHtml(null,r)}${r.freezes?`<p class="freeze-note">${I.snow}<span><b>Freezing</b> Make only what this week needs. Freeze any spare once cooled, with a sticker: the name and the date it was made. Use within 3 months, oldest first.</span></p>`:""}${r.ingredients?.length?`<h4>Ingredients${r.serves?` <span class="h4-note">makes ${r.serves} toddler ${r.serves==1?"portion":"portions"}</span>`:""}</h4><ul class="ing">${r.ingredients.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
   ${r.method?.length?`<h4>Method</h4><ol class="method">${r.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}
   ${r.tip?`<p class="tip">${I.leaf}<span>${esc(r.tip)}</span></p>`:""}
   ${r.parts?.length>1?`<h4>On her plate</h4><div class="plate-list">${r.parts.map(p=>`<span>${esc(p.name)}</span>`).join("")}</div>`:""}
