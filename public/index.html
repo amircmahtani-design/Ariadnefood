@@ -672,6 +672,23 @@ label.f>span,.lbl{font-weight:600}
 .dl-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .seg.yn{display:grid;grid-template-columns:1fr 1fr;width:150px;margin:0}.seg.yn button{min-height:44px}
 .daylog .notes{margin-top:10px}.daylog .meta.by{margin-top:8px}
+/* essentials v5.6: three compact tiles (vitamin D, milk, water) */
+.essentials{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.essentials .tile{padding:10px 10px 9px;gap:6px;min-height:0;border-radius:18px;align-items:stretch}
+.essentials .tile-top{display:flex;justify-content:flex-start;align-items:center;gap:6px;margin:0;padding:0}
+.essentials .tile-ic{width:24px;height:24px;background:none}.essentials .tile-ic svg{width:18px;height:18px}
+.essentials .tile strong{font-size:15px;line-height:1.1;white-space:nowrap}
+.essentials .tile small{font-size:12.5px;line-height:1.25;color:var(--ink-2);display:flex;align-items:center;gap:4px;min-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.essentials .tile-mid{display:flex;align-items:center;gap:8px;min-height:36px}
+.essentials .vitd .box{width:30px;height:30px;flex:none}
+.essentials .ctl{display:flex;align-items:center;justify-content:space-between;margin:0;background:rgb(255 255 255 / .7);border-radius:999px;padding:2px}
+.essentials .ctl button{width:32px;height:32px;border:0;border-radius:50%;background:var(--surface);font-size:19px;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-1);color:var(--ink);position:relative}
+.essentials .ctl button:after{content:"";position:absolute;inset:-6px}
+.essentials .ctl button:active{transform:scale(.92)}
+.essentials .ctl output{font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+@media (max-width:380px){.essentials .tile-ic{display:none}.essentials .tile{padding:10px 8px 9px}}
+.water{background:#E3EEF1}.water .tile-ic{color:#3F6E7A}
+
 /* print: A4 landscape (v4.5) — opened as its own page (?print=…) so it works from the home-screen app */
 @page{size:A4 landscape;margin:0}
 #print{display:none}
@@ -856,7 +873,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="5.5";
+const APP_VERSION="5.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -872,6 +889,7 @@ const I={
   pencil:sv('<path d="M15.5 5.5l3 3L9 18H6v-3z"/><path d="M13.5 7.5l3 3"/>'),
   plus:sv('<path d="M12 5v14M5 12h14"/>',2),
   copy:sv('<rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>'),
+  drop:sv('<path d="M12 3.2s-6 6.6-6 11a6 6 0 0 0 12 0c0-4.4-6-11-6-11z"/>'),
   sun:sv('<circle cx="12" cy="12" r="4"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>'),
   bottle:sv('<path d="M10 2.8h4M10.5 2.8v2.6L9 7.6a3 3 0 0 0-.5 1.7v9.4A2.3 2.3 0 0 0 10.8 21h2.4a2.3 2.3 0 0 0 2.3-2.3V9.3a3 3 0 0 0-.5-1.7l-1.5-2.2V2.8"/><path d="M8.5 12.5h7"/>'),
   clock:sv('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
@@ -966,13 +984,18 @@ function viewDay(){
     ${k!==t?`<button class="link center-link" data-act="today">Back to today</button>`:""}
   </header>
   <div class="essentials">
-    <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}">
-      <span class="tile-top"><span class="tile-ic">${I.sun}</span><span class="box">${I.check}</span></span>
-      <strong>Vitamin D</strong><small class="vd-dose">${(+S.settings.drops||3)} drops · ${(+S.settings.drops||3)*(+S.settings.iuPerDrop||200)} IU</small><small class="vd-by">${vd.done?`${vd.by?avatar(vd.by,18):""}Given${vd.by?" by "+esc(vd.by):""}${vd.at?" · "+esc(vd.at):""}`:"Tap once given"}</small></button>
+    <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}" aria-label="Vitamin D, ${vd.done?"given":"tap once given"}">
+      <span class="tile-top"><span class="tile-ic">${I.sun}</span><strong>Vitamin D</strong></span>
+      <span class="tile-mid"><span class="box">${I.check}</span><small>${(+S.settings.drops||3)} drops</small></span>
+      <small class="vd-by">${vd.done?`${vd.by?avatar(vd.by,16):""}${vd.at?esc(vd.at):"Given"}`:"Not yet"}</small></button>
     <div class="tile milk">
-      <span class="tile-top"><span class="tile-ic">${I.bottle}</span><small class="tile-tag">${day.milk!=null?"Logged":"Usual"}</small></span>
-      <strong>Milk</strong>
-      <span class="ctl"><button data-act="milk" data-d="-50" aria-label="50 ml less">−</button><output class="num">${ml} ml</output><button data-act="milk" data-d="50" aria-label="50 ml more">+</button></span></div>
+      <span class="tile-top"><span class="tile-ic">${I.bottle}</span><strong>Milk</strong></span>
+      <span class="ctl"><button data-act="milk" data-d="-50" aria-label="50 ml less">−</button><output class="num">${ml}</output><button data-act="milk" data-d="50" aria-label="50 ml more">+</button></span>
+      <small>ml${day.milk!=null?"":" · usual"}</small></div>
+    <div class="tile water">
+      <span class="tile-top"><span class="tile-ic">${I.drop}</span><strong>Water</strong></span>
+      <span class="ctl"><button data-act="water" data-d="-1" aria-label="One cup less">−</button><output class="num">${+day.water||0}</output><button data-act="water" data-d="1" aria-label="One cup more">+</button></span>
+      <small>${(+day.water||0)==1?"cup":"cups"} · aim 1–4</small></div>
   </div>`;
   h+=SLOTS.map(([s,label])=>{
     const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),parts=partsFor(m),log=m.log||{},title=mealTitle(m);
@@ -1543,6 +1566,7 @@ $("#view").addEventListener("click",async e=>{
   else if(act==="today"){ui.date=todayKey();render()}
   else if(act==="poop"){const cur=S.days[ui.date]?.poop?.v;patchDay(ui.date,{poop:cur===a.dataset.val?null:{v:a.dataset.val,by:me||"",at:timeNow()}});keepScroll(render)}
   else if(act==="vitd"){const on=S.days[ui.date]?.vitD?.done;patchDay(ui.date,{vitD:on?null:{done:true,by:me||"",at:timeNow()}});keepScroll(render)}
+  else if(act==="water"){const cur=+(S.days[ui.date]?.water)||0;patchDay(ui.date,{water:Math.max(0,Math.min(12,cur+ +a.dataset.d))});keepScroll(render)}
   else if(act==="milk"){const day=S.days[ui.date]||{};const cur=day.milk!=null?+day.milk:+S.settings.milkDefault||0;patchDay(ui.date,{milk:Math.max(0,cur+ +a.dataset.d)});keepScroll(render)}
   else if(act==="change"){const p=slotEl.querySelector(".change");p.hidden=!p.hidden}
   else if(act==="doneChange"){document.activeElement?.blur();keepScroll(render)}
