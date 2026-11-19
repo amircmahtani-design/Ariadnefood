@@ -215,7 +215,8 @@ export default async (req) => {
       // Never rewrite days unless a migration changed them: a write here could undo a tick made during a deploy.
       await Promise.all([store.setJSON("recipes", recipes), daysTouched ? store.setJSON("days", days) : null, store.setJSON("settings", settings)]);
     }
-    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60) });
+    const shop = (await store.get("shop", { type: "json" })) || {};
+    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop });
   }
 
   // Plain-text report for Claude (or anyone) to read: what she ate, gaps, plan, recipes, and how to write back.
@@ -285,6 +286,20 @@ export default async (req) => {
     const recipes = ((await store.get("recipes", { type: "json" })) || []).filter((x) => x.id !== body.id);
     await store.setJSON("recipes", recipes);
     return json({ ok: true, recipes });
+  }
+
+  // Shopping tick list: which items are already in the bag, per week (shared between phones).
+  if (route === "shop-tick" || route === "shop-clear") {
+    const w = String(body.w || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) return json({ error: "Bad request" }, 400);
+    const shop = (await store.get("shop", { type: "json" })) || {};
+    const set = new Set(shop[w] || []);
+    if (route === "shop-clear") set.clear();
+    else { const k = clip(body.k, 80); if (!k) return json({ error: "Bad request" }, 400); body.on ? set.add(k) : set.delete(k); }
+    shop[w] = [...set];
+    for (const k of Object.keys(shop).sort().slice(0, -8)) delete shop[k];
+    await store.setJSON("shop", shop);
+    return json({ ok: true, shop });
   }
 
   // Kitchen helper questions: saved Q&A, and Amir's replies (which become house rules for the helper).
