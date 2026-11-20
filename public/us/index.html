@@ -529,6 +529,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 .nowcard{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--r-lg);background:var(--sage-mist);margin:-4px 0 16px}
 .nowcard em{display:block;font-style:normal;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .nowcard b{display:block;font-size:17px;font-weight:600;line-height:1.3}
+.dgrp{margin:0 0 10px}
 .qchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
 .qchip{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 16px;border-radius:999px;border:0;background:var(--surface);box-shadow:var(--sh-1);font-size:15px;font-weight:600;color:var(--ink)}
 .qchip svg{width:17px;height:17px;color:var(--sage)}
@@ -577,7 +578,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="3.5";
+const APP_VERSION="3.6";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -888,14 +889,16 @@ function askWho(){
 const LIB=()=>S().adults?._lib||[];
 function library(){const m=new Map();LIB().forEach(r=>m.set(r.title.toLowerCase(),{...r,lib:r.id}));Object.entries(S().adults||{}).forEach(([k,v])=>{if(k==="_prefs")return;Object.values(v||{}).forEach(c=>{const p=c?.plan;if(!p?.title)return;const o=m.get(p.title.toLowerCase());if(!o||(!o.lib&&(p.ing||[]).length>(o.ing||[]).length))m.set(p.title.toLowerCase(),p)})});return [...m.values()].sort((a,b)=>a.title.localeCompare(b.title))}
 // Pick a dish by typing: favourites first, tap one and it's saved
-function dishResults(slot,q){
-  q=(q||"").trim().toLowerCase();const lib=library(),fits=r=>!r.lib||(r.meals||[]).includes(slot)||(slot==="dinner"&&(r.meals||[]).includes("lunch"));
+function dishResults(slot,q,cat){
+  q=(q||"").trim().toLowerCase();const fits=r=>!r.lib||(r.meals||[]).includes(slot)||(slot==="dinner"&&(r.meals||[]).includes("lunch"));
+  let lib=library();if(cat)lib=lib.filter(r=>r.lib&&catOf(r)===cat); // a group picked: only that group, everything in it
   let list;
-  if(!q){list=lib.filter(r=>r.lib&&r.fav&&fits(r));if(!list.length)list=lib.filter(r=>r.lib&&fits(r)).slice(0,12)}
+  if(!q&&cat)list=[...lib].sort((a,b)=>(!!b.fav-!!a.fav)||a.title.localeCompare(b.title));
+  else if(!q){list=lib.filter(r=>r.lib&&r.fav&&fits(r));if(!list.length)list=lib.filter(r=>r.lib&&fits(r)).slice(0,12)}
   else list=lib.filter(r=>(r.title+" "+(r.ing||[]).join(" ")).toLowerCase().includes(q)).sort((a,b)=>(!!b.fav-!!a.fav)||(b.title.toLowerCase().startsWith(q)-a.title.toLowerCase().startsWith(q))||a.title.localeCompare(b.title)).slice(0,40);
   const row=r=>`<button class="dres" data-pick="${esc(r.title)}"><span class="px"><b>${esc(r.title)}</b>${r.amir?`<small>Amir: ${esc(r.amir.title)}</small>`:""}</span>${r.fav?`<span class="hrt">${I.heart}</span>`:""}</button>`;
   const exact=q&&lib.some(r=>r.title.toLowerCase()===q),add=q&&!exact?`<button class="dres add" data-pnew="1"><span class="addi">${I.plus}</span><span class="px"><b>Add “${esc(q.charAt(0).toUpperCase()+q.slice(1))}”</b><small>A new dish. AI writes the recipe</small></span></button>`:"";
-  return `${q?"":`<h3 class="grph">${list.some(r=>r.fav)?"Your favourites":"Your recipes"}</h3>`}${list.length?list.map(row).join(""):q?"":`<p class="small muted">Tap ♡ in Recipes to keep favourites here.</p>`}${add}`;
+  return `${q?"":`<h3 class="grph">${cat?`${cat} · ${list.length}`:list.some(r=>r.fav)?"Your favourites":"Your recipes"}</h3>`}${list.length?list.map(row).join(""):q?"":`<p class="small muted">Tap ♡ in Recipes to keep favourites here.</p>`}${add}`;
 }
 function dishSheet(k,slot){
   const a=A.adultMeal(k,slot),pl=S().adults?.[k]?.[slot]?.plan,sl=SLOTS.find(x=>x[0]===slot)[1],out=a.lia.mode==="out"&&a.amir.mode==="out";
@@ -908,6 +911,7 @@ function dishSheet(k,slot){
   <div id="dishPick" data-k="${k}" data-slot="${slot}">
   <label class="rsearch"><span class="sr">Search your recipes</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="dishQ" placeholder="Type a dish, e.g. pasta" autocomplete="off" enterkeyhint="done"></label>
   <div class="qchips">${quick}</div>
+  ${(()=>{const c={};LIB().forEach(r=>{const g=catOf(r);c[g]=(c[g]||0)+1});return `<label class="rsel dgrp"><span class="sr">Recipe group</span><select id="dishCat"><option value="">All groups</option>${CATS.filter(g=>c[g]).map(g=>`<option value="${esc(g)}">${g} (${c[g]})</option>`).join("")}</select>${I.down}</label>`})()}
   <div id="dishRes">${dishResults(slot,"")}</div></div>
   <details class="onlyone"><summary>Only one of you?</summary>
   <form id="oneForm" data-k="${k}" data-slot="${slot}" class="stack">${PEOPLE.map(([w,n])=>{const o=S().adults?.[k]?.[slot]?.[w]?.mode||"";return `<div class="whorow"><span>${avatar(n,30)}${n}</span><select name="p_${w}"><option value="">Having this</option><option value="own"${o==="own"?" selected":""}>Own meal</option><option value="out"${o==="out"?" selected":""}>Eating out</option></select></div>
@@ -1112,11 +1116,12 @@ document.addEventListener("click",async e=>{
     if(t.dataset.sure!=="1"){t.dataset.sure="1";t.classList.add("sure");setTimeout(()=>{if(t.isConnected){t.dataset.sure="";t.classList.remove("sure")}},3000);status("Tap × again to remove",true);return}
     try{const d=await post("grocery-del",{w,id:t.dataset.gdel});S().groceries=d.groceries;render()}catch(err){status("Not removed. Check the connection.",true,true)}return}
 });
-document.addEventListener("input",e=>{if(e.target.id==="dishQ"){const box=$("#dishPick");$("#dishRes").innerHTML=dishResults(box.dataset.slot,e.target.value);return}
+document.addEventListener("input",e=>{if(e.target.id==="dishQ"){const box=$("#dishPick");$("#dishRes").innerHTML=dishResults(box.dataset.slot,e.target.value,$("#dishCat")?.value);return}
   if(e.target.id!=="recQ")return;ui.recQ=e.target.value;const tmp=document.createElement("div");tmp.innerHTML=viewRecipes();$("#recList").innerHTML=tmp.querySelector("#recList").innerHTML});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.matches?.(".wday")&&d.open)ui.openDay=d.dataset.day},true);
 document.addEventListener("change",e=>{
   if(e.target.id==="recCat"){ui.recCat=e.target.value;render();return}
+  if(e.target.id==="dishCat"){const box=$("#dishPick");$("#dishRes").innerHTML=dishResults(box.dataset.slot,$("#dishQ").value,e.target.value);return}
   if(e.target.id==="photoIn"){readPhoto(e.target.files[0]);return}
   if(e.target.id==="recPhotoIn"){recFromPhotos(e.target.files);return}
   if(e.target.name==="d"){const b=$(".pickbox");if(b)b.hidden=e.target.value!=="pick"}
