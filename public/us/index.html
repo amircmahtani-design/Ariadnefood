@@ -487,7 +487,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.5";
+const APP_VERSION="1.6";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -612,7 +612,7 @@ function viewWeek(){
       <div class="body">${SLOTS.map(([s,l])=>`<h3 class="wk-sl">${l}</h3>${PEOPLE.map(([w,n])=>personRow(k,s,w,n,ms[SLOTS.findIndex(x=>x[0]===s)][w])).join("")}<button class="link" data-rec="${k}|${s}|lia">${I.book}Recipe</button>`).join("")}</div></details>`}).join("");
   const cells=[...Array(7)].flatMap((_,i)=>SLOTS.map(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan));
   const planned=cells.some(x=>x&&!x.locked),picks=cells.filter(x=>x?.locked).length,gaps=gapCount(mon);
-  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${!gaps?"Every meal is set":picks||planned?`${gaps} ${gaps>1?"meals":"meal"} still empty`:"Plan your week"}</b><span>${!gaps?"Tap any meal to change it. Set it to “Let AI choose” and AI fills it next time.":"Tap a meal to pick your own dish. AI fills only the empty ones, from your recipes first, balanced across the week."}</span></div>
+  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${!gaps?"Every meal is set":picks||planned?`${gaps} ${gaps>1?"meals":"meal"} still empty`:"Plan your week"}</b><span>${!gaps?"Tap any meal to change it. Set it to “Let AI choose” and AI fills it next time.":"Tap a meal to pick your own dish. AI fills only the empty ones from your own recipes, balanced across the week."}</span></div>
     ${gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Fill ${gaps===21?"the week":`the ${gaps} empty ${gaps>1?"meals":"meal"}`} with AI</button>`:""}`}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}</section>`;
   return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
   ${aiCard}${days}${houseCard()}<p class="ver">Version ${APP_VERSION}</p>`;
@@ -661,7 +661,7 @@ function viewRecipes(){
   const list=!shown.length?`<p class="empty">${lib.length?"Nothing matches. Try another word.":"No dishes yet. Add the ones you love."}</p>`
     :q||cat?`<div class="rlist">${shown.map(recRow).join("")}</div>`
     :CATS.filter(c=>counts[c]).map(c=>`<h3 class="wk-sl rl-h">${c} <span class="rl-n">${counts[c]}</span></h3><div class="rlist">${shown.filter(r=>catOf(r)===c).map(recRow).join("")}</div>`).join("");
-  return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>AI fills empty meals from these first</p></div></div>
+  return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>AI plans your week from these</p></div></div>
   <div class="house-acts addrec"><button class="btn sm" data-act="addRecipe">${I.plus}Add a dish</button><button class="btn ghost sm" data-act="recPhoto">${I.camera}From photos</button></div>
   <label class="rsearch"><span class="sr">Search recipes</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="recQ" placeholder="Search a dish or an ingredient" value="${esc(ui.recQ||"")}" autocomplete="off"></label>
   <div class="rcats" role="group" aria-label="Recipe groups"><button data-rcat="" aria-pressed="${!cat}">All</button>${CATS.filter(c=>counts[c]).map(c=>`<button data-rcat="${esc(c)}" aria-pressed="${cat===c}">${c} <span>${counts[c]}</span></button>`).join("")}</div>
@@ -842,7 +842,7 @@ function askPlan(){
   const mon=ui.week,gaps=gapCount(mon),picks=[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan?.locked).length,0);
   if(!gaps){status("Every meal this week is set",true);return}
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${esc(A.shortRange(mon))}</p><h2 class="display">Fill ${gaps===21?"the week":`the ${gaps} empty ${gaps>1?"meals":"meal"}`}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <form id="planForm" class="stack"><p class="muted">AI fills only the empty meals${picks?`, balanced around the ${picks} you chose`:""}, using your recipes first. Everything already set stays as it is. Amir's allergies are always covered.</p>
+  <form id="planForm" class="stack"><p class="muted">AI fills only the empty meals${picks?`, balanced around the ${picks} you chose`:""}, from your own recipes. Everything already set stays as it is. Amir's allergies are always covered.</p>
   <label><span class="lbl">Anything to keep in mind? (optional)</span><textarea name="focus" rows="3" placeholder="e.g. Lighter dinners, Lia away Tuesday"></textarea></label>
   <button class="btn wide">${I.spark}Fill ${gaps>1?`${gaps} meals`:"1 meal"}</button></form>`);
 }
