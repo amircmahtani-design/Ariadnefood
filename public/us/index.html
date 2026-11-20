@@ -556,7 +556,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="2.7";
+const APP_VERSION="2.8";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -708,7 +708,7 @@ function gridName(title){
 function weekGrid(mon){
   const t=todayKey(),ks=[...Array(7)].map((_,i)=>addDays(mon,i));
   const cellTxt=p=>{if(p.mode==="out")return `<b>Eating out</b>`;if(p.mode==="none")return `<b class="mute">Not chosen</b>`;if(p.mode==="left")return `<b>Leftovers</b>${(p.fridge||[]).slice(0,3).map(x=>`<small>${esc(gridName(x).main)}</small>`).join("")}`;
-    const g=gridName(p.text);return `<b>${esc(g.main)}</b>${g.wth?`<small>with ${esc(g.wth)}</small>`:""}${g.plus.map(x=>`<small>+ ${esc(x)}</small>`).join("")}${(p.mode==="same"||p.mode==="swap")&&p.side?`<small>+ ${esc(p.side.toLowerCase())}</small>`:""}`};
+    const g=gridName(p.text);return `<b>${esc(g.main)}</b>${g.wth?`<small>with ${esc(g.wth)}</small>`:""}${g.plus.map(x=>`<small>+ ${esc(x)}</small>`).join("")}${(p.mode==="same"||p.mode==="swap")&&p.side?p.side.split(/,\s*|\s+and\s+|\s*\+\s*/).map(x=>x.trim().replace(/^an?\s+/i,"").toLowerCase().replace(/\bgreek\b/g,"Greek")).filter(Boolean).slice(0,3).map(x=>`<small>+ ${esc(x)}</small>`).join(""):""}`};
   return `<div class="wgrid"><div class="wg-h"></div>${ks.map(k=>{const d=parse(k);return `<div class="wg-h${k===t?" today":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()}</span></div>`}).join("")}
   ${SLOTS.map(([s,l,ic])=>`<div class="wg-sl">${ic}<span>${s==="breakfast"?"B'fast":l}</span></div>${ks.map(k=>{const a=A.adultMeal(k,s),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text;
     const inner=same?cellTxt(a.lia):`${cellTxt(a.lia)}<i class="wg-am">Amir</i>${cellTxt(a.amir)}`,who=a.lia.dish?"lia":a.amir.dish?"amir":"";
