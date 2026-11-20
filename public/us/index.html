@@ -474,7 +474,28 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .mbody small{display:block;font-size:15px;color:var(--ink-2);margin-top:4px;line-height:1.4}
 b.mute{color:var(--ink-3)!important;font-style:italic}
 .wlist{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-2);padding:4px 18px;margin:0 0 16px}
-.wrow{display:flex;align-items:center;gap:14px;width:100%;border:0;border-top:1px solid var(--line);background:none;text-align:left;padding:12px 0;min-height:68px;color:var(--ink)}
+.wrow{display:flex;align-items:center;gap:12px;width:100%;border-top:1px solid var(--line);padding:12px 0;min-height:68px;color:var(--ink)}
+.wpick{display:block;width:100%;border:0;background:none;text-align:left;padding:0;color:var(--ink);min-height:44px}
+.wrecs{display:flex;flex-wrap:wrap;gap:0 16px}
+.wrec{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;min-height:36px;font-size:14.5px;font-weight:600;color:var(--sage)}.wrec svg{width:16px;height:16px}
+.wrow .pen{border:0;flex:none;width:44px;height:44px;margin:0 -4px 0 0}
+.wgrid{display:none}
+@media (orientation:landscape) and (min-width:640px){
+  .wgrid{display:grid;grid-template-columns:62px repeat(7,minmax(0,1fr));gap:4px;width:min(calc(100vw - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)),1180px);margin:0 0 16px;position:relative;left:50%;transform:translateX(-50%)}
+  .wlist{display:none}
+  .wg-h{text-align:center;padding:6px 2px;border-radius:12px;line-height:1.15}
+  .wg-h b{display:block;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+  .wg-h span{font-family:var(--serif);font-size:20px;font-weight:560}
+  .wg-h.today{background:var(--sage);color:#fff}.wg-h.today b{color:#E9EFE2}
+  .wg-sl{display:flex;flex-direction:column;justify-content:flex-start;padding-top:10px;gap:2px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+  .wg-sl svg{width:16px;height:16px;color:var(--sage-2)}
+  .wg-c{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;width:100%;text-align:left;border:0;margin:0;padding:8px 8px 9px;min-height:64px;border-radius:12px;background:var(--surface);box-shadow:var(--sh-1);color:var(--ink)}
+  .wg-c b{display:block;font-size:14px;font-weight:700;line-height:1.25;overflow-wrap:normal;word-break:normal}
+  .wg-c small{display:block;font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.25}
+  .wg-c small+small{margin-top:1px}
+  .wg-c .wg-am{display:block;font-style:normal;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--terra-ink);margin-top:7px;padding-top:5px;border-top:1px solid var(--line)}
+  .wg-c.today{box-shadow:0 0 0 2px var(--sage-2),var(--sh-1)}
+}
 .wrow:first-child{border-top:0}
 .wd{flex:none;width:46px;height:50px;border-radius:14px;background:var(--bg);display:grid;place-content:center;text-align:center;line-height:1.1}
 .wd small{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
@@ -535,7 +556,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="2.6";
+const APP_VERSION="2.7";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -666,14 +687,33 @@ function viewWeek(){
   const mon=ui.week,t=todayKey(),gaps=gapCount(mon);
   const rows=[...Array(7)].map((_,i)=>addDays(mon,i)).map(k=>{const a=A.adultMeal(k,"lunch"),d=parse(k),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text,empty=isGap(k,"lunch");
     const none=a.lia.mode==="none",main=pText(a.lia),amir=!same&&!none?`Amir: ${pText(a.amir)}`:"";
-    return `<button class="wrow${k===t?" today":""}" data-edit="${k}|lunch"><span class="wd"><small>${DOW[d.getDay()].slice(0,3)}</small><b>${d.getDate()}</b></span><span class="wm"><b${none?' class="mute"':""}>${esc(main)}</b>${amir?`<small>${esc(amir)}</small>`:""}</span><span class="chev">${I.right}</span></button>`}).join("");
+    const rec=[["lia",a.lia],["amir",a.amir]].filter(([,p])=>p.dish&&!empty&&p.mode!=="out");const recB=!rec.length?"":rec.length===2&&!same?rec.map(([w])=>`<button class="wrec" data-rec="${k}|lunch|${w}">${I.book}${w==="lia"?"Lia's recipe":"Amir's recipe"}</button>`).join(""):`<button class="wrec" data-rec="${k}|lunch|${rec[0][0]}">${I.book}See the recipe</button>`;
+    return `<div class="wrow${k===t?" today":""}"><span class="wd"><small>${DOW[d.getDay()].slice(0,3)}</small><b>${d.getDate()}</b></span><span class="wm"><button class="wpick" data-edit="${k}|lunch"><b${none?' class="mute"':""}>${esc(main)}</b>${amir?`<small>${esc(amir)}</small>`:""}</button>${recB?`<span class="wrecs">${recB}</span>`:""}</span><button class="pen" data-edit="${k}|lunch" aria-label="Change lunch on ${DOW[d.getDay()]}">${I.pen}</button></div>`}).join("");
   const fill=aiBusy?`<p class="streaming wfill"><span class="dot"></span>${esc(aiBusy)}</p>`
     :gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Plan ${gaps>1?`${gaps} lunches`:"1 lunch"} with AI</button>`:"";
   return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Lunches"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
-  <div class="wlist">${rows}</div>
+  ${weekGrid(mon)}<div class="wlist">${rows}</div>
   ${fill}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}
   <p class="note">Breakfast is simple and dinner is leftovers.</p>
   <p class="ver">Version ${APP_VERSION}</p>`;
+}
+// Phone on its side: the whole week, breakfast to dinner, one column per day. Tap a dish for its recipe.
+const GRID_SHORT=[[/\s*\([^)]*\)/g,""],[/\bhomemade\s+/gi,""],[/^oatmeal\s+/i,""],[/\bair-fried\s+/gi,""],[/\bwholemeal\s+/gi,""],[/\bwholewheat\s+/gi,""],[/\s{2,}/g," "]];
+function gridName(title){
+  const sh=t=>{GRID_SHORT.forEach(([a,b])=>t=t.replace(a,b));return t.trim()},low=t=>sh(t).toLowerCase().replace(/\bgreek\b/g,"Greek");
+  let main=String(title||""),rest=[];const w=main.match(/^(.*?)\s+with\s+(.*)$/i);if(w){main=w[1];rest=w[2].split(/\s+(?:and|with)\s+|,\s*/)}
+  const parts=main.split(/,\s*/);main=sh(parts.shift()).replace(/^(easy|quick|simple)\s+/i,"");
+  return {main:main.charAt(0).toUpperCase()+main.slice(1),wth:"",plus:[...parts,...rest].map(low).filter(Boolean).slice(0,3)};
+}
+function weekGrid(mon){
+  const t=todayKey(),ks=[...Array(7)].map((_,i)=>addDays(mon,i));
+  const cellTxt=p=>{if(p.mode==="out")return `<b>Eating out</b>`;if(p.mode==="none")return `<b class="mute">Not chosen</b>`;if(p.mode==="left")return `<b>Leftovers</b>${(p.fridge||[]).slice(0,3).map(x=>`<small>${esc(gridName(x).main)}</small>`).join("")}`;
+    const g=gridName(p.text);return `<b>${esc(g.main)}</b>${g.wth?`<small>with ${esc(g.wth)}</small>`:""}${g.plus.map(x=>`<small>+ ${esc(x)}</small>`).join("")}${(p.mode==="same"||p.mode==="swap")&&p.side?`<small>+ ${esc(p.side.toLowerCase())}</small>`:""}`};
+  return `<div class="wgrid"><div class="wg-h"></div>${ks.map(k=>{const d=parse(k);return `<div class="wg-h${k===t?" today":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()}</span></div>`}).join("")}
+  ${SLOTS.map(([s,l,ic])=>`<div class="wg-sl">${ic}<span>${s==="breakfast"?"B'fast":l}</span></div>${ks.map(k=>{const a=A.adultMeal(k,s),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text;
+    const inner=same?cellTxt(a.lia):`${cellTxt(a.lia)}<i class="wg-am">Amir</i>${cellTxt(a.amir)}`,who=a.lia.dish?"lia":a.amir.dish?"amir":"";
+    const act=who&&a.lia.mode!=="out"?`data-rec="${k}|${s}|${who}"`:`data-edit="${k}|${s}"`;
+    return `<button class="wg-c${k===t?" today":""}" ${act}>${inner}</button>`}).join("")}`).join("")}</div>`;
 }
 function viewShop(){
   const w=ui.shopW||A.planWeek(),mode=ui.shopFor,secs=A.shop(w,mode)||[],P=A.pantryOf(w),have=new Set(P.at?P.have||[]:[]),got=new Set(S().shop?.[w]||[]);
