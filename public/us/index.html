@@ -564,10 +564,8 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <nav class="tabs" aria-label="Sections">
   <div class="wrap" id="tabs">
-    <button class="tab" data-view="day"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M8.5 7c0-1.2 1-1.6 1-2.8M12 7c0-1.2 1-1.6 1-2.8M15.5 7c0-1.2 1-1.6 1-2.8"/></svg></span>Today</button>
     <button class="tab" data-view="week"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>Week</button>
     <button class="tab" data-view="recipes"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/></svg></span>Recipes</button>
-    <button class="tab" data-view="shop"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.3 10.2a2 2 0 0 1-2 1.8H8.3a2 2 0 0 1-2-1.8z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg></span>Shopping</button>
   </div>
 </nav>
 
@@ -583,7 +581,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="3.9";
+const APP_VERSION="4.0";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -623,7 +621,7 @@ const AL_NAME={fish:"fish",seafood:"seafood",chickpeas:"chickpeas",nuts:"nuts"};
 
 /* ---------- state: everything comes from Ariadne's Table (hidden frame) ---------- */
 const ui={view:"week",date:todayKey(),week:mondayOf(todayKey()),shopW:null,shopFor:ls.get("us-shopfor")||"us"};
-if(!["day","week","recipes","shop"].includes(ui.view))ui.view="day";
+if(!["week","recipes"].includes(ui.view))ui.view="week"; // Today and Shopping were retired: the week and the recipes are all they need
 let me=ls.get("ari-me")||"",A=null,busy=false;
 function hook(){try{const w=$("#ariFrame").contentWindow;if(w&&w.ariUs&&w.ariUs.ready()){const first=!A;A=w.ariUs;if(first){ui.shopW=A.planWeek();render();setWho();if(!me)askWho()}}}catch(e){}}
 window.addEventListener("message",e=>{if(e.origin===location.origin&&e.data==="ari-ready")setTimeout(hook,0)});
