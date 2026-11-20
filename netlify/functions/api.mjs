@@ -342,7 +342,7 @@ export default async (req) => {
         if (!["breakfast", "lunch", "dinner"].includes(sl)) continue;
         const cur = ((adults[k] ??= {})[sl] ??= {});
         if (!isObj(pl)) { delete cur.plan; continue; }
-        cur.plan = pl.share ? { share: clip(pl.share, 80), locked: !!pl.locked } : { ...dish(pl), amir: dish(pl.amir), locked: !!pl.locked, ...(pl.lib ? { lib: clip(pl.lib, 60) } : {}) };
+        cur.plan = pl.share ? { share: clip(pl.share, 80), locked: !!pl.locked, ...(pl.side ? { side: clip(pl.side, 120) } : {}) } : { ...dish(pl), amir: dish(pl.amir), locked: !!pl.locked, ...(pl.lib ? { lib: clip(pl.lib, 60) } : {}) };
         if (body.reset) { delete cur.lia; delete cur.amir; }
       }
     }

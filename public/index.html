@@ -934,7 +934,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="13.0";
+const APP_VERSION="13.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1735,7 +1735,7 @@ function sideNoAllergen(side){const R=allergyRules();return String(side||"").spl
 function swapText(al){return al.includes("fish")||al.includes("seafood")?"Grilled chicken breast with lemon and oregano":al.includes("chickpeas")?"Lean beef or chicken patties":al.includes("nuts")?"The same dish, made without nuts":`Something without ${al.join(" or ")}`}
 function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
   if(slot==="breakfast"){const b=pl&&pl.title&&pl.locked?{t:pl.title,i:pl.ing||[],method:pl.method||[]}:adultBf(k);const one=who=>{const o=ov[who];return o?.mode==="out"?{mode:"out",text:"Eating out"}:o?.mode==="own"?{mode:"own",text:o.text||"Own breakfast"}:{mode:"same",text:b.t,dish:{title:b.t,ing:b.i,method:b.method||[]}}};return {r:null,bf:b,side:"",al:[],lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
-  const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=m?.side||"",al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
+  const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=(pl?.share&&pl.side)||m?.side||"",al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
   const own=pl&&pl.title&&!pl.share?pl:null,oal=own?allergensOf({title:own.title,ingredients:own.ing||[]},""):[];
   // Dinner is usually leftovers: theirs from lunch, or Ariadne's dishes in the fridge
   if(slot==="dinner"&&!pl){const lu=adultMeal(k,"lunch");
