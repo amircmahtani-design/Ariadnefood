@@ -420,12 +420,12 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .rsel{position:relative;display:block}
 .rsel select{width:100%;min-height:46px;border-radius:999px;padding:0 40px 0 18px;font-size:15.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);-webkit-appearance:none;appearance:none}
 .rsel>svg{position:absolute;right:16px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
-.onmenu{min-width:0;margin-top:6px;padding:16px;border-radius:var(--r-lg);background:var(--sage-mist)}
+.onmenu{min-width:0;margin-top:14px;padding:16px;border-radius:var(--r-lg);background:var(--sage-mist)}
 .onmenu .rh{margin:0 0 10px}
 .seg2{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;padding:4px;border-radius:999px;background:rgb(82 100 71 / .08);margin:0 0 12px}
 .seg2 button{border:0;background:none;border-radius:999px;min-height:40px;font-size:15px;font-weight:600;color:var(--ink-3)}
 .seg2 button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1)}
-.rfull{margin-top:14px;border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--sh-1);padding:4px 16px}
+.rfull{margin-top:4px;border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--sh-1);padding:4px 16px}
 .rfull summary{display:flex;align-items:center;gap:12px;min-height:60px;list-style:none;cursor:pointer}.rfull summary::-webkit-details-marker{display:none}
 .rfull summary>span{flex:1;min-width:0;font-weight:600;font-size:16.5px}.rfull summary small{display:block;font-weight:500;font-size:14px;color:var(--ink-3);margin-top:1px}
 .rfull summary>svg{flex:none;width:20px;height:20px;color:var(--sage)}.rfull summary>svg:last-child{color:var(--ink-3);transition:transform .3s}.rfull[open] summary>svg:last-child{transform:rotate(180deg)}
@@ -577,7 +577,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="3.1";
+const APP_VERSION="3.2";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -841,7 +841,7 @@ function libSheet(r,draft){
   <h3 class="rh">Method</h3><ol class="rmeth">${lst(r.method)}</ol>
   ${r.amir?`<div class="amirv"><h3 class="rh">For Amir: ${esc(r.amir.title)}</h3><ul class="ring">${lst(r.amir.ing)}</ul>${(r.amir.method||[]).length?`<ol class="rmeth">${lst(r.amir.method)}</ol>`:""}</div>`:""}`;
     // Saved recipes open folded: add it to a day straight away, or tap to read the whole recipe
-    return draft?full:`${onMenu(r)}<details class="rfull"><summary>${I.book}<span>See the full recipe<small>${(r.ing||[]).length} ingredients · ${(r.method||[]).length} steps${r.amir?" · Amir's version":""}</small></span>${I.down}</summary>${full}</details>`})()}
+    return draft?full:`<details class="rfull"><summary>${I.book}<span>See the full recipe<small>${(r.ing||[]).length} ingredients · ${(r.method||[]).length} steps${r.amir?" · Amir's version":""}</small></span>${I.down}</summary>${full}</details>${onMenu(r)}`})()}
   <div class="sh-acts">${draft?`<button class="btn wide" data-act="saveRec">Save to our recipes</button><button class="btn ghost wide" data-act="addRecipe">Try again</button>`
     :`${r.ari&&A.recipeById(r.ari)?`<p class="sentari">${I.baby}In Ariadne's recipes too</p>`:`<button class="btn ghost wide ari" data-act="toAri" data-id="${esc(r.id)}">${I.baby}Ariadne could eat this</button>`}<button class="btn ghost wide" data-act="editRec" data-id="${esc(r.id)}">${I.pen}Edit</button><button class="btn ghost wide del" data-act="delRec" data-id="${esc(r.id)}">Remove from our recipes</button>`}</div>`);
 }
