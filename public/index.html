@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="12.0";
+const APP_VERSION="12.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1683,8 +1683,11 @@ function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
   const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=m?.side||"",al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
   const own=pl&&pl.title&&!pl.share?pl:null,oal=own?allergensOf({title:own.title,ingredients:own.ing||[]},""):[];
   // Dinner is usually leftovers: theirs from lunch, or Ariadne's dishes in the fridge
-  if(slot==="dinner"&&!pl){const lu=adultMeal(k,"lunch"),hers=["lunch","dinner"].map(s=>{const x=S.days[k]?.meals?.[s];const rr=x?.recipeId&&recipeById(x.recipeId);return rr&&!TODDLER_ONLY.test(rr.title)?rr:null}).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
-    const fr=who=>{const l=[];const mine=lu[who];if(["plan","same","alt","swap"].includes(mine.mode))l.push(mine.text);hers.forEach(rr=>{if(who==="amir"&&allergensOf(rr,"").length)return;if(!l.includes(rr.title))l.push(rr.title+" (Ariadne's)")});return l};
+  if(slot==="dinner"&&!pl){const lu=adultMeal(k,"lunch");
+    // What should be in the fridge tonight: Ariadne's batches already cooked by today (yesterday's, today's, and anything made today for tomorrow)
+    const madeOn=(id,d)=>{let x=d;for(let n=0;n<4;n++){const p=addDays(x,-1);if(!["lunch","dinner"].some(s2=>S.days[p]?.meals?.[s2]?.recipeId===id))break;x=p}return x};
+    const hers=[];[-1,0,1].forEach(o=>{const d=addDays(k,o);["lunch","dinner"].forEach(s2=>{const id=S.days[d]?.meals?.[s2]?.recipeId,rr=id&&recipeById(id);if(!rr||TODDLER_ONLY.test(rr.title)||hers.includes(rr))return;const mk=madeOn(id,d);if(mk<=k&&mk>=addDays(k,-2))hers.push(rr)})});
+    const fr=who=>{const l=[];hers.forEach(rr=>{if(who==="amir"&&allergensOf(rr,"").length)return;l.push(rr.title+" (Ariadne's)")});const mine=lu[who];if(["plan","same","alt","swap"].includes(mine.mode)&&!l.some(x=>x.startsWith(mine.text)))l.push(mine.text+" (from lunch)");return l};
     const one=who=>{const o=ov[who];if(o?.mode==="out")return {mode:"out",text:"Eating out"};if(o?.mode==="own")return {mode:"own",text:o.text||"Own meal"};return {mode:"left",text:"Leftovers from the fridge",fridge:fr(who)}};
     return {r,side,al,own:null,kid,locked:false,left:true,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
   const one=who=>{const o=ov[who];if(o?.mode==="out")return {mode:"out",text:"Eating out"};if(o?.mode==="own")return {mode:"own",text:o.text||"Own meal"};
