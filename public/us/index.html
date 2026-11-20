@@ -410,6 +410,10 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .rcats button span{font-weight:500;color:var(--ink-3);margin-left:2px}
 .rcats button[aria-pressed="true"]{background:var(--sage);border-color:var(--sage);color:#fff}
 .rcats button[aria-pressed="true"] span{color:rgb(255 255 255 / .8)}
+.rrw{display:flex;align-items:center;border-top:1px solid var(--line)}.rlist .rrw:first-child{border-top:0}.rrw .rrow{border-top:0;flex:1}
+.fav{flex:none;width:44px;height:44px;border:0;background:none;display:grid;place-items:center;color:var(--ink-3);margin-right:-8px}
+.fav svg{width:22px;height:22px}.fav.on{color:#C0533A}.fav.on svg{fill:#C0533A}
+.favchip{display:inline-flex;align-items:center;gap:5px}.favchip svg{width:16px;height:16px}
 .rl-n{font-weight:500;color:var(--ink-3);letter-spacing:0}
 .orline{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:14px}.orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line-2)}
 .rl-h{margin:18px 4px 8px}
@@ -489,7 +493,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="2.4";
+const APP_VERSION="2.5";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -520,6 +524,7 @@ const I={
   spark:sv('<path d="M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2L5 10.5l5.2-1.8z"/><path d="M18.5 16v4M16.5 18h4"/>'),
   book:sv('<path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/>'),
   baby:sv('<circle cx="12" cy="12" r="8.5"/><path d="M9 10.5h.01M15 10.5h.01M9.5 14.5a3.5 3.5 0 0 0 5 0M12 3.5c1.5 0 2 1 2 2"/>'),
+  heart:sv('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'),
   pen:sv('<path d="M15.5 5.5l3 3L8 19H5v-3z"/>'),
 };
 const PEOPLE=[["lia","Lia"],["amir","Amir"]];
@@ -662,19 +667,19 @@ function catOf(r){if(r.cat&&CATS.includes(r.cat))return r.cat;const m=r.meals||[
   if(/\b(chicken|turkey)\b/.test(all))return "Poultry";
   if(/\b(beef|pork|lamb|veal)\b/.test(all))return "Meat";
   return "Vegetarian"}
-function recRow(r){return `<button class="rrow" data-lib="${esc(r.id)}"><span class="px"><b>${esc(r.title)}</b><small>${esc([r.time,r.serves].filter(Boolean).join(" · "))}</small>${r.amir?`<i class="pchip warn">Amir's version: ${esc(r.amir.title)}</i>`:""}</span><span class="chev">${I.right}</span></button>`}
+function recRow(r){return `<div class="rrw"><button class="rrow" data-lib="${esc(r.id)}"><span class="px"><b>${esc(r.title)}</b><small>${esc([r.time,r.serves].filter(Boolean).join(" · "))}</small>${r.amir?`<i class="pchip warn">Amir's version: ${esc(r.amir.title)}</i>`:""}</span><span class="chev">${I.right}</span></button><button class="fav${r.fav?" on":""}" data-fav="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="${r.fav?"Remove from favourites":"Add to favourites"}">${I.heart}</button></div>`}
 function viewRecipes(){
   const lib=LIB().slice().sort((a,b)=>a.title.localeCompare(b.title)),q=(ui.recQ||"").trim().toLowerCase(),cat=ui.recCat||"";
   const counts={};lib.forEach(r=>{const c=catOf(r);counts[c]=(counts[c]||0)+1});
-  const hit=r=>(!cat||catOf(r)===cat)&&(!q||(r.title+" "+(r.ing||[]).join(" ")+" "+(r.amir?.title||"")).toLowerCase().includes(q));
+  const hit=r=>(!cat||(cat==="fav"?r.fav:catOf(r)===cat))&&(!q||(r.title+" "+(r.ing||[]).join(" ")+" "+(r.amir?.title||"")).toLowerCase().includes(q));
   const shown=lib.filter(hit);
   const list=!shown.length?`<p class="empty">${lib.length?"Nothing matches. Try another word.":"No dishes yet. Add the ones you love."}</p>`
     :q||cat?`<div class="rlist">${shown.map(recRow).join("")}</div>`
     :CATS.filter(c=>counts[c]).map(c=>`<h3 class="wk-sl rl-h">${c} <span class="rl-n">${counts[c]}</span></h3><div class="rlist">${shown.filter(r=>catOf(r)===c).map(recRow).join("")}</div>`).join("");
-  return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>AI plans your week from these</p></div></div>
+  return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>Tap ♡ on the ones you cook most. AI plans mostly from those</p></div></div>
   <div class="house-acts addrec"><button class="btn sm" data-act="addRecipe">${I.plus}Add a dish</button><button class="btn ghost sm" data-act="recPhoto">${I.camera}From photos</button></div>
   <label class="rsearch"><span class="sr">Search recipes</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="recQ" placeholder="Search a dish or an ingredient" value="${esc(ui.recQ||"")}" autocomplete="off"></label>
-  <div class="rcats" role="group" aria-label="Recipe groups"><button data-rcat="" aria-pressed="${!cat}">All</button>${CATS.filter(c=>counts[c]).map(c=>`<button data-rcat="${esc(c)}" aria-pressed="${cat===c}">${CHIP[c]||c} <span>${counts[c]}</span></button>`).join("")}</div>
+  <div class="rcats" role="group" aria-label="Recipe groups"><button data-rcat="" aria-pressed="${!cat}">All</button><button data-rcat="fav" class="favchip" aria-pressed="${cat==="fav"}">${I.heart}Favourites <span>${lib.filter(r=>r.fav).length}</span></button>${CATS.filter(c=>counts[c]).map(c=>`<button data-rcat="${esc(c)}" aria-pressed="${cat===c}">${CHIP[c]||c} <span>${counts[c]}</span></button>`).join("")}</div>
   <div id="recList">${list}</div>
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
@@ -841,7 +846,7 @@ function planContext(mon){
   for(let i=7;i<=13;i++){const p=S().adults?.[addDays(mon,i)]?.lunch?.plan;if(p?.lib)prev.push(p.lib)}
   const lib=LIB().filter(r=>(r.meals||[]).some(m=>m==="lunch"||m==="dinner")),sides=LIB().filter(r=>(r.meals||[]).includes("side"));
   if(prev.length)lines.push(`ALREADY USED in the weeks around this one, do NOT pick these ids: ${[...new Set(prev)].join(", ")}`);
-  lines.push(`LIBRARY (id: title [group]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${catOf(r)}]; ${(r.ing||[]).slice(0,3).map(x=>x.replace(/\(.*?\)/g,"").slice(0,40)).join(", ")}${r.amir?" (Amir version)":""}`).join("\n")}`);
+  lines.push(`LIBRARY (id: title [group]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title}${r.fav?" [FAV]":""} [${catOf(r)}]; ${(r.ing||[]).slice(0,3).map(x=>x.replace(/\(.*?\)/g,"").slice(0,40)).join(", ")}${r.amir?" (Amir version)":""}`).join("\n")}`);
   if(sides.length)lines.push(`Their side dishes (good for "side"): ${sides.map(r=>r.title).join("; ")}`);
   lines.push(`Amir avoids: ${[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")}.`);
   return lines.join("\n");
@@ -898,6 +903,8 @@ document.addEventListener("click",async e=>{
   if(t.dataset.wk){ui.week=addDays(ui.week,+t.dataset.wk);render();return}
   if(t.dataset.sw){ui.shopW=addDays(ui.shopW,+t.dataset.sw);render();return}
   if(t.dataset.for){ui.shopFor=t.dataset.for;ls.set("us-shopfor",ui.shopFor);render();return}
+  if(t.dataset.fav){const r=LIB().find(x=>x.id===t.dataset.fav);if(!r)return;const on=!r.fav;r.fav=on;t.classList.toggle("on",on);t.setAttribute("aria-pressed",on);
+    try{const d=await post("adult-lib",{recipes:[{...r,fav:on}]});S().adults=d.adults;const c=$(".favchip span");if(c)c.textContent=LIB().filter(x=>x.fav).length}catch(err){r.fav=!on;t.classList.toggle("on",!on);status("Not saved. Check the connection.",true,true)}return}
   if(t.hasAttribute("data-rcat")){ui.recCat=t.dataset.rcat;render();return}
   if(t.dataset.lib){const r=LIB().find(x=>x.id===t.dataset.lib);if(r)libSheet(r);return}
   if(t.dataset.act==="addRecipe"){addRecipe();return}
