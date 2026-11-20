@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="11.6";
+const APP_VERSION="11.7";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1662,7 +1662,7 @@ async function shrink(file){
 const adultTxt=f=>f===.5?"half a recipe":f===1?"1 more recipe":`${String(f).replace(".5","½")} more recipes`;
 const PREFS=()=>({allergies:["fish","seafood","chickpeas","nuts"],other:"",portion:3,...(S.adults?._prefs||{})});
 // Toddler-style dishes are Ariadne's alone: never shared with Lia and Amir
-const TODDLER_ONLY=/\b(bites?|patt(y|ies)|fingers?|nuggets?|puree|purée|mash)\b/i;
+const TODDLER_ONLY=/\b(bites?|patt(y|ies)|fingers?|fritters?|nuggets?|puree|purée|mash)\b/i;
 const ADULT_P_=()=>+PREFS().portion||3; // one grown-up portion, in Ariadne's portions
 // Their own breakfast (Ariadne's is too small and too soft): a weekly rotation, high in protein, no nuts
 const ADULT_BF=[
