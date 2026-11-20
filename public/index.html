@@ -942,7 +942,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.0";
+const APP_VERSION="14.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1106,7 +1106,7 @@ function recipeOptions(slot,selected,custom,group){
 }
 
 /* Today */
-/* Catherine's day off is Sunday: Saturday she cooks for both days and does most of the baking (Lia and Amir have Ariadne); Sunday is reheat only. */
+/* Catherine's day off is Sunday: Saturday she cooks for both days; Sunday is reheat only. */
 /* Today's kitchen: just what to cook, nothing else. */
 function kitchenNote(k){
   const c=cookPlan(k),dow=parse(k).getDay(),sun=S.days[addDays(k,1)]?.meals||{},ms=S.days[k]?.meals||{};
@@ -1260,9 +1260,6 @@ function bakeList(mon,need){
     else if(hb&&[0,6].includes(parse(md).getDay())&&md>=mon){md=mon;part="afternoon"} // bread needed early in the week: Saturday afternoon, after Friday's shopping
     else if([0,6].includes(parse(md).getDay())){md=addDays(md,parse(md).getDay()===0?-2:-1);part="afternoon"}
     if(BROTH.has(id)&&md<mon&&mon>=t){md=mon;part="first thing in the morning"} // needed on the Saturday itself: put it on to simmer first thing
-    // Saturday is the big cooking day (Lia and Amir have Ariadne): anything first needed from Saturday lunch to Wednesday gets made that Saturday instead (not strict: never before today, and late days still get frozen)
-    const satOK=mon>=t&&x.first.k>=mon&&x.first.k<=addDays(mon,4)&&!(x.first.k===mon&&x.first.bf);
-    if(satOK&&md!==mon){md=mon;part=BROTH.has(id)?"first thing in the morning":x.first.k===mon?"morning":"afternoon"}
     if(md<t){md=t;part="as soon as you can"}
     const dayName=d=>d===t?(part==="morning"?"This morning":part==="afternoon"?"This afternoon":"Today, as soon as you can"):`${DOW[parse(d).getDay()]} ${dmy(d).slice(0,5)} ${part}`;
     // Baked things stay fresh about 3 days: if the last one is eaten more than 3 days after making, freeze part of the batch straight away.
