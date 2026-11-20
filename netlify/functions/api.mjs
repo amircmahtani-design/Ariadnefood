@@ -354,8 +354,8 @@ export default async (req) => {
       for (const r of (Array.isArray(body.recipes) ? body.recipes : []).slice(0, 40)) {
         if (!isObj(r) || !r.title) continue;
         const id = clip(r.id, 60) || clip(r.title, 60).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-        const meals = (Array.isArray(r.meals) ? r.meals : ["lunch", "dinner"]).filter((m) => ["breakfast", "lunch", "dinner"].includes(m));
-        const rec = { id, ...dish(r), meals: meals.length ? meals : ["lunch", "dinner"], time: clip(r.time, 30), tip: clip(r.tip, 300), amir: dish(r.amir), at: new Date().toISOString() };
+        const meals = (Array.isArray(r.meals) ? r.meals : ["lunch", "dinner"]).filter((m) => ["breakfast", "lunch", "dinner", "side", "basic"].includes(m));
+        const rec = { id, ...dish(r), meals: meals.length ? meals : ["lunch", "dinner"], time: clip(r.time, 30), serves: clip(r.serves, 40), tip: clip(r.tip, 300), amir: dish(r.amir), at: new Date().toISOString() };
         const i = lib.findIndex((x) => x.id === id); if (i >= 0) lib[i] = rec; else lib.push(rec);
       }
     } else { const i = lib.findIndex((x) => x.id === body.id); if (i >= 0) lib.splice(i, 1); }
@@ -646,7 +646,7 @@ Reply with ONLY JSON, no markdown:
       if (!name && !imgs.length) return json({ error: "Type the name of the dish first." }, 400);
       const system = `You write home recipes for Lia and Amir, a healthy, fit couple in Dubai. Given the name of a dish they love, write the recipe the way it is really made, a little lighter where that doesn't spoil it (lean meat, good olive oil, plenty of vegetables, wholewheat where it works), and high in protein. Ingredients easy to buy in Dubai supermarkets. Bread and pitta are homemade at home: write "homemade bread" or "homemade pitta" when needed.
 ALLERGIES: Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts"}. If the dish contains any of them, keep it as it is for Lia and add "amir": his own version for one person without them. If you can make the whole dish safe for both without spoiling it (e.g. leave out a nut garnish), do that instead and leave "amir" out.
-Quantities for TWO people. Every ingredient line starts with the amount: "200 g wholewheat penne", "2 chicken breasts", "1 onion", "2 tbsp olive oil". Method: 4 to 8 short clear steps. "meals": which of breakfast, lunch, dinner it suits.
+Quantities for TWO people. Every ingredient line starts with the amount: "200 g wholewheat penne", "2 chicken breasts", "1 onion", "2 tbsp olive oil". Method: 4 to 8 short clear steps. "meals": which of breakfast, lunch, dinner it suits; use "side" for a side dish or side salad, "basic" for a sauce, dressing, spread or frosting.
 Reply with ONLY JSON, no markdown:
 {"title":"","meals":["lunch","dinner"],"time":"30 min","ing":[""],"method":[""],"tip":"one short line, optional","amir":{"title":"","ing":[],"method":[]}}`;
       if (imgs.length) return callAI(system + `

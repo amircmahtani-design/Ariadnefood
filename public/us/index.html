@@ -477,7 +477,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.3";
+const APP_VERSION="1.4";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -628,10 +628,11 @@ function viewShop(){
 }
 
 function viewRecipes(){
-  const lib=LIB().slice().sort((a,b)=>a.title.localeCompare(b.title)),grp=[["Breakfast",lib.filter(r=>(r.meals||[]).includes("breakfast"))],["Lunch & dinner",lib.filter(r=>!(r.meals||[]).includes("breakfast")||(r.meals||[]).some(m=>m!=="breakfast"))]];
+  const lib=LIB().slice().sort((a,b)=>a.title.localeCompare(b.title)),has=(r,m)=>(r.meals||[]).includes(m);
+  const grp=[["Breakfast",lib.filter(r=>has(r,"breakfast"))],["Lunch & dinner",lib.filter(r=>has(r,"lunch")||has(r,"dinner"))],["Sides & salads",lib.filter(r=>has(r,"side"))],["Basics & sauces",lib.filter(r=>has(r,"basic"))]];
   return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>AI fills empty meals from these first</p></div></div>
   <div class="house-acts addrec"><button class="btn sm" data-act="addRecipe">${I.plus}Add a dish</button><button class="btn ghost sm" data-act="recPhoto">${I.camera}From photos</button></div>
-  ${lib.length?grp.filter(([,l])=>l.length).map(([h,l])=>`<h3 class="wk-sl rl-h">${h}</h3><div class="rlist">${l.map(r=>`<button class="rrow" data-lib="${esc(r.id)}"><span class="px"><b>${esc(r.title)}</b><small>${esc([r.time,(r.meals||[]).map(cap).join(", ")].filter(Boolean).join(" · "))}</small>${r.amir?`<i class="pchip warn">Amir's version: ${esc(r.amir.title)}</i>`:""}</span><span class="chev">${I.right}</span></button>`).join("")}</div>`).join("")
+  ${lib.length?grp.filter(([,l])=>l.length).map(([h,l])=>`<h3 class="wk-sl rl-h">${h}</h3><div class="rlist">${l.map(r=>`<button class="rrow" data-lib="${esc(r.id)}"><span class="px"><b>${esc(r.title)}</b><small>${esc([r.time,r.serves].filter(Boolean).join(" · "))}</small>${r.amir?`<i class="pchip warn">Amir's version: ${esc(r.amir.title)}</i>`:""}</span><span class="chev">${I.right}</span></button>`).join("")}</div>`).join("")
     :`<p class="empty">No dishes yet. Add the ones you love and AI writes the recipe.</p>`}
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
@@ -660,9 +661,9 @@ async function recFromPhotos(files){
 let draftRec=null;
 function libSheet(r,draft){
   const lst=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join("");
-  openSheet(`<div class="sh-h"><div><p class="eyebrow">${draft?"New recipe · check it, then save":esc(((r.meals||[]).map(cap).join(", ")))}${r.time?` · ${esc(r.time)}`:""}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${draft?"New recipe · check it, then save":esc(((r.meals||[]).map(m=>m==="basic"?"Basic":cap(m)).join(", ")))}${r.time?` · ${esc(r.time)}`:""}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   ${r.tip?`<p class="small muted" style="margin:-6px 0 12px">${esc(r.tip)}</p>`:""}
-  <h3 class="rh">Ingredients, for two</h3><ul class="ring">${lst(r.ing)}</ul>
+  <h3 class="rh">Ingredients${r.serves?`, ${esc(r.serves)}`:", for two"}</h3><ul class="ring">${lst(r.ing)}</ul>
   <h3 class="rh">Method</h3><ol class="rmeth">${lst(r.method)}</ol>
   ${r.amir?`<div class="amirv"><h3 class="rh">For Amir: ${esc(r.amir.title)}</h3><ul class="ring">${lst(r.amir.ing)}</ul>${(r.amir.method||[]).length?`<ol class="rmeth">${lst(r.amir.method)}</ol>`:""}</div>`:""}
   <div class="sh-acts">${draft?`<button class="btn wide" data-act="saveRec">Save to our recipes</button><button class="btn ghost wide" data-act="addRecipe">Try again</button>`
@@ -672,7 +673,7 @@ function editRec(r){
   const ta=(n,a,rows)=>`<textarea name="${n}" rows="${rows}">${esc((a||[]).join("\n"))}</textarea>`;
   openSheet(`<div class="sh-h"><div><p class="eyebrow">Edit recipe</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <form id="recEdit" data-id="${esc(r.id)}" class="stack"><label><span class="lbl">Name</span><input name="title" maxlength="120" value="${esc(r.title)}" required></label>
-  <div><span class="lbl">Good for</span><div class="checks">${["breakfast","lunch","dinner"].map(m=>`<label><input type="checkbox" name="meals" value="${m}"${(r.meals||[]).includes(m)?" checked":""}><span>${cap(m)}</span></label>`).join("")}</div></div>
+  <div><span class="lbl">Good for</span><div class="checks">${[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["side","Side"],["basic","Basic / sauce"]].map(([m,l])=>`<label><input type="checkbox" name="meals" value="${m}"${(r.meals||[]).includes(m)?" checked":""}><span>${l}</span></label>`).join("")}</div></div>
   <label><span class="lbl">Takes about</span><input name="time" maxlength="30" value="${esc(r.time||"")}"></label>
   <label><span class="lbl">Ingredients for two, one per line</span>${ta("ing",r.ing,7)}</label>
   <label><span class="lbl">Method, one step per line</span>${ta("method",r.method,6)}</label>
@@ -698,7 +699,7 @@ function dishSheet(k,slot){
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">What are you having?</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>${now}
   <form id="dishForm" data-k="${k}" data-slot="${slot}" class="stack"><div class="opts">
     ${opt("pick","Our own dish","Pick one of your recipes or write a new one",`<span class="pickbox"${cur==="pick"?"":" hidden"}>
-      ${lib.length?`<select name="lib"><option value="">New dish…</option>${[["Our recipes",lib.filter(r=>r.lib&&(r.meals||[]).includes(slot))],["Our recipes (other meals)",lib.filter(r=>r.lib&&!(r.meals||[]).includes(slot))],["Had before",lib.filter(r=>!r.lib)]].filter(([,l])=>l.length).map(([h,l])=>`<optgroup label="${h}">${l.map(r=>`<option value="${esc(r.title)}"${pl?.locked&&pl.title===r.title?" selected":""}>${esc(r.title)}</option>`).join("")}</optgroup>`).join("")}</select>`:""}
+      ${lib.length?`<select name="lib"><option value="">New dish…</option>${[["Our recipes",lib.filter(r=>r.lib&&(r.meals||[]).includes(slot))],["Our recipes (other meals)",lib.filter(r=>r.lib&&!(r.meals||[]).includes(slot)&&!(r.meals||[]).includes("basic"))],["Had before",lib.filter(r=>!r.lib)]].filter(([,l])=>l.length).map(([h,l])=>`<optgroup label="${h}">${l.map(r=>`<option value="${esc(r.title)}"${pl?.locked&&pl.title===r.title?" selected":""}>${esc(r.title)}</option>`).join("")}</optgroup>`).join("")}</select>`:""}
       <span class="newbox"${pl?.locked&&lib.some(r=>r.title===pl.title)?" hidden":""}><input name="title" maxlength="120" placeholder="e.g. Chicken souvlaki with Greek salad" value="${pl?.locked&&!pl.share?esc(pl.title):""}">
       <textarea name="ing" rows="4" placeholder="Ingredients for two, one per line (optional: AI writes them if you leave this empty)">${pl?.locked&&!pl.share?esc((pl.ing||[]).join("\n")):""}</textarea>
       <textarea name="method" rows="3" placeholder="Method, one step per line (optional)">${pl?.locked&&!pl.share?esc((pl.method||[]).join("\n")):""}</textarea></span></span>`)}
@@ -797,7 +798,9 @@ function planContext(mon,keepAll){
       if(pl.share){const r=A.adultMeal(k,s).r;if(r)lines.push(`  CHOSEN ${s}: shared with Ariadne: ${r.title} (keep as {"share":"${r.id}"})`);return}
       lines.push(`  CHOSEN ${s}: ${pl.title}${(pl.ing||[]).length?`; ${pl.ing.join(", ")}`:" (NEEDS RECIPE)"}`)})}
   const prev=[];for(let i=1;i<=7;i++){const k=addDays(mon,-i);SLOTS.forEach(([s])=>{const t=S().adults?.[k]?.[s]?.plan?.title;if(t)prev.push(t)})}
-  const lib=LIB();if(lib.length)lines.push(`LIBRARY (id: title [meals]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${(r.meals||[]).join("/")}]; ${(r.ing||[]).slice(0,5).join(", ")}${r.amir?" (has a version for Amir)":""}`).join("\n")}`);
+  const all=LIB(),lib=all.filter(r=>(r.meals||[]).some(m=>["breakfast","lunch","dinner"].includes(m))),sides=all.filter(r=>(r.meals||[]).includes("side"));
+  if(sides.length)lines.push(`Side dishes and salads they like (you may mention one in a meal's title, e.g. "Grilled chicken with coleslaw"): ${sides.map(r=>r.title).join("; ")}`);
+  if(lib.length)lines.push(`LIBRARY (id: title [meals]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${(r.meals||[]).filter(m=>m!=="side").join("/")}]; ${(r.ing||[]).slice(0,5).join(", ")}${r.amir?" (has a version for Amir)":""}`).join("\n")}`);
   if(prev.length)lines.push(`Last week they had (avoid repeating): ${[...new Set(prev)].join("; ")}`);
   lines.push(`Amir avoids: ${[...P.allergies,P.other].filter(Boolean).join(", ")}.`);
   return lines.join("\n");
