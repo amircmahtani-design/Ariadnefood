@@ -489,7 +489,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="2.1";
+const APP_VERSION="2.2";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -837,11 +837,12 @@ function planContext(mon){
   const P=A.prefs(),lines=[`Week: Saturday ${mon} to Friday ${addDays(mon,6)}. Lunches:`];
   for(let i=0;i<7;i++){const k=addDays(mon,i),pl=S().adults?.[k]?.lunch?.plan;
     lines.push(`${DOW[parse(k).getDay()]} ${k}: ${isGap(k,"lunch")?"EMPTY":pl.share?`CHOSEN (Ariadne's ${A.adultMeal(k,"lunch").r?.title||"dish"})`:`CHOSEN ${pl.title}${(pl.ing||[]).length?"":" (NEEDS RECIPE)"}`}`)}
-  const prev=[];for(let i=1;i<=7;i++){const t=S().adults?.[addDays(mon,-i)]?.lunch?.plan?.title;if(t)prev.push(t)}
+  const prev=[];for(let i=1;i<=14;i++){const p=S().adults?.[addDays(mon,-i)]?.lunch?.plan;if(p?.lib)prev.push(p.lib)}
+  for(let i=7;i<=13;i++){const p=S().adults?.[addDays(mon,i)]?.lunch?.plan;if(p?.lib)prev.push(p.lib)}
   const lib=LIB().filter(r=>(r.meals||[]).some(m=>m==="lunch"||m==="dinner")),sides=LIB().filter(r=>(r.meals||[]).includes("side"));
   lines.push(`LIBRARY (id: title [group]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${catOf(r)}]; ${(r.ing||[]).slice(0,6).join(", ")}${r.amir?" (has Amir's version)":""}`).join("\n")}`);
   if(sides.length)lines.push(`Their side dishes (good for "side"): ${sides.map(r=>r.title).join("; ")}`);
-  if(prev.length)lines.push(`Last week's lunches (avoid repeating): ${[...new Set(prev)].join("; ")}`);
+  if(prev.length)lines.push(`ALREADY USED in the weeks around this one, do NOT pick these ids: ${[...new Set(prev)].join(", ")}`);
   lines.push(`Amir avoids: ${[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")}.`);
   return lines.join("\n");
 }
