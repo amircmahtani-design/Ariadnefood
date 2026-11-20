@@ -232,7 +232,9 @@ export default async (req) => {
     }
     const shop = (await store.get("shop", { type: "json" })) || {};
     const pantry = (await store.get("pantry", { type: "json" })) || {};
-    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry });
+    const adults = (await store.get("adults", { type: "json" })) || {};
+    const groceries = (await store.get("groceries", { type: "json" })) || {};
+    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults, groceries });
   }
 
   // Plain-text report for Claude (or anyone) to read: what she ate, gaps, plan, recipes, and how to write back.
@@ -280,7 +282,7 @@ export default async (req) => {
 
   if (req.method !== "POST") return json({ error: "Not found" }, 404);
   const raw = await req.text();
-  if (raw.length > (route === "ai" ? 5_500_000 : 400_000)) return json({ error: "Too large" }, 413);
+  if (raw.length > (route === "ai" || route === "list-photo" ? 5_500_000 : 400_000)) return json({ error: "Too large" }, 413);
   let body;
   try { body = JSON.parse(raw); } catch { return json({ error: "Bad request" }, 400); }
 
@@ -314,6 +316,51 @@ export default async (req) => {
   }
 
   // Shopping tick list: which items are already in the bag, per week (shared between phones).
+  // Amir & Lia's meals: overrides per day and meal ("same" as Ariadne, "swap", "out", or their own text).
+  if (route === "adult-set") {
+    const k = String(body.k || ""), slot = String(body.slot || ""), who = String(body.who || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !["lunch", "dinner"].includes(slot) || !["lia", "amir"].includes(who)) return json({ error: "Bad request" }, 400);
+    const adults = (await store.get("adults", { type: "json" })) || {};
+    const v = isObj(body.value) ? { mode: clip(body.value.mode, 12), text: clip(body.value.text, 160), by: clip(body.by, 40) } : null;
+    ((adults[k] ??= {})[slot] ??= {});
+    if (v && v.mode) adults[k][slot][who] = v; else delete adults[k][slot][who];
+    for (const d of Object.keys(adults).sort().slice(0, -120)) delete adults[d];
+    await store.setJSON("adults", adults);
+    return json({ ok: true, adults });
+  }
+  // Extra things for the house shopping (typed, or read from a photo of a written list), per shopping week.
+  if (route === "grocery-add" || route === "grocery-del") {
+    const w = String(body.w || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) return json({ error: "Bad request" }, 400);
+    const g = (await store.get("groceries", { type: "json" })) || {};
+    const list = g[w] || [];
+    if (route === "grocery-add") {
+      const items = (Array.isArray(body.items) ? body.items : [body.text]).map((t) => clip(t, 80)).filter(Boolean).slice(0, 60);
+      for (const t of items) if (!list.some((x) => x.t.toLowerCase() === t.toLowerCase())) list.push({ id: Math.random().toString(36).slice(2, 9), t, by: clip(body.by, 40), at: new Date().toISOString() });
+    } else { const i = list.findIndex((x) => x.id === body.id); if (i >= 0) list.splice(i, 1); }
+    g[w] = list;
+    for (const k of Object.keys(g).sort().slice(0, -10)) delete g[k];
+    await store.setJSON("groceries", g);
+    return json({ ok: true, groceries: g });
+  }
+  // Read a photo of a handwritten shopping list and return the items in plain English.
+  if (route === "list-photo") {
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) return json({ error: "AI isn't switched on for this site yet." }, 503);
+    const img = String(body.image || ""), mt = ["image/jpeg", "image/png", "image/webp"].includes(body.mt) ? body.mt : "image/jpeg";
+    if (!img || img.length > 5_000_000) return json({ error: "Bad image" }, 400);
+    const base = (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/$/, "");
+    const r = await fetch(`${base}/v1/messages`, { method: "POST", headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: process.env.AI_MODEL || "claude-sonnet-4-5", max_tokens: 1200,
+        system: "You read photos of handwritten or printed shopping lists for a family in Dubai. Return ONLY a JSON array of strings: one item per entry, in simple everyday English as you'd write it on a list (e.g. \"Washing-up liquid\", \"Milk 2 L\", \"Bin bags\"). Keep any quantity written next to the item. Skip crossed-out items, headings and anything unreadable. No other text.",
+        messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: mt, data: img } }, { type: "text", text: "List the items on this shopping list." }] }] }) });
+    if (!r.ok) { console.log("photo AI error", r.status, (await r.text().catch(() => "")).slice(0, 300)); return json({ error: "Couldn't read the photo. Try again." }, 502); }
+    const j = await r.json();
+    const txt = (j.content || []).map((c) => c.text || "").join("");
+    let items = [];
+    try { items = JSON.parse(txt.slice(txt.indexOf("["), txt.lastIndexOf("]") + 1)); } catch { items = []; }
+    return json({ items: (Array.isArray(items) ? items : []).map((t) => clip(String(t), 80)).filter(Boolean).slice(0, 60) });
+  }
   if (route === "shop-tick" || route === "shop-clear") {
     const w = String(body.w || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) return json({ error: "Bad request" }, 400);
