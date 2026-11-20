@@ -315,6 +315,17 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .actrow .tpick{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:4px}.actrow select{padding-left:10px;padding-right:24px;background-position:right 8px center}
 .actrow input{min-width:0}
 .routine h3{font-size:12.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin:12px 0 2px}
+
+.special{background:var(--butter);border-radius:var(--r-xl);padding:14px 18px 6px;margin:0 0 16px;box-shadow:var(--sh-1)}
+.special.alldone{background:var(--sage-soft)}
+.special .sp-h{display:flex;align-items:center;gap:10px;margin-bottom:2px;color:var(--butter-ink)}
+.special.alldone .sp-h{color:var(--sage)}
+.special .sp-h svg{width:20px;height:20px;flex:none}
+.special .sp-h b{flex:1;font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:20px;color:var(--ink)}
+.special .sp-h span{font-size:14px;font-weight:600}
+.special .task{border-bottom:1px solid rgb(122 95 20 / .14)}
+.special .task:last-child,.special>:last-child .task{border-bottom:0}
+.special .tk{background:rgb(255 255 255 / .6)}
 </style>
 </head>
 <body>
@@ -346,7 +357,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.5";
+const APP_VERSION="1.6";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -381,6 +392,7 @@ const I={
   shirt:sv('<path d="M8.5 4 4 6.5l1.8 4 2.2-1V20h8V9.5l2.2 1 1.8-4L15.5 4a3.5 3.5 0 0 1-7 0z"/>'),
   car:sv('<path d="M5 16.5h14M5.5 16.5V12l1.8-4.5h9.4l1.8 4.5v4.5M5.5 12h13"/><circle cx="8" cy="16.8" r="1.6"/><circle cx="16" cy="16.8" r="1.6"/>'),
   cup:sv('<path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16M8.5 5.5c0-1 .8-1.3.8-2.3M12 5.5c0-1 .8-1.3.8-2.3"/>'),
+  star:sv('<path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>'),
   info:sv('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>',1.9),
   out:sv('<path d="M14 4.5h4.5v15H14M10 8l-4 4 4 4M6 12h9"/>'),
 };
@@ -527,12 +539,16 @@ function viewDay(){
   const k=ui.date,t=todayKey(),d=parse(k),day=buildDay(k);
   const rel=k===t?"Today":k===addDays(t,1)?"Tomorrow":k===addDays(t,-1)?"Yesterday":"";
   let h=`<header class="pagehead"><div class="ph-row"><button class="iconbtn" data-act="prev" aria-label="Previous day">${I.left}</button>
-    <div class="ph-t"><p class="eyebrow">${rel||DOW[d.getDay()]}</p><h1 class="display">${DOW[d.getDay()]} ${d.getDate()}<br>${MON[d.getMonth()]}</h1></div>
+    <div class="ph-t">${rel?`<p class="eyebrow">${rel}</p>`:""}<h1 class="display">${DOW[d.getDay()]} ${d.getDate()}<br>${MON[d.getMonth()]}</h1></div>
     <button class="iconbtn" data-act="next" aria-label="Next day">${I.right}</button></div>
     ${k!==t?`<button class="link backtoday" data-act="today">Back to today</button>`:""}</header>`;
   if(day.off)return h+`<div class="dayoff">${I.sun}<span><b>Catherine's day off</b>Amir and Lia have Ariadne today. Food was cooked on Saturday: lunch and dinner are reheat only.</span></div>`;
   const c=dayCount(k,day),pct=c.all?Math.round(c.done/c.all*100):0;
   h+=`<div class="prog"><div class="bar"><span style="width:${pct}%"></span></div><b>${c.done} of ${c.all} done</b></div>`;
+  // Out of the ordinary today (sheets, laundry, afternoon baking, added chores): shown first so nothing is missed. Ticking here ticks it in the schedule too.
+  const special=day.items.filter(it=>!it.marker&&(["sheets","wash","dry","bakepm"].includes(it.id)||it.tag==="extra"));
+  if(special.length){const left=special.filter(it=>!(it.subs?.length?it.subs.every(x=>tickOf(k,x.id)):tickOf(k,it.id))).length;
+    h+=`<section class="special${left?"":" alldone"}"><div class="sp-h">${I.star||I.info}<b>${left?(k===t?"Special for today":"Special that day"):"All special jobs done"}</b><span>${special.length-left} of ${special.length}</span></div>${special.map(it=>row(k,it,false)).join("")}</section>`}
   const nx=nextItem(k,day);
   if(k===t)h+=nx?`<div class="next"><span class="ic">${I.right}</span><span><small>${nx.t<=nowMin()?"Now":"Next"} · ${fmt(nx.t)}</small><b>${esc(nx.title)}</b>${nx.sub?`<span>${esc(nx.sub)}</span>`:""}</span></div>`
     :c.all?`<div class="next done"><span class="ic">${I.check}</span><span><b>Everything is done today</b><span>Thank you, Catherine.</span></span></div>`:"";
