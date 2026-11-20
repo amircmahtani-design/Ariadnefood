@@ -234,6 +234,8 @@ export default async (req) => {
     const pantry = (await store.get("pantry", { type: "json" })) || {};
     const adults = (await store.get("adults", { type: "json" })) || {};
     const groceries = (await store.get("groceries", { type: "json" })) || {};
+    // Ariadne's Table and Catherine's Day don't need Lia & Amir's recipe library: leave it out so the app loads fast
+    if (new URL(req.url).searchParams.has("lean") && adults._lib) { const { _lib, ...rest } = adults; return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults: rest, groceries }); }
     return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults, groceries });
   }
 
