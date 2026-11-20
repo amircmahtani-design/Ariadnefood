@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="11.1";
+const APP_VERSION="11.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1160,8 +1160,8 @@ function freshDishes(k){const ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]
   return new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!y.has(id))).size+(parse(k).getDay()===6?2:0)}
 const NO_COOK_BF=new Set(["spanakplain","fruitplate","ricottatoast","pbtoast","hummustoast"]);
 // Bread and pitta: a full batch goes in the freezer and is used up over the following weeks, so only bake when the stock runs out.
-const HOME_BAKES=new Set(["homepitta","homebread","homechickenbroth","homebonebroth"]);
-const BROTH=new Set(["homechickenbroth","homebonebroth"]);
+const HOME_BAKES=new Set(["homepitta","homebread","homebroth"]);
+const BROTH=new Set(["homebroth"]);
 function homeStock(id,mon){let stock=0,w=mondayOf(addDays(todayKey(),1));
   while(w<mon){const n=bakeNeeds(w)[id]?.n||0,sv=+recipeById(id)?.serves||8;if(n>stock)stock+=Math.ceil((n-stock)/sv)*sv;stock-=n;w=addDays(w,7)}
   return stock}
@@ -1181,10 +1181,10 @@ function bakeNeeds(mon){
       if(/homemade wholemeal bread/i.test(lines))add("homebread",k,1,sl==="breakfast"?"at breakfast":`with ${sl}`)}
     // Homemade broth: count 250 ml boxes for each dish cooked that day
     const seen=new Set();for(const sl of ["lunch","dinner"]){const id=ms[sl]?.recipeId,r=id&&recipeById(id);if(!r||seen.has(id)||!madeToday(id,k))continue;seen.add(id);
-      (r.ingredients||[]).forEach(l=>{const m=l.match(/([\d.]+)\s*(ml|litres?|l)\s+(?:hot\s+)?homemade (chicken|bone) broth/i);if(!m)return;const ml=+m[1]*(/^l/i.test(m[2])?1000:1)*((+r.serves||1)>1?mealScale(id,k):1);
-        add(m[3].toLowerCase()==="chicken"?"homechickenbroth":"homebonebroth",k,Math.ceil(ml/250*2)/2,`for ${r.title}`)})}
+      (r.ingredients||[]).forEach(l=>{const m=l.match(/([\d.]+)\s*(ml|litres?|l)\s+(?:hot\s+)?homemade broth/i);if(!m)return;const ml=+m[1]*(/^l/i.test(m[2])?1000:1)*((+r.serves||1)>1?mealScale(id,k):1);
+        add("homebroth",k,Math.ceil(ml/250*2)/2,`for ${r.title}`)})}
     // sides cooked in broth (rice, couscous) go with the dishes cooked that day
-    [...new Set(["lunch","dinner"].filter(sl=>seen.has(ms[sl]?.recipeId)).flatMap(sl=>String(ms[sl].side||"").split(/\s*\+\s*/)).map(t=>t&&cookedSide(t)).filter(Boolean))].forEach(r=>(r.ingredients||[]).forEach(l=>{const m=l.match(/([\d.]+)\s*ml\s+(?:hot\s+)?homemade chicken broth/i);if(m)add("homechickenbroth",k,Math.ceil(+m[1]/250*2)/2,`for ${r.title}`)}));
+    [...new Set(["lunch","dinner"].filter(sl=>seen.has(ms[sl]?.recipeId)).flatMap(sl=>String(ms[sl].side||"").split(/\s*\+\s*/)).map(t=>t&&cookedSide(t)).filter(Boolean))].forEach(r=>(r.ingredients||[]).forEach(l=>{const m=l.match(/([\d.]+)\s*ml\s+(?:hot\s+)?homemade broth/i);if(m)add("homebroth",k,Math.ceil(+m[1]/250*2)/2,`for ${r.title}`)}));
     for(const sl of ["breakfast","snack"]){const id=ms[sl]?.recipeId;if(!id)continue;
       if(COOKIE_OF[id]){add(COOKIE_OF[id],k,.5,sl==="snack"?"for snack":"at breakfast");continue}
       const r=recipeById(id),fruitOnly=r&&(r.parts||[]).flatMap(p=>p.items||[]).every(([k])=>FOODS[k]?.group==="fruit");if(r&&!fruitOnly&&(+r.serves||6)>1&&(r.freezes||/cookie|muffin|bar|finger|bites|fritter|pancake/i.test(r.title)))add(id,k,1,sl==="snack"?"for snack":"at breakfast")}}
@@ -1763,7 +1763,8 @@ function buildShopping(mon){
   weekBakes(mon).filter(x=>HOME_BAKES.has(x.r.id)).forEach(x=>{const r=x.r,b=x.makes/(+r.serves||1);
     (r.ingredients||[]).forEach(line=>{if(/water$/i.test(line))return;
       if(/carcass/i.test(line)){const o=(other.Carcass??={n:"Chicken carcasses (ask the butcher)",c:0});o.c+=2*Math.ceil(b);return}
-      if(/marrow bones/i.test(line)){const o=(other.Marrow??={n:"Beef marrow bones",g:0,wm:1,f:"For the homemade bone broth"});o.g+=1500*Math.ceil(b);return}
+      if(/marrow bones/i.test(line)){const o=(other.Marrow??={n:"Beef marrow bones",g:0,wm:1,f:"For the homemade broth"});o.g+=1000*Math.ceil(b);return}
+      if(/allspice/i.test(line)){other.Allspice??={n:"Allspice berries (whole)",c:0};return}
       if(/wholemeal flour/i.test(line)){const o=(other.WMF??={n:"Wholemeal flour",g:0,wm:1});o.g+=(parseFloat(line)||0)*b;return}
       const q=lineQty(line);if(q.length)q.forEach(y=>add(y.k,r.title,y.g*b,y.c*b,y.tin));else if(/yeast/i.test(line)){const o=(other.Yeast??={n:"Dried yeast sachets",c:0});o.c+=Math.ceil(b)}})});
   const qty=x=>{if(PANTRY.has(x.k))return "";if(x.tins)return `${x.tins} ${x.tins==1?"tin":"tins"}`;
