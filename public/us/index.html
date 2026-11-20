@@ -332,7 +332,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .special .tk{background:rgb(255 255 255 / .6)}
 
 /* ---- Amir & Lia ---- */
-.tabs .wrap{grid-template-columns:repeat(3,1fr)}
+.tabs .wrap{grid-template-columns:repeat(4,1fr)}
 .meal,.house{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-2);padding:6px 20px 8px;margin:0 0 16px}
 .meal-h,.house-h{display:flex;align-items:center;gap:12px;padding:12px 0 10px}
 .meal-h .sic,.house-h .sic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--sage-mist);color:var(--sage)}
@@ -399,6 +399,17 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .pit .toggle{margin:0;flex:none;width:44px;justify-content:center}
 .pit input[name^=t]{flex:1}
 .ver{margin-top:var(--s6)}
+.addrec{margin:0 0 18px}
+.orline{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:14px}.orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.rl-h{margin:18px 4px 8px}
+.rlist{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-1);padding:2px 18px}
+.rrow{display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;text-align:left;padding:14px 0;min-height:64px;color:var(--ink)}
+.rlist .rrow:first-child{border-top:0}
+.amirv{margin-top:18px;padding:4px 16px 14px;border-radius:var(--r-lg);background:var(--terra-soft)}
+.sh-acts{display:grid;gap:10px;margin-top:22px}
+.btn.del{color:var(--terra-ink)}
+.nowis{margin:-6px 0 14px;font-size:15px;color:var(--ink-2)}
+.btn .dot{width:9px;height:9px;border-radius:50%;background:#fff;animation:bl 1s infinite}
 .pick{display:inline-block!important;font-size:12.5px!important;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--butter-ink)!important;background:var(--butter);border-radius:999px;padding:1px 9px;margin:2px 0 3px}
 .pickbox{display:grid;gap:8px;margin-top:12px}.newbox{display:grid;gap:8px}
 .opt>span:last-child{flex:1;min-width:0}
@@ -449,6 +460,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
   <div class="wrap" id="tabs">
     <button class="tab" data-view="day"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M8.5 7c0-1.2 1-1.6 1-2.8M12 7c0-1.2 1-1.6 1-2.8M15.5 7c0-1.2 1-1.6 1-2.8"/></svg></span>Today</button>
     <button class="tab" data-view="week"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>Week</button>
+    <button class="tab" data-view="recipes"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/></svg></span>Recipes</button>
     <button class="tab" data-view="shop"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.3 10.2a2 2 0 0 1-2 1.8H8.3a2 2 0 0 1-2-1.8z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg></span>Shopping</button>
   </div>
 </nav>
@@ -459,12 +471,13 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 </div>
 <div class="status fade" id="status" aria-live="polite"></div>
 <input type="file" id="photoIn" accept="image/*" hidden>
+<input type="file" id="recPhotoIn" accept="image/*" multiple hidden>
 <!-- Ariadne's Table, loaded hidden: their meals come from the same plan as hers -->
 <iframe id="ariFrame" src="/?embed=1" title="" aria-hidden="true" tabindex="-1" hidden></iframe>
 
 <script>
 "use strict";
-const APP_VERSION="1.2";
+const APP_VERSION="1.3";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -503,7 +516,7 @@ const AL_NAME={fish:"fish",seafood:"seafood",chickpeas:"chickpeas",nuts:"nuts"};
 
 /* ---------- state: everything comes from Ariadne's Table (hidden frame) ---------- */
 const ui={view:ls.get("us-view")||"day",date:todayKey(),week:mondayOf(todayKey()),shopW:null,shopFor:ls.get("us-shopfor")||"us"};
-if(!["day","week","shop"].includes(ui.view))ui.view="day";
+if(!["day","week","recipes","shop"].includes(ui.view))ui.view="day";
 let me=ls.get("ari-me")||"",A=null,busy=false;
 function hook(){try{const w=$("#ariFrame").contentWindow;if(w&&w.ariUs&&w.ariUs.ready()){const first=!A;A=w.ariUs;if(first){ui.shopW=A.planWeek();render();setWho();if(!me)askWho()}}}catch(e){}}
 window.addEventListener("message",e=>{if(e.origin===location.origin&&e.data==="ari-ready")setTimeout(hook,0)});
@@ -564,7 +577,7 @@ function houseCard(){
 function render(){
   document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-current",b.dataset.view===ui.view?"page":"false"));
   if(!A)return;
-  $("#view").innerHTML=ui.view==="week"?viewWeek():ui.view==="shop"?viewShop():viewDay();
+  $("#view").innerHTML=ui.view==="week"?viewWeek():ui.view==="shop"?viewShop():ui.view==="recipes"?viewRecipes():viewDay();
 }
 function viewDay(){
   const k=ui.date,dw=dayWord(k);
@@ -589,8 +602,8 @@ function viewWeek(){
       <div class="body">${SLOTS.map(([s,l])=>`<h3 class="wk-sl">${l}</h3>${PEOPLE.map(([w,n])=>personRow(k,s,w,n,ms[SLOTS.findIndex(x=>x[0]===s)][w])).join("")}<button class="link" data-rec="${k}|${s}|lia">${I.book}Recipe</button>`).join("")}</div></details>`}).join("");
   const cells=[...Array(7)].flatMap((_,i)=>SLOTS.map(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan));
   const planned=cells.some(x=>x&&!x.locked),picks=cells.filter(x=>x?.locked).length,gaps=gapCount(mon);
-  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${planned?"Your menu for this week":picks?`${picks} ${picks>1?"meals":"meal"} chosen`:"Plan your week with AI"}</b><span>${planned?`Breakfast, lunch and dinner for you two${picks?`, built around the ${picks} you chose`:""}. Tap any meal to pick your own dish.`:picks?"AI fills every other meal around your picks, balanced across the week.":"Tap any meal below to pick your own dish first, or let AI plan the whole week. Healthy, high protein, Amir's allergies always covered."}</span></div>
-    <button class="btn${planned&&!gaps?" ghost":""} wide" data-act="aiPlan">${I.spark}${planned?(gaps?"Fill the empty meals":"Plan it again"):picks?"Fill in the rest with AI":"Plan this week"}</button>`}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}</section>`;
+  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${!gaps?"Every meal is set":picks||planned?`${gaps} ${gaps>1?"meals":"meal"} still empty`:"Plan your week"}</b><span>${!gaps?"Tap any meal to change it. Set it to “Let AI choose” and AI fills it next time.":"Tap a meal to pick your own dish. AI fills only the empty ones, from your recipes first, balanced across the week."}</span></div>
+    ${gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Fill ${gaps===21?"the week":`the ${gaps} empty ${gaps>1?"meals":"meal"}`} with AI</button>`:""}`}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}</section>`;
   return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
   ${aiCard}${days}${houseCard()}<p class="ver">Version ${APP_VERSION}</p>`;
 }
@@ -614,6 +627,58 @@ function viewShop(){
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
 
+function viewRecipes(){
+  const lib=LIB().slice().sort((a,b)=>a.title.localeCompare(b.title)),grp=[["Breakfast",lib.filter(r=>(r.meals||[]).includes("breakfast"))],["Lunch & dinner",lib.filter(r=>!(r.meals||[]).includes("breakfast")||(r.meals||[]).some(m=>m!=="breakfast"))]];
+  return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>AI fills empty meals from these first</p></div></div>
+  <div class="house-acts addrec"><button class="btn sm" data-act="addRecipe">${I.plus}Add a dish</button><button class="btn ghost sm" data-act="recPhoto">${I.camera}From photos</button></div>
+  ${lib.length?grp.filter(([,l])=>l.length).map(([h,l])=>`<h3 class="wk-sl rl-h">${h}</h3><div class="rlist">${l.map(r=>`<button class="rrow" data-lib="${esc(r.id)}"><span class="px"><b>${esc(r.title)}</b><small>${esc([r.time,(r.meals||[]).map(cap).join(", ")].filter(Boolean).join(" · "))}</small>${r.amir?`<i class="pchip warn">Amir's version: ${esc(r.amir.title)}</i>`:""}</span><span class="chev">${I.right}</span></button>`).join("")}</div>`).join("")
+    :`<p class="empty">No dishes yet. Add the ones you love and AI writes the recipe.</p>`}
+  <p class="ver">Version ${APP_VERSION}</p>`;
+}
+function addRecipe(){
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">Our recipes</p><h2 class="display">Add a dish</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <form id="recForm" class="stack"><label><span class="lbl">Name of the dish</span><input name="name" maxlength="120" required placeholder="e.g. Vodka pasta"></label>
+  <label><span class="lbl">Anything special? (optional)</span><input name="notes" maxlength="200" placeholder="e.g. The way Lia's mum makes it, extra spicy"></label>
+  <button class="btn wide">${I.spark}Write the recipe</button>
+  <div class="orline"><span>or</span></div>
+  <button type="button" class="btn ghost wide" data-act="recPhoto">${I.camera}Take photos of a recipe</button>
+  <p class="small muted" style="text-align:center">A cookbook page, a handwritten card or a screenshot. Up to 4 photos. Type the name above too if you like.</p></form>`);
+}
+async function shrink(file){
+  const img=await new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im)};im.onerror=rej;im.src=u});
+  const sc=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.8);
+}
+async function recFromPhotos(files){
+  files=[...files].slice(0,4);if(!files.length)return;const form=$("#recForm"),name=form?.name.value.trim()||"",notes=form?.notes.value.trim()||"";
+  busy=true;openSheet(`<div class="loading"><p class="streaming" style="justify-content:center"><span class="dot"></span>Reading the recipe…</p></div>`);
+  try{const images=[];for(const f of files)images.push(await shrink(f));const P=A.prefs();
+    const r=await streamAI({task:"adultrecipe",name,focus:notes,images,allergies:[...P.allergies,P.other].filter(Boolean).join(", ")});
+    draftRec={title:r.title||name||"New dish",meals:r.meals,time:r.time,ing:r.ing||[],method:r.method||[],tip:r.tip||"",amir:r.amir&&r.amir.title?r.amir:null};libSheet(draftRec,true)}
+  catch(err){closeSheet();status(err.message||"Couldn't read the photos. Try again.",true,true)}finally{busy=false;$("#recPhotoIn").value=""}
+}
+let draftRec=null;
+function libSheet(r,draft){
+  const lst=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join("");
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${draft?"New recipe · check it, then save":esc(((r.meals||[]).map(cap).join(", ")))}${r.time?` · ${esc(r.time)}`:""}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  ${r.tip?`<p class="small muted" style="margin:-6px 0 12px">${esc(r.tip)}</p>`:""}
+  <h3 class="rh">Ingredients, for two</h3><ul class="ring">${lst(r.ing)}</ul>
+  <h3 class="rh">Method</h3><ol class="rmeth">${lst(r.method)}</ol>
+  ${r.amir?`<div class="amirv"><h3 class="rh">For Amir: ${esc(r.amir.title)}</h3><ul class="ring">${lst(r.amir.ing)}</ul>${(r.amir.method||[]).length?`<ol class="rmeth">${lst(r.amir.method)}</ol>`:""}</div>`:""}
+  <div class="sh-acts">${draft?`<button class="btn wide" data-act="saveRec">Save to our recipes</button><button class="btn ghost wide" data-act="addRecipe">Try again</button>`
+    :`<button class="btn ghost wide" data-act="editRec" data-id="${esc(r.id)}">${I.pen}Edit</button><button class="btn ghost wide del" data-act="delRec" data-id="${esc(r.id)}">Remove from our recipes</button>`}</div>`);
+}
+function editRec(r){
+  const ta=(n,a,rows)=>`<textarea name="${n}" rows="${rows}">${esc((a||[]).join("\n"))}</textarea>`;
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">Edit recipe</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <form id="recEdit" data-id="${esc(r.id)}" class="stack"><label><span class="lbl">Name</span><input name="title" maxlength="120" value="${esc(r.title)}" required></label>
+  <div><span class="lbl">Good for</span><div class="checks">${["breakfast","lunch","dinner"].map(m=>`<label><input type="checkbox" name="meals" value="${m}"${(r.meals||[]).includes(m)?" checked":""}><span>${cap(m)}</span></label>`).join("")}</div></div>
+  <label><span class="lbl">Takes about</span><input name="time" maxlength="30" value="${esc(r.time||"")}"></label>
+  <label><span class="lbl">Ingredients for two, one per line</span>${ta("ing",r.ing,7)}</label>
+  <label><span class="lbl">Method, one step per line</span>${ta("method",r.method,6)}</label>
+  <button class="btn wide">Save</button></form>`);
+}
+
 /* ---------- sheets ---------- */
 function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0}
 function closeSheet(){const sh=$("#sheet");sh.classList.remove("open");setTimeout(()=>{if(!sh.classList.contains("open")){sh.hidden=true;$("#sheetBody").innerHTML=""}},260)}
@@ -622,16 +687,18 @@ function askWho(){
   <div class="who">${["Amir","Lia"].map(p=>`<button class="btn ghost wide who-row" data-who="${p}">${avatar(p,34)}<span>${p}</span></button>`).join("")}</div></div>`);
 }
 // Pick the dish for both of them (locked, so AI plans around it), or hand the meal back to AI
-function library(){const m=new Map();Object.entries(S().adults||{}).forEach(([k,v])=>{if(k==="_prefs")return;Object.values(v||{}).forEach(c=>{const p=c?.plan;if(!p?.title)return;const o=m.get(p.title.toLowerCase());if(!o||(p.ing||[]).length>(o.ing||[]).length)m.set(p.title.toLowerCase(),p)})});return [...m.values()].sort((a,b)=>a.title.localeCompare(b.title))}
+const LIB=()=>S().adults?._lib||[];
+function library(){const m=new Map();LIB().forEach(r=>m.set(r.title.toLowerCase(),{...r,lib:r.id}));Object.entries(S().adults||{}).forEach(([k,v])=>{if(k==="_prefs")return;Object.values(v||{}).forEach(c=>{const p=c?.plan;if(!p?.title)return;const o=m.get(p.title.toLowerCase());if(!o||(!o.lib&&(p.ing||[]).length>(o.ing||[]).length))m.set(p.title.toLowerCase(),p)})});return [...m.values()].sort((a,b)=>a.title.localeCompare(b.title))}
 function dishSheet(k,slot){
   const a=A.adultMeal(k,slot),pl=S().adults?.[k]?.[slot]?.plan,sl=SLOTS.find(x=>x[0]===slot)[1],lib=library();
-  const cur=!pl?"ai":pl.share?"ari":pl.locked?"pick":"ai";
+  const cur=!pl?"ai":pl.share?"ari":"pick";
   const opt=(v,t,d,extra="")=>`<label class="opt"><input type="radio" name="d" value="${v}"${cur===v?" checked":""}><span class="ob"></span><span><b>${t}</b>${d?`<small>${d}</small>`:""}${extra}</span></label>`;
-  const aiDesc=pl&&!pl.locked?(pl.share?`Now: ${esc(a.r?.title||"")} (Ariadne's)`:`Now: ${esc(pl.title)}`):"AI picks a balanced dish when it plans the week";
-  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">What are you having?</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  const aiDesc="Leaves this meal empty, and AI fills it next time you tap Fill";
+  const now=pl?`<p class="nowis">Now: <b>${esc(pl.share?(a.r?.title||"")+" (Ariadne's)":pl.title)}</b>${pl.locked?" · your pick":" · from AI"}</p>`:"";
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">What are you having?</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>${now}
   <form id="dishForm" data-k="${k}" data-slot="${slot}" class="stack"><div class="opts">
     ${opt("pick","Our own dish","Pick one of your recipes or write a new one",`<span class="pickbox"${cur==="pick"?"":" hidden"}>
-      ${lib.length?`<select name="lib"><option value="">New dish…</option>${lib.map(r=>`<option value="${esc(r.title)}"${pl?.locked&&pl.title===r.title?" selected":""}>${esc(r.title)}</option>`).join("")}</select>`:""}
+      ${lib.length?`<select name="lib"><option value="">New dish…</option>${[["Our recipes",lib.filter(r=>r.lib&&(r.meals||[]).includes(slot))],["Our recipes (other meals)",lib.filter(r=>r.lib&&!(r.meals||[]).includes(slot))],["Had before",lib.filter(r=>!r.lib)]].filter(([,l])=>l.length).map(([h,l])=>`<optgroup label="${h}">${l.map(r=>`<option value="${esc(r.title)}"${pl?.locked&&pl.title===r.title?" selected":""}>${esc(r.title)}</option>`).join("")}</optgroup>`).join("")}</select>`:""}
       <span class="newbox"${pl?.locked&&lib.some(r=>r.title===pl.title)?" hidden":""}><input name="title" maxlength="120" placeholder="e.g. Chicken souvlaki with Greek salad" value="${pl?.locked&&!pl.share?esc(pl.title):""}">
       <textarea name="ing" rows="4" placeholder="Ingredients for two, one per line (optional: AI writes them if you leave this empty)">${pl?.locked&&!pl.share?esc((pl.ing||[]).join("\n")):""}</textarea>
       <textarea name="method" rows="3" placeholder="Method, one step per line (optional)">${pl?.locked&&!pl.share?esc((pl.method||[]).join("\n")):""}</textarea></span></span>`)}
@@ -708,7 +775,8 @@ async function shareList(){
 }
 
 /* ---------- AI week plan ---------- */
-const gapCount=mon=>[...Array(7)].reduce((n,_,i)=>{const k=addDays(mon,i);return n+SLOTS.filter(([s])=>{const a=A.adultMeal(k,s);return a.lia.mode==="none"&&a.amir.mode==="none"}).length},0);
+const isGap=(k,s)=>{const pl=S().adults?.[k]?.[s]?.plan;return !pl||(pl.share&&!pl.locked&&A.adultMeal(k,s).kid)};
+const gapCount=mon=>[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>isGap(addDays(mon,i),s)).length,0);
 let aiBusy="",aiNote="";
 async function streamAI(body,onTick){
   const r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -725,33 +793,35 @@ function planContext(mon,keepAll){
   const P=A.prefs(),lines=[`Week: Saturday ${mon} to Friday ${addDays(mon,6)}.`,`Ariadne's lunches and dinners this week (id: title; contains):`];
   for(let i=0;i<7;i++){const k=addDays(mon,i);lines.push(`${DOW[parse(k).getDay()]} ${k}:`);
     ["lunch","dinner"].forEach(s=>{const a=A.adultMeal(k,s);lines.push(a.r?`  Ariadne ${s}: ${a.r.id}: ${a.r.title}; ${(a.r.ingredients||[]).slice(0,7).join(", ")}${a.al.length?` [has ${a.al.join(", ")}]`:""}${a.kid?" [toddler only]":""}`:`  Ariadne ${s}: nothing planned`)});
-    SLOTS.forEach(([s])=>{const pl=S().adults?.[k]?.[s]?.plan;if(!pl||(!pl.locked&&!keepAll))return;
+    SLOTS.forEach(([s])=>{const pl=S().adults?.[k]?.[s]?.plan;if(isGap(k,s)){lines.push(`  EMPTY ${s}`);return}
       if(pl.share){const r=A.adultMeal(k,s).r;if(r)lines.push(`  CHOSEN ${s}: shared with Ariadne: ${r.title} (keep as {"share":"${r.id}"})`);return}
       lines.push(`  CHOSEN ${s}: ${pl.title}${(pl.ing||[]).length?`; ${pl.ing.join(", ")}`:" (NEEDS RECIPE)"}`)})}
   const prev=[];for(let i=1;i<=7;i++){const k=addDays(mon,-i);SLOTS.forEach(([s])=>{const t=S().adults?.[k]?.[s]?.plan?.title;if(t)prev.push(t)})}
+  const lib=LIB();if(lib.length)lines.push(`LIBRARY (id: title [meals]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${(r.meals||[]).join("/")}]; ${(r.ing||[]).slice(0,5).join(", ")}${r.amir?" (has a version for Amir)":""}`).join("\n")}`);
   if(prev.length)lines.push(`Last week they had (avoid repeating): ${[...new Set(prev)].join("; ")}`);
   lines.push(`Amir avoids: ${[...P.allergies,P.other].filter(Boolean).join(", ")}.`);
   return lines.join("\n");
 }
 function askPlan(){
-  const mon=ui.week,gaps=gapCount(mon),picks=[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan?.locked).length,0),has=[...Array(7)].some((_,i)=>SLOTS.some(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan));
-  openSheet(`<div class="sh-h"><div><p class="eyebrow">${esc(A.shortRange(mon))}</p><h2 class="display">${picks?"Fill in the rest":"Plan your week"}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <form id="planForm" class="stack"><p class="muted">Breakfast, lunch and dinner for Lia and Amir. Healthy and high protein, with Amir's allergies covered. It shares Ariadne's dish only where that makes sense (3 to 5 meals a week).</p>
-  <label><span class="lbl">Anything to keep in mind? (optional)</span><textarea name="focus" rows="3" placeholder="e.g. Lighter dinners, steak once, Lia away Tuesday"></textarea></label>
-  ${picks?`<p class="small muted">Your ${picks} chosen ${picks>1?"meals stay":"meal stays"} as ${picks>1?"they are":"it is"}. AI fills in the rest around ${picks>1?"them":"it"}.</p>`:has?`<p class="small muted">Replaces the AI meals for this week. Meals you chose yourselves stay.</p>`:""}
-  ${gaps&&has?`<button class="btn wide" name="go" value="gaps">${I.spark}Fill the ${gaps} empty ${gaps>1?"meals":"meal"}</button><button class="btn ghost wide" name="go" value="all">Plan the whole week again</button>`:`<button class="btn wide" name="go" value="all">${I.spark}Plan the week</button>`}</form>`);
+  const mon=ui.week,gaps=gapCount(mon),picks=[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan?.locked).length,0);
+  if(!gaps){status("Every meal this week is set",true);return}
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${esc(A.shortRange(mon))}</p><h2 class="display">Fill ${gaps===21?"the week":`the ${gaps} empty ${gaps>1?"meals":"meal"}`}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <form id="planForm" class="stack"><p class="muted">AI fills only the empty meals${picks?`, balanced around the ${picks} you chose`:""}, using your recipes first. Everything already set stays as it is. Amir's allergies are always covered.</p>
+  <label><span class="lbl">Anything to keep in mind? (optional)</span><textarea name="focus" rows="3" placeholder="e.g. Lighter dinners, Lia away Tuesday"></textarea></label>
+  <button class="btn wide">${I.spark}Fill ${gaps>1?`${gaps} meals`:"1 meal"}</button></form>`);
 }
-async function aiPlan(focus,gapsOnly){
-  const mon=ui.week;closeSheet();aiBusy="Planning your week around Ariadne's…";aiNote="";render();
+async function aiPlan(focus){
+  const mon=ui.week;closeSheet();aiBusy="Filling the empty meals…";aiNote="";render();
   try{
-    const res=await streamAI({task:"adultplan",weekStart:mon,today:todayKey(),focus,allergies:[...A.prefs().allergies,A.prefs().other].filter(Boolean).join(", "),context:planContext(mon,gapsOnly)},t=>{const n=(t.match(/"date"/g)||[]).length;const el=$(".aiplan .streaming");if(el)el.innerHTML=`<span class="dot"></span>Writing the menu… day ${Math.min(7,Math.max(1,n))} of 7`});
+    const res=await streamAI({task:"adultplan",weekStart:mon,today:todayKey(),focus,allergies:[...A.prefs().allergies,A.prefs().other].filter(Boolean).join(", "),context:planContext(mon)},t=>{const n=(t.match(/"date"/g)||[]).length;const el=$(".aiplan .streaming");if(el)el.innerHTML=`<span class="dot"></span>Writing the menu… day ${Math.min(7,Math.max(1,n))} of 7`});
     const plans={};
     (res.days||[]).slice(0,7).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);plans[k]={};
       SLOTS.forEach(([s])=>{const x=d[s],cur=S().adults?.[k]?.[s]?.plan;if(!x)return;
-        if(gapsOnly&&cur&&!cur.locked&&!(cur.share&&A.adultMeal(k,s).kid))return;
-        if(cur?.locked){ // their own pick: keep it, only fill in a missing recipe or Amir's alternative
-          if(cur.share)return;const need=!(cur.ing||[]).length,needAmir=!cur.amir&&x.amir&&x.amir.title;
+        if(!isGap(k,s)){ // already set: only fill in a missing recipe for their own pick
+          if(!cur?.locked||cur.share)return; // their own pick: keep it, only fill in a missing recipe or Amir's alternative
+          const need=!(cur.ing||[]).length,needAmir=!cur.amir&&x.amir&&x.amir.title;
           if(need||needAmir)plans[k][s]={...cur,ing:need?x.ing||[]:cur.ing,method:need?x.method||[]:cur.method,time:cur.time||x.time||"",amir:cur.amir||(x.amir&&x.amir.title?x.amir:null),locked:true};return}
+        if(x.lib){const r=LIB().find(l=>l.id===x.lib);if(r){plans[k][s]={title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id};return}}
         if(x.share){const a=A.adultMeal(k,s),r=a.r;if(s!=="breakfast"&&r&&r.id===x.share&&!a.kid){plans[k][s]={share:r.id};return}if(!x.title){plans[k][s]=null;return}}
         if(x.title)plans[k][s]={title:x.title,time:x.time||"",ing:x.ing||[],method:x.method||[],amir:x.amir&&x.amir.title?x.amir:null}})});
     if(!Object.keys(plans).length)throw new Error("The plan came back empty. Try again.");
@@ -783,6 +853,13 @@ document.addEventListener("click",async e=>{
   if(t.dataset.wk){ui.week=addDays(ui.week,+t.dataset.wk);render();return}
   if(t.dataset.sw){ui.shopW=addDays(ui.shopW,+t.dataset.sw);render();return}
   if(t.dataset.for){ui.shopFor=t.dataset.for;ls.set("us-shopfor",ui.shopFor);render();return}
+  if(t.dataset.lib){const r=LIB().find(x=>x.id===t.dataset.lib);if(r)libSheet(r);return}
+  if(t.dataset.act==="addRecipe"){addRecipe();return}
+  if(t.dataset.act==="recPhoto"){$("#recPhotoIn").click();return}
+  if(t.dataset.act==="saveRec"){if(!draftRec)return;try{const d=await post("adult-lib",{recipes:[draftRec]});S().adults=d.adults;closeSheet();ui.view="recipes";ls.set("us-view","recipes");render();status("Saved to your recipes",true);draftRec=null}catch(err){status("Not saved. Check the connection.",true,true)}return}
+  if(t.dataset.act==="editRec"){const r=LIB().find(x=>x.id===t.dataset.id);if(r)editRec(r);return}
+  if(t.dataset.act==="delRec"){if(t.dataset.sure!=="1"){t.dataset.sure="1";t.textContent="Tap again to remove";setTimeout(()=>{if(t.isConnected){t.dataset.sure="";t.textContent="Remove from our recipes"}},3000);return}
+    try{const d=await post("adult-lib-del",{id:t.dataset.id});S().adults=d.adults;closeSheet();render();status("Removed",true)}catch(err){status("Not removed. Check the connection.",true,true)}return}
   if(t.dataset.rec){const [k,s,w]=t.dataset.rec.split("|");recipeSheet(k,s,w);return}
   if(t.dataset.eat){const [k,s]=t.dataset.eat.split("|"),on=!t.classList.contains("on");t.classList.toggle("on",on);
     try{const d=await post("adult-set",{k,slot:s,who:"eaten",value:on?{mode:"done"}:null,by:me||""});S().adults=d.adults;render()}catch(err){t.classList.toggle("on",!on);status("Not saved. Check the connection.",true,true)}return}
@@ -804,6 +881,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("toggle",e=>{const d=e.target;if(d.matches?.(".wday")&&d.open)ui.openDay=d.dataset.day},true);
 document.addEventListener("change",e=>{
   if(e.target.id==="photoIn"){readPhoto(e.target.files[0]);return}
+  if(e.target.id==="recPhotoIn"){recFromPhotos(e.target.files);return}
   if(e.target.name==="d"){const b=$(".pickbox");if(b)b.hidden=e.target.value!=="pick"}
   if(e.target.name==="lib"){const nb=$(".newbox");if(nb)nb.hidden=!!e.target.value}
   if(/^p_/.test(e.target.name)){const w=e.target.name.slice(2),i=e.target.form["t_"+w];i.hidden=e.target.value!=="own";if(!i.hidden)i.focus()}
@@ -822,12 +900,19 @@ document.addEventListener("submit",async e=>{
     else{const libT=f.lib?.value;if(libT){const r=library().find(x=>x.title===libT);plan={title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,locked:true}}
       else{const title=f.title.value.trim();if(!title){f.title.focus();return}const lines=v=>v.split("\n").map(x=>x.trim()).filter(Boolean);plan={title,ing:lines(f.ing.value),method:lines(f.method.value),amir:null,locked:true}}}
     const curPl=S().adults?.[k]?.[slot]?.plan;
-    try{let res;if(d!=="ai"||curPl?.locked)res=await post("adult-plan-save",{plans:{[k]:{[slot]:plan}}});
+    try{let res;if(d!=="ai"||curPl)res=await post("adult-plan-save",{plans:{[k]:{[slot]:plan}}});
       for(const [w] of PEOPLE){const m=f["p_"+w].value,txt=f["t_"+w].value.trim(),old=S().adults?.[k]?.[slot]?.[w]?.mode||"";
         const value=m==="out"?{mode:"out"}:m==="own"&&txt?{mode:"own",text:txt}:null;if((value?.mode||"")!==old||m==="own")res=await post("adult-set",{k,slot,who:w,value,by:me||""})}
       if(res)S().adults=res.adults;closeSheet();render();status(d==="pick"&&plan&&!plan.ing.length?"Saved. AI writes the recipe when it fills the week":"Saved",true)}
     catch(err){status("Not saved. Check the connection.",true,true)}return}
-  if(f.id==="planForm"){aiPlan(f.focus.value.trim(),e.submitter?.value==="gaps");return}
+  if(f.id==="recForm"){const name=f.name.value.trim();if(!name)return;const btn=f.querySelector(".btn");btn.disabled=true;btn.innerHTML=`<span class="dot"></span>Writing the recipe…`;busy=true;
+    try{const P=A.prefs(),r=await streamAI({task:"adultrecipe",name,focus:f.notes.value.trim(),allergies:[...P.allergies,P.other].filter(Boolean).join(", ")});
+      draftRec={title:r.title||name,meals:r.meals,time:r.time,ing:r.ing||[],method:r.method||[],tip:r.tip||"",amir:r.amir&&r.amir.title?r.amir:null};libSheet(draftRec,true)}
+    catch(err){btn.disabled=false;btn.innerHTML=`${I.spark}Write the recipe`;status(err.message||"Couldn't write it. Try again.",true,true)}finally{busy=false}return}
+  if(f.id==="recEdit"){const lines=v=>v.split("\n").map(x=>x.trim()).filter(Boolean),old=LIB().find(x=>x.id===f.dataset.id)||{};
+    const r={...old,id:f.dataset.id,title:f.title.value.trim(),meals:[...f.querySelectorAll("[name=meals]:checked")].map(x=>x.value),time:f.time.value.trim(),ing:lines(f.ing.value),method:lines(f.method.value)};
+    try{const d=await post("adult-lib",{recipes:[r]});S().adults=d.adults;libSheet(LIB().find(x=>x.id===r.id)||r);render();status("Saved",true)}catch(err){status("Not saved. Check the connection.",true,true)}return}
+  if(f.id==="planForm"){aiPlan(f.focus.value.trim());return}
   if(f.id==="prefForm"){const me2=f.querySelector("[name=me]:checked")?.value;if(me2){me=me2;ls.set("ari-me",me);setWho()}
     const prefs={allergies:[...f.querySelectorAll("[name=al]:checked")].map(x=>x.value),other:f.other.value.trim(),portion:+f.portion.value};
     try{const d=await post("adult-prefs",{prefs});S().adults=d.adults;closeSheet();render();status("Saved",true)}catch(err){status("Not saved. Check the connection.",true,true)}return}

@@ -324,7 +324,7 @@ export default async (req) => {
     const v = isObj(body.value) ? { mode: clip(body.value.mode, 12), text: clip(body.value.text, 160), by: clip(body.by, 40) } : null;
     ((adults[k] ??= {})[slot] ??= {});
     if (v && v.mode) adults[k][slot][who] = v; else delete adults[k][slot][who];
-    for (const d of Object.keys(adults).filter((x) => x !== "_prefs").sort().slice(0, -120)) delete adults[d];
+    for (const d of Object.keys(adults).filter((x) => !x.startsWith("_")).sort().slice(0, -120)) delete adults[d];
     await store.setJSON("adults", adults);
     return json({ ok: true, adults });
   }
@@ -342,6 +342,24 @@ export default async (req) => {
         if (body.reset) { delete cur.lia; delete cur.amir; }
       }
     }
+    await store.setJSON("adults", adults);
+    return json({ ok: true, adults });
+  }
+  // Lia & Amir's own recipe library (dishes they like; the AI fills empty meals from it first)
+  if (route === "adult-lib" || route === "adult-lib-del") {
+    const adults = (await store.get("adults", { type: "json" })) || {};
+    const lib = adults._lib || [];
+    const dish = (d) => isObj(d) && d.title ? { title: clip(d.title, 120), ing: (Array.isArray(d.ing) ? d.ing : []).map((x) => clip(x, 100)).filter(Boolean).slice(0, 30), method: (Array.isArray(d.method) ? d.method : []).map((x) => clip(x, 400)).filter(Boolean).slice(0, 14) } : null;
+    if (route === "adult-lib") {
+      for (const r of (Array.isArray(body.recipes) ? body.recipes : []).slice(0, 40)) {
+        if (!isObj(r) || !r.title) continue;
+        const id = clip(r.id, 60) || clip(r.title, 60).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const meals = (Array.isArray(r.meals) ? r.meals : ["lunch", "dinner"]).filter((m) => ["breakfast", "lunch", "dinner"].includes(m));
+        const rec = { id, ...dish(r), meals: meals.length ? meals : ["lunch", "dinner"], time: clip(r.time, 30), tip: clip(r.tip, 300), amir: dish(r.amir), at: new Date().toISOString() };
+        const i = lib.findIndex((x) => x.id === id); if (i >= 0) lib[i] = rec; else lib.push(rec);
+      }
+    } else { const i = lib.findIndex((x) => x.id === body.id); if (i >= 0) lib.splice(i, 1); }
+    adults._lib = lib;
     await store.setJSON("adults", adults);
     return json({ ok: true, adults });
   }
@@ -608,14 +626,32 @@ Plan breakfast, lunch and dinner for 7 days starting ${week} (Saturday to Friday
 Their food: high protein, lots of vegetables, whole grains, good fats, little sugar, nothing deep-fried, real home cooking that tastes good. Varied through the week; no dish more than twice. Use ingredients easy to buy in Dubai supermarkets (Spinneys, Carrefour, Waitrose). Bread and pitta are homemade at home: say "homemade bread" or "homemade pitta" when used, never buy them.
 ALLERGIES: Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts"}. Lia eats everything.
 When a meal for both would contain one of Amir's allergens (for example salmon for Lia), give Amir his own alternative in "amir". Otherwise leave "amir" out, and prefer meals they can both eat.
+FILL ONLY THE EMPTY MEALS: you are given the meals already set for the week (CHOSEN). Plan ONLY the meals listed under EMPTY, and leave out every other meal from your answer.
+THEIR RECIPES: they keep a library of dishes they love (LIBRARY). Fill empty meals from the library first, as {"lib":"<id>"}, using each library dish at most once a week and only for the meal types it is listed for. Invent a new dish only when the library can't keep the week balanced.
 CHOSEN MEALS: some meals are already chosen by Lia and Amir (listed as CHOSEN). Keep them exactly as they are, and plan every other meal around them so the whole week is balanced: vary the proteins (chicken, beef, lamb, turkey, eggs, dairy, and fish for Lia only), don't repeat a chosen meal's main protein at the other meal that day, and balance heavier and lighter days. Still return every meal of every day; for a CHOSEN meal repeat its title, and when it is marked NEEDS RECIPE write its "ing" and "method" (and "amir" if it has his allergens).
 SHARING WITH ARIADNE: you get Ariadne's lunches and dinners for the week. Dishes marked [toddler only] are never shared: bites, patties, fingers and the like are hers alone. Where it is genuinely logical, Lia and Amir eat the same dish as her, cooked in a bigger batch (e.g. bolognese, roast chicken drumsticks, keftedakia, a good stew). Do this only 3 to 5 times in the week, never for toddler-style food (patties, bites, fingers, purees, mash, cookies, snacks), and never for the same dish two meals in a row. To share, set the meal to {"share":"<Ariadne's recipe id for that day and meal>"}. If the shared dish contains Amir's allergens, add "amir" with his alternative.
 Sunday is the nanny's day off: Sunday lunch and dinner are quick (15 to 25 minutes) or shared. Breakfasts take 10 minutes or less; they make breakfast themselves.
 Quantities are for TWO people (Amir's alternative: for ONE). Ingredient lines start with the amount in grams or a count, in simple shop English: "300 g chicken breast", "2 eggs", "1 avocado", "200 g Greek yoghurt", "150 g broccoli". Method: 3 to 6 short steps.
 Reply with ONLY JSON, no markdown:
-{"note":"one sentence on the week","days":[{"date":"YYYY-MM-DD","breakfast":{"title":"","time":"10 min","ing":[""],"method":[""]},"lunch":{"title":"","time":"","ing":[],"method":[],"amir":{"title":"","ing":[],"method":[]}},"dinner":{"share":"recipe-id"}}]}`;
+{"note":"one sentence on what you filled and why","days":[{"date":"YYYY-MM-DD","breakfast":{"title":"","time":"10 min","ing":[""],"method":[""]},"lunch":{"title":"","time":"","ing":[],"method":[],"amir":{"title":"","ing":[],"method":[]}},"dinner":{"share":"recipe-id"}}]}`;
       const content = clip(body.context, 14000) || "No details.";
       return callAI(system, content + (focus ? `\n\nRequest from Lia and Amir: ${focus}` : ""), 12000);
+    }
+
+    if (body.task === "adultrecipe") {
+      const name = clip(body.name, 120).trim();
+      const imgs = (Array.isArray(body.images) ? body.images : []).slice(0, 4)
+        .filter((x) => typeof x === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(x))
+        .map((x) => { const [, type, data] = x.match(/^data:(image\/\w+);base64,(.*)$/); return { type: "image", source: { type: "base64", media_type: type, data } }; });
+      if (!name && !imgs.length) return json({ error: "Type the name of the dish first." }, 400);
+      const system = `You write home recipes for Lia and Amir, a healthy, fit couple in Dubai. Given the name of a dish they love, write the recipe the way it is really made, a little lighter where that doesn't spoil it (lean meat, good olive oil, plenty of vegetables, wholewheat where it works), and high in protein. Ingredients easy to buy in Dubai supermarkets. Bread and pitta are homemade at home: write "homemade bread" or "homemade pitta" when needed.
+ALLERGIES: Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts"}. If the dish contains any of them, keep it as it is for Lia and add "amir": his own version for one person without them. If you can make the whole dish safe for both without spoiling it (e.g. leave out a nut garnish), do that instead and leave "amir" out.
+Quantities for TWO people. Every ingredient line starts with the amount: "200 g wholewheat penne", "2 chicken breasts", "1 onion", "2 tbsp olive oil". Method: 4 to 8 short clear steps. "meals": which of breakfast, lunch, dinner it suits.
+Reply with ONLY JSON, no markdown:
+{"title":"","meals":["lunch","dinner"],"time":"30 min","ing":[""],"method":[""],"tip":"one short line, optional","amir":{"title":"","ing":[],"method":[]}}`;
+      if (imgs.length) return callAI(system + `
+FROM PHOTOS: the photos show a recipe (a cookbook page, handwritten card, a screenshot) or a finished dish. Copy a written recipe faithfully, scaled to two people, in grams where you can; keep their wording for the title. If it is only a photo of food, work out a sensible home recipe for it. Allergy rules above still apply.`, [...imgs, { type: "text", text: `Turn this into a recipe for Lia and Amir.${name ? ` It's called: ${name}.` : ""}${focus ? ` Notes: ${focus}` : ""}` }], 3000);
+      return callAI(system, `Dish: ${name}${focus ? `\nNotes: ${focus}` : ""}`, 2500);
     }
 
     if (body.task === "photo") {
