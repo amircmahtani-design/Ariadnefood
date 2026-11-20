@@ -489,7 +489,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="2.2";
+const APP_VERSION="2.3";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -840,9 +840,9 @@ function planContext(mon){
   const prev=[];for(let i=1;i<=14;i++){const p=S().adults?.[addDays(mon,-i)]?.lunch?.plan;if(p?.lib)prev.push(p.lib)}
   for(let i=7;i<=13;i++){const p=S().adults?.[addDays(mon,i)]?.lunch?.plan;if(p?.lib)prev.push(p.lib)}
   const lib=LIB().filter(r=>(r.meals||[]).some(m=>m==="lunch"||m==="dinner")),sides=LIB().filter(r=>(r.meals||[]).includes("side"));
-  lines.push(`LIBRARY (id: title [group]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${catOf(r)}]; ${(r.ing||[]).slice(0,6).join(", ")}${r.amir?" (has Amir's version)":""}`).join("\n")}`);
-  if(sides.length)lines.push(`Their side dishes (good for "side"): ${sides.map(r=>r.title).join("; ")}`);
   if(prev.length)lines.push(`ALREADY USED in the weeks around this one, do NOT pick these ids: ${[...new Set(prev)].join(", ")}`);
+  lines.push(`LIBRARY (id: title [group]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${catOf(r)}]; ${(r.ing||[]).slice(0,3).map(x=>x.replace(/\(.*?\)/g,"").slice(0,40)).join(", ")}${r.amir?" (Amir version)":""}`).join("\n")}`);
+  if(sides.length)lines.push(`Their side dishes (good for "side"): ${sides.map(r=>r.title).join("; ")}`);
   lines.push(`Amir avoids: ${[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")}.`);
   return lines.join("\n");
 }

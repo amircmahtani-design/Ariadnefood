@@ -631,7 +631,7 @@ ALLERGIES: Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, c
 Only if the library has nothing suitable at all may you write a new lunch as {"title":"","ing":[],"method":[]}, quantities for two.
 Reply with ONLY JSON, no markdown:
 {"note":"one sentence on the lunches you picked and why","days":[{"date":"YYYY-MM-DD","lunch":{"lib":"id","side":"brown rice"}}]}`;
-      const content = clip(body.context, 14000) || "No details.";
+      const content = clip(body.context, 40000) || "No details.";
       return callAI(system, content + (focus ? `\n\nRequest from Lia and Amir: ${focus}` : ""), 6000);
     }
 
