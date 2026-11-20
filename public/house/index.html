@@ -361,7 +361,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.8";
+const APP_VERSION="1.9";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -521,7 +521,7 @@ function row(k,it,now){
   if(it.subs&&it.subs.length){
     const n=it.subs.filter(s=>tickOf(k,s.id)).length,done=n===it.subs.length;
     return `<div class="grp"><button class="task${done?" done":""}${now?" now":""}" data-tickall="${esc(it.id)}" data-k="${k}"><span class="tk">${I.check}</span><span class="tm">${fmt(it.t)}</span><span class="tx"><b>${esc(it.title)}${now?'<i class="nowchip">Now</i>':""}</b><small>${esc(it.sub||"")} · ${n} of ${it.subs.length} done</small>${tags}</span></button>
-      <div class="subs">${it.subs.map(s=>{const t=tickOf(k,s.id);return `<button class="task${t?" done":""}" data-tick="${esc(s.id)}" data-k="${k}"><span class="tk">${I.check}</span><span class="tx"><b>${esc(s.title)}</b>${s.note?`<small>${esc(s.note)}</small>`:""}${byLine(t)}</span></button>`}).join("")}</div>
+      <div class="subs">${it.subs.map(s=>{const t=tickOf(k,s.id);return `<button class="task${t?" done":""}" data-tick="${esc(s.id)}" data-k="${k}"><span class="tk">${I.check}</span><span class="tx"><b>${esc(s.title)}</b>${s.note?`<small>${esc(s.note)}</small>`:""}</span></button>`}).join("")}</div>
       <a class="link ariopen" href="/">Recipes in Ariadne's Table ${I.right}</a></div>`;
   }
   const t=tickOf(k,it.id);
