@@ -252,6 +252,7 @@ select.bare{border:0;background:none;box-shadow:none;padding:4px 26px 4px 0;min-
 select.bare:focus{box-shadow:none}
 .wfields .side,.wfields .cust{min-height:40px;padding:8px 12px;font-size:16px;border-radius:12px;background:var(--bg);border-color:transparent}
 .wfields .side::placeholder{color:var(--ink-3)}
+.gacts{display:grid;gap:10px}.gform{display:grid;gap:12px}
 .wrec{justify-self:start;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:2px 0;min-height:36px;font:inherit;font-size:15px;font-weight:600;color:var(--sage)}.wrec svg{width:17px;height:17px}
 .wgrid{display:none}
 @media (orientation:landscape) and (min-width:640px){
@@ -934,7 +935,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="13.3";
+const APP_VERSION="13.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1375,7 +1376,23 @@ function weekGrid(mon){
   return `<div class="wgrid"><div class="wg-h"></div>${ks.map(k=>{const d=parse(k);return `<div class="wg-h${k===t?" today":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()}</span></div>`}).join("")}
   ${SLOTS.map(([s,l])=>`<div class="wg-sl">${SLOT_ICON[s]}<span>${s==="breakfast"?"B'fast":l}</span></div>${ks.map(k=>{const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),title=mealTitle(m);
     const g=gridName(r?r.title:m.custom||"",m.side),inner=title?`<b>${esc(g.main)}</b>${g.wth?`<small>with ${esc(g.wth)}</small>`:""}${g.plus.map(x=>`<small>+ ${esc(x)}</small>`).join("")}`:`<b>Nothing yet</b>`;
-    return r?`<button class="wg-c${k===t?" today":""}" data-act="recipe" data-id="${esc(r.id)}" data-day="${k}">${inner}</button>`:`<div class="wg-c${k===t?" today":""}${title?"":" none"}">${inner}</div>`}).join("")}`).join("")}</div>`;
+    return `<button class="wg-c${k===t?" today":""}${title?"":" none"}" data-act="gcell" data-day="${k}" data-slot="${s}">${inner}</button>`}).join("")}`).join("")}</div>`;
+}
+
+// Tapping a dish in the sideways week: see its recipe or change it
+function gridCell(k,s){
+  const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),title=mealTitle(m),l=SLOTS.find(x=>x[0]===s)[1];
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${parse(k).getDate()} ${MONTHS[parse(k).getMonth()].slice(0,3)} · ${l}</p><h2 class="display">${esc(title||"Nothing planned yet")}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <div class="gacts">${r?`<button class="btn wide" data-sact="grec" data-id="${esc(r.id)}" data-day="${k}">${I.bowl}See the recipe</button>`:""}<button class="btn ${r?"ghost ":""}wide" data-sact="gchange" data-day="${k}" data-slot="${s}">${I.pencil}${title?"Change dish":"Choose a dish"}</button></div>`);
+}
+function gridChange(k,s){
+  const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom?"__custom":""),l=SLOTS.find(x=>x[0]===s)[1];
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${parse(k).getDate()} ${MONTHS[parse(k).getMonth()].slice(0,3)} · ${l}</p><h2 class="display">Change dish</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <div class="gform" data-day="${k}" data-slot="${s}">
+    <label class="f"><span>Meal</span><select data-gpick>${recipeOptions(s,sel,m.custom)}</select></label>
+    <label class="f"${sel==="__custom"?"":" hidden"} data-gcustwrap><span>What is it?</span><input data-gcustom value="${esc(m.custom)}" placeholder="e.g. Banana + cheese cubes"></label>
+    <label class="f"><span>Side (optional)</span><input data-gside value="${esc(m.side)}" placeholder="${s==="lunch"||s==="dinner"?"e.g. rice + green beans":"e.g. strawberries"}"></label>
+    <button class="btn wide" data-sact="gsave">Save</button></div>`);
 }
 
 /* Recipes */
@@ -2063,6 +2080,7 @@ $("#view").addEventListener("click",async e=>{
   const rf=e.target.closest("[data-rf]");if(rf){ui.rf=rf.dataset.rf;document.querySelectorAll("[data-rf]").forEach(b=>b.setAttribute("aria-pressed",b===rf));renderRList();return}
   const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
   if(act==="ask"){doAsk();return}
+  if(act==="gcell"){gridCell(a.dataset.day,a.dataset.slot);return}
   if(act==="showSide"){const inp=a.parentElement.querySelector("[data-wside]");a.remove();inp.hidden=false;inp.focus();return}
   if(act==="areply"){askReply(a.dataset.id);return}
   if(act==="adone"){askReply(a.dataset.id,true);return}
@@ -2147,6 +2165,9 @@ $("#sheet").addEventListener("click",async e=>{
   const avr=e.target.closest("[data-avremove]");if(avr){try{const d=await post("avatar",{name:avr.dataset.avremove,data:null});S.settings=d.settings;setWho();openSettings();render();status("Photo removed",true)}catch{status("Couldn't remove it",false,true)}return}
   const w=e.target.closest("[data-who]");if(w){me=w.dataset.who;ls.set("ari-me",me);setWho();closeSheet();return}
   const s=e.target.closest("[data-sact]");if(!s)return;const act=s.dataset.sact;
+  if(act==="grec"){ui.rday=s.dataset.day||null;openRecipe(s.dataset.id);return}
+  if(act==="gchange"){gridChange(s.dataset.day,s.dataset.slot);return}
+  if(act==="gsave"){const f=s.closest(".gform"),v=f.querySelector("[data-gpick]").value;setMeal(f.dataset.day,f.dataset.slot,v,f.querySelector("[data-gside]").value.trim()||null,f.querySelector("[data-gcustom]").value.trim());closeSheet();render();status("Saved",true);return}
   if(act==="rscale"){ui.rscale[s.dataset.id]=+s.dataset.f;const sc=$("#sheetBody").scrollTop;openRecipe(s.dataset.id);$("#sheetBody").scrollTop=sc;return}
   if(act==="edit")editRecipe(s.dataset.id);
   else if(act==="delete"){if(!confirm("Delete this recipe? Meals already planned with it will show as empty."))return;
@@ -2177,6 +2198,7 @@ $("#sheet").addEventListener("click",async e=>{
     catch(err){live.innerHTML=`<div class="errbox">${esc(err.message)}</div>`;s.disabled=false;s.innerHTML=`${I.spark}Read recipe`}}
 });
 $("#sheet").addEventListener("change",async e=>{
+  if(e.target.matches("[data-gpick]")){const w=e.target.closest(".gform").querySelector("[data-gcustwrap]");w.hidden=e.target.value!=="__custom";if(!w.hidden)w.querySelector("input").focus();return}
   if(e.target.matches("[data-avfile]")){const name=e.target.dataset.avfile,f=e.target.files[0];if(!f)return;
     try{status("Saving photo…");const data=await squareAvatar(f);const d=await post("avatar",{name,data});S.settings=d.settings;setWho();openSettings();render();status("Photo saved",true)}catch{status("Couldn't save that photo",false,true)}return}
   if(e.target.id!=="photoIn")return;const files=[...e.target.files].slice(0,4);photos=[];
