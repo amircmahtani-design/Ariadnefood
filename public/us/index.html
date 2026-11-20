@@ -577,7 +577,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="3.4";
+const APP_VERSION="3.5";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -708,7 +708,7 @@ function viewWeek(){
   const mon=ui.week,t=todayKey(),gaps=gapCount(mon);
   const rows=[...Array(7)].map((_,i)=>addDays(mon,i)).map(k=>{const a=A.adultMeal(k,"lunch"),d=parse(k),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text,empty=isGap(k,"lunch");
     const none=a.lia.mode==="none",main=pText(a.lia),amir=!same&&!none?`Amir: ${pText(a.amir)}`:"";
-    const rec=[["lia",a.lia],["amir",a.amir]].filter(([,p])=>p.dish&&!empty&&p.mode!=="out");const recB=!rec.length?"":rec.length===2&&!same?rec.map(([w])=>`<button class="wrec" data-rec="${k}|lunch|${w}">${I.book}${w==="lia"?"Lia's recipe":"Amir's recipe"}</button>`).join(""):`<button class="wrec" data-rec="${k}|lunch|${rec[0][0]}">${I.book}See the recipe</button>`;
+    const rec=[["lia",a.lia],["amir",a.amir]].filter(([w,p])=>p.dish&&!empty&&p.mode!=="out"&&!(w==="amir"&&p.mode==="swap"));const recB=!rec.length?"":rec.length===2&&!same?rec.map(([w])=>`<button class="wrec" data-rec="${k}|lunch|${w}">${I.book}${w==="lia"?"Lia's recipe":"Amir's recipe"}</button>`).join(""):`<button class="wrec" data-rec="${k}|lunch|${rec[0][0]}">${I.book}See the recipe</button>`;
     return `<div class="wrow${k===t?" today":""}"><span class="wd"><small>${DOW[d.getDay()].slice(0,3)}</small><b>${d.getDate()}</b></span><span class="wm"><button class="wpick" data-edit="${k}|lunch"><b${none?' class="mute"':""}>${esc(main)}</b>${amir?`<small>${esc(amir)}</small>`:""}</button>${recB?`<span class="wrecs">${recB}</span>`:""}</span><button class="pen" data-edit="${k}|lunch" aria-label="Change lunch on ${DOW[d.getDay()]}">${I.pen}</button></div>`}).join("");
   const fill=aiBusy?`<p class="streaming wfill"><span class="dot"></span>${esc(aiBusy)}</p>`
     :gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Plan ${gaps>1?`${gaps} lunches`:"1 lunch"} with AI</button>`:"";
@@ -732,7 +732,7 @@ function weekGrid(mon){
     const g=gridName(p.text);return `<b>${esc(g.main)}</b>${g.wth?`<small>with ${esc(g.wth)}</small>`:""}${g.plus.map(x=>`<small>+ ${esc(x)}</small>`).join("")}${(p.mode==="same"||p.mode==="swap")&&p.side?p.side.split(/,\s*|\s+and\s+|\s*\+\s*/).map(x=>x.trim().replace(/^an?\s+/i,"").toLowerCase().replace(/\bgreek\b/g,"Greek")).filter(Boolean).slice(0,3).map(x=>`<small>+ ${esc(x)}</small>`).join(""):""}`};
   return `<div class="wgrid"><div class="wg-h"></div>${ks.map(k=>{const d=parse(k);return `<div class="wg-h${k===t?" today":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()}</span></div>`}).join("")}
   ${SLOTS.map(([s,l,ic])=>`<div class="wg-sl">${ic}<span>${s==="breakfast"?"B'fast":l}</span></div>${ks.map(k=>{const a=A.adultMeal(k,s),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text;
-    const am=a.amir,amT=am.mode==="out"?"eating out":am.mode==="own"?am.text:am.mode==="left"?"leftovers":gridName(am.mode==="swap"?am.text.replace(/^grilled\s+/i,"").replace(/\s+with\s.*$/i,""):am.text).main.toLowerCase();
+    const am=a.amir,amT=am.mode==="out"?"eating out":am.mode==="own"?am.text:am.mode==="left"?"leftovers":gridName(am.mode==="swap"?am.text.replace(/^(grilled|lean)\s+/i,"").replace(/\s+with\s.*$/i,"").replace(/\s+patty$/i,""):am.text).main.toLowerCase();
     const inner=same?cellTxt(a.lia):`${cellTxt(a.lia)}<i class="wg-am">Amir: ${esc(amT)}</i>`,who=a.lia.dish?"lia":a.amir.dish?"amir":"";
     const act=`data-cell="${k}|${s}"`;
     return `<button class="wg-c${k===t?" today":""}" ${act}>${inner}</button>`}).join("")}`).join("")}</div>`;
@@ -740,7 +740,7 @@ function weekGrid(mon){
 // Tapping a dish in the sideways week: see its recipe or change it
 function cellSheet(k,s){
   const a=A.adultMeal(k,s),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text,sl=SLOTS.find(x=>x[0]===s)[1];
-  const recs=[["lia",a.lia],["amir",a.amir]].filter(([,p])=>p.dish&&p.mode!=="out");
+  const recs=[["lia",a.lia],["amir",a.amir]].filter(([w,p])=>p.dish&&p.mode!=="out"&&!(w==="amir"&&p.mode==="swap"));
   const recB=!recs.length?"":same||recs.length===1?`<button class="btn wide" data-rec="${k}|${s}|${recs[0][0]}">${I.book}See the recipe</button>`
     :recs.map(([w])=>`<button class="btn wide${w==="amir"?" ghost":""}" data-rec="${k}|${s}|${w}">${I.book}${w==="lia"?"Lia's recipe":"Amir's recipe"}</button>`).join("");
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">${esc(pText(a.lia))}</h2>${same?"":`<p class="small muted" style="margin-top:4px">Amir: ${esc(pText(a.amir))}</p>`}</div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
