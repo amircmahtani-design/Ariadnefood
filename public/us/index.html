@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Lia &amp; Amir">
-<link rel="icon" href="/img/favicon-64.png" type="image/png">
-<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="icon" href="/img/us-favicon-64.png?v=1" type="image/png">
+<link rel="apple-touch-icon" href="/img/us-touch-180.png?v=1">
 <link rel="manifest" href="/us/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -461,12 +461,12 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 <body>
 <header class="top">
   <div class="wrap topin">
-    <div class="brand"><img src="/img/app-icon-128.png" alt="" width="34" height="34" style="border-radius:9px"><span class="bt">Lia &amp; Amir<small>Healthy · Fit · Family meals</small></span></div>
+    <div class="brand"><img src="/img/us-icon-128.png?v=1" alt="" width="34" height="34" style="border-radius:9px"><span class="bt">Lia &amp; Amir<small>Healthy · Fit · Family meals</small></span></div>
     <button class="who-btn" id="whoBtn" aria-label="Who's using this phone"><span class="av"></span><span id="whoName">Who?</span></button>
   </div>
 </header>
 
-<main class="wrap" id="view"><div class="loading"><img src="/img/app-icon-256.png" alt="" width="84" height="84" style="border-radius:20px"><p>Loading the menu…</p></div></main>
+<main class="wrap" id="view"><div class="loading"><img src="/img/us-icon-256.png?v=1" alt="" width="84" height="84" style="border-radius:20px"><p>Loading the menu…</p></div></main>
 
 <nav class="tabs" aria-label="Sections">
   <div class="wrap" id="tabs">
@@ -489,7 +489,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="2.3";
+const APP_VERSION="2.4";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
