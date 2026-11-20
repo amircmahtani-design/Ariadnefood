@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Catherine's Day">
 <link rel="icon" href="/img/house-favicon-64.png?v=1" type="image/png">
 <link rel="apple-touch-icon" href="/img/house-touch-180.png?v=1">
+<script src="/push.js?v=1" defer></script>
 <link rel="manifest" href="/house/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -361,7 +362,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.9";
+const APP_VERSION="2.0";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -513,7 +514,7 @@ function avatar(name,size=32){
   if(st)return `<img class="avt sq" src="/img/people/${st}.webp?v=1" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px">`;
   return `<span class="avt" style="width:${size}px;height:${size}px;background:var(--sage-soft);color:var(--sage);font-size:${Math.round(size*.44)}px">${esc(name.charAt(0).toUpperCase())}</span>`;
 }
-function setWho(){$("#whoName").textContent=me||"Who are you?";$("#whoBtn .av").innerHTML=avatar(me,34)}
+function setWho(){window.AriPush?.setWho();$("#whoName").textContent=me||"Who are you?";$("#whoBtn .av").innerHTML=avatar(me,34)}
 const byLine=t=>t?`<em class="by">${avatar(t.by,20)}${esc(t.by||"Someone")} · ${fmt(new Date(t.at).getHours()*60+new Date(t.at).getMinutes())}</em>`:"";
 function row(k,it,now){
   if(it.marker)return `<div class="marker"><span class="mi">${it.icon||I.info}</span><span class="tm">${fmt(it.t)}</span><span><b>${it.title}</b>${it.sub?`<br>${esc(it.sub)}`:""}</span></div>`;
@@ -655,7 +656,7 @@ async function tick(k,ids,on){
   try{let last;for(const id of ids)last=await post("house-tick",{date:k,id,on,by:me});if(last)H.ticks=last.ticks;render()}
   catch(e){H.ticks[k]=prev;render();status("Not saved. Check the connection.",true,true)}
 }
-function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0}
+function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0;if($("#pushBox"))window.AriPush?.mount()}
 function closeSheet(){const sh=$("#sheet");sh.classList.remove("open");setTimeout(()=>{if(!sh.classList.contains("open")){sh.hidden=true;$("#sheetBody").innerHTML=""}},260)}
 function askWho(){
   openSheet(`<div class="who-sheet"><h2 class="display">Who's using this phone?</h2><p class="muted">So everyone can see who ticked each job.</p>
@@ -686,7 +687,7 @@ const DAYS6=[1,2,3,4,5,6];
 function openSettings(at){
   const h=H.house;
   let s=`<div class="sh-h"><h2 class="display">Settings</h2><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <div class="opt-row" style="display:flex;align-items:center;gap:12px">${avatar(me,44)}<div style="flex:1"><b>${esc(me||"Nobody chosen")}</b><br><span class="small muted">This phone</span></div><button class="btn sm ghost" data-act="who">Change</button></div>`;
+  <div id="pushBox"></div><div class="opt-row" style="display:flex;align-items:center;gap:12px">${avatar(me,44)}<div style="flex:1"><b>${esc(me||"Nobody chosen")}</b><br><span class="small muted">This phone</span></div><button class="btn sm ghost" data-act="who">Change</button></div>`;
   if(!isParent()){s+=`<p class="note">Amir or Lia can change the activity times, the sheets day and the ironing day.</p><p class="ver">Catherine's Day v${APP_VERSION}</p>`;openSheet(s);return}
   s+=`<form id="setForm" class="set">
   <section class="setgrp"><h3 class="grph">Ariadne's activities</h3><p class="small muted" style="margin-bottom:10px">Her classes and outings. Choose "None" on a day without one.</p>

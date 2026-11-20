@@ -9,6 +9,7 @@ import { applySafety } from "../lib/safety.mjs";
 import { SCRAMBLED, STAPLES, VEAL_PORK } from "../lib/seed-more.mjs";
 import { applyBreakfast, COURGETTE_COOKIES, SPANAK_COURGETTE, markFreezes } from "../lib/breakfast.mjs";
 import { applyFamily } from "../lib/family.mjs";
+import { pushKeys, pushTo } from "../lib/push.mjs";
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -101,6 +102,9 @@ export default async (req) => {
     if (!buf) return new Response("Not found", { status: 404 });
     return new Response(buf, { headers: { "content-type": "image/webp", "cache-control": "public, max-age=31536000, immutable" } });
   }
+
+  // Notifications: the app asks for the public key, then saves this phone's subscription under who's using it
+  if (req.method === "GET" && route === "push-key") return json({ key: (await pushKeys(store)).publicKey });
 
   if (req.method === "GET" && route === "state") {
     let [days, recipes, settings, insight, asks] = await Promise.all([
@@ -422,6 +426,18 @@ export default async (req) => {
     return json({ ok: true, shop });
   }
   // Kitchen check before shopping: what's already at home, and who confirmed the list is ready.
+  if (route === "push-sub" || route === "push-unsub" || route === "push-test") {
+    const subs = (await store.get("pushsubs", { type: "json" })) || {};
+    const ep = clip(body.sub?.endpoint || body.endpoint, 600);
+    if (route === "push-test") { const n = await pushTo(store, clip(body.who, 40), { title: "Notifications are on", body: "This is how they'll look: silent, on your lock screen.", url: clip(body.url, 120) || "/" }); return json({ ok: true, sent: n }); }
+    if (!ep || !/^https:\/\//.test(ep)) return json({ error: "Bad request" }, 400);
+    if (route === "push-unsub") delete subs[ep];
+    else { const who = clip(body.who, 40); if (!["Amir", "Lia", "Catherine"].includes(who)) return json({ error: "Pick who you are first" }, 400);
+      subs[ep] = { who, app: clip(body.app, 20), sub: { endpoint: ep, keys: { p256dh: clip(body.sub?.keys?.p256dh, 200), auth: clip(body.sub?.keys?.auth, 100) } }, at: new Date().toISOString() }; }
+    await store.setJSON("pushsubs", subs);
+    return json({ ok: true });
+  }
+
   if (route === "pantry-tick" || route === "pantry-done") {
     const w = String(body.w || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) return json({ error: "Bad request" }, 400);
@@ -433,6 +449,12 @@ export default async (req) => {
     pantry[w] = p;
     for (const k of Object.keys(pantry).sort().slice(0, -8)) delete pantry[k];
     await store.setJSON("pantry", pantry);
+    // Kitchen check done: tell Lia the list is ready (only Lia, and only when it's newly done)
+    if (route === "pantry-done" && !body.undo) {
+      const d = new Date(w + "T00:00:00Z"), e = new Date(d.getTime() + 6 * 864e5), M = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const range = d.getUTCMonth() === e.getUTCMonth() ? `${d.getUTCDate()}–${e.getUTCDate()} ${M[e.getUTCMonth()]}` : `${d.getUTCDate()} ${M[d.getUTCMonth()]}–${e.getUTCDate()} ${M[e.getUTCMonth()]}`;
+      try { await pushTo(store, "Lia", { title: "Shopping list is ready", body: `${p.by || "Catherine"} checked the kitchen. The list for ${range} is ready to shop.`, url: `/?shop=${w}` }); } catch {}
+    }
     return json({ ok: true, pantry });
   }
 

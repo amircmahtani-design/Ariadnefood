@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Lia &amp; Amir">
 <link rel="icon" href="/img/us-favicon-64.png?v=1" type="image/png">
 <link rel="apple-touch-icon" href="/img/us-touch-180.png?v=1">
+<script src="/push.js?v=1" defer></script>
 <link rel="manifest" href="/us/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -588,7 +589,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.2";
+const APP_VERSION="4.3";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -652,7 +653,7 @@ function avatar(name,size=32){
   if(st)return `<img class="avt sq" src="/img/people/${st}.webp?v=1" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px">`;
   return `<span class="avt" style="width:${size}px;height:${size}px;background:var(--sage-soft);color:var(--sage);font-size:${Math.round(size*.44)}px">${esc(name.charAt(0).toUpperCase())}</span>`;
 }
-function setWho(){$("#whoName").textContent=me||"Who?";$("#whoBtn .av").innerHTML=avatar(me,34)}
+function setWho(){window.AriPush?.setWho();$("#whoName").textContent=me||"Who?";$("#whoBtn .av").innerHTML=avatar(me,34)}
 const dayWord=k=>{const t=todayKey();return k===t?"Today":k===addDays(t,1)?"Tomorrow":k===addDays(t,-1)?"Yesterday":""};
 const cap=s=>String(s||"").charAt(0).toUpperCase()+String(s||"").slice(1);
 const alList=al=>al.map(a=>AL_NAME[a]||a).join(" and ");
@@ -890,7 +891,7 @@ function editRec(r){
 }
 
 /* ---------- sheets ---------- */
-function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0}
+function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0;if($("#pushBox"))window.AriPush?.mount()}
 function closeSheet(){const sh=$("#sheet");sh.classList.remove("open");setTimeout(()=>{if(!sh.classList.contains("open")){sh.hidden=true;$("#sheetBody").innerHTML=""}},260)}
 function askWho(){
   openSheet(`<div class="who-sheet"><h2 class="display">Who's using this phone?</h2><p class="muted">So the list shows who added each thing.</p>
@@ -1070,6 +1071,7 @@ async function aiPlan(focus){
 function openSettings(){
   const P=A.prefs();
   openSheet(`<div class="sh-h"><h2 class="display">Settings</h2><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <div id="pushBox"></div>
   <form id="prefForm"><div class="setgrp"><h3 class="grph">Who's using this phone</h3><div class="checks">${["Lia","Amir"].map(n=>`<label><input type="radio" name="me" value="${n}"${me===n?" checked":""}><span>${n}</span></label>`).join("")}</div></div>
   <div class="setgrp"><h3 class="grph">Amir's allergies</h3><p class="small muted" style="margin:0 0 10px">Any dish with these gets an alternative for Amir. Lia still has the dish.</p>
     <div class="checks">${["fish","seafood","chickpeas","nuts"].map(a=>`<label><input type="checkbox" name="al" value="${a}"${P.allergies.includes(a)?" checked":""}><span>${a==="nuts"?"Nuts (not almonds)":cap(a)}</span></label>`).join("")}</div>

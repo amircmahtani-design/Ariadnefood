@@ -11,6 +11,7 @@
 <link rel="icon" href="/img/favicon-64.png?v=2" type="image/png">
 <link rel="icon" href="/img/favicon.ico?v=2" sizes="32x32">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png?v=2">
+<script src="/push.js?v=1" defer></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -942,7 +943,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.1";
+const APP_VERSION="14.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1550,6 +1551,7 @@ function openSettings(){
   const s=S.settings,f=s.formula||{},ppl=s.people||[];
   openSheet(`<form id="sform" class="stack">
     <div class="sh-h"><div><p class="eyebrow">Ariadne's Table</p><h2 class="display">Settings</h2></div><button type="button" class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+    <div id="pushBox"></div>
     <label class="f"><span>Who's using this phone</span><select name="me">${ppl.map(p=>`<option${p===me?" selected":""}>${esc(p)}</option>`).join("")}</select></label>
     <div class="card-soft"><p class="micro">Profile pictures</p><ul class="av-list">${ppl.map(p=>`<li>${avatar(p,44)}<span class="av-n">${esc(p)}</span><label class="btn ghost sm">${S.settings?.avatars?.[p]?"Change":"Add photo"}<input type="file" accept="image/*" data-avfile="${esc(p)}" hidden></label>${S.settings?.avatars?.[p]?`<button type="button" class="link" data-avremove="${esc(p)}">Remove</button>`:""}</li>`).join("")}</ul></div>
     <div class="grid2"><label class="f"><span>Usual formula a day (ml)</span><input name="milkDefault" type="number" min="0" step="10" value="${esc(s.milkDefault)}"></label>
@@ -1688,7 +1690,7 @@ function avatar(name,size=32){
   const [bg,fg]=AV_TONE[name]||["#EFE6D8","#5F6656"];
   return `<span class="avt" style="width:${size}px;height:${size}px;background:${bg};color:${fg};font-size:${Math.round(size*.44)}px">${esc(name.trim().charAt(0).toUpperCase())}</span>`;
 }
-function setWho(){const n=$("#whoName");if(n)n.textContent=me||"Who are you?";const a=$("#whoBtn .av");if(a)a.innerHTML=avatar(me,34)}
+function setWho(){window.AriPush?.setWho();const n=$("#whoName");if(n)n.textContent=me||"Who are you?";const a=$("#whoBtn .av");if(a)a.innerHTML=avatar(me,34)}
 async function squareAvatar(file){
   const url=URL.createObjectURL(file);const img=new Image();img.src=url;await img.decode();
   const side=Math.min(img.width,img.height),c=document.createElement("canvas");c.width=c.height=256;
@@ -1737,7 +1739,7 @@ async function aiPlan(){
 }
 
 /* ---------- sheets ---------- */
-function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0}
+function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0;if($("#pushBox"))window.AriPush?.mount()}
 function closeSheet(){const sh=$("#sheet");sh.classList.remove("open");setTimeout(()=>{if(!sh.classList.contains("open")){sh.hidden=true;$("#sheetBody").innerHTML=""}},250)}
 async function submitRecipe(form){
   const fd=new FormData(form),lines=s=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
