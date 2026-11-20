@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..650,100&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="/foods.js?v=5"></script>
+<script src="/foods.js?v=6"></script>
 <script src="/engine.js?v=3"></script>
 <style>
 [hidden]{display:none!important}
@@ -842,7 +842,7 @@ let me=ls.get("ari-me")||"";
 let pending={},timer=null,saving=false,loaded=false,busy=false,photos=[];
 
 /* ---------- ingredient parsing (for manual edits) ---------- */
-const UNIT_G={egg:50,carrot:60,banana:110,potato:170,sweet_potato:150,apple:150,pear:170,courgette:200,onion:110,spring_onion:15,avocado:150,tomato:120,orange:130,kiwi:70,peach:150,mango:200,chicken_thigh:100,chicken_breast:170,salmon:120,cod:120,sardines:90,bread:35,pitta:60,filo:25,lemon:30,dates:20,cucumber:200,red_pepper:150,chickpeas:240,lentils_red:200,broccoli:250,cauliflower:400};
+const UNIT_G={egg:50,chicken_thigh:110,chicken_wings:45,carrot:60,banana:110,potato:170,sweet_potato:150,apple:150,pear:170,courgette:200,onion:110,spring_onion:15,avocado:150,tomato:120,orange:130,kiwi:70,peach:150,mango:200,chicken_thigh:100,chicken_breast:170,salmon:120,cod:120,sardines:90,bread:35,pitta:60,filo:25,lemon:30,dates:20,cucumber:200,red_pepper:150,chickpeas:240,lentils_red:200,broccoli:250,cauliflower:400};
 function gramsFromLine(line,k){
   const t=line.toLowerCase().replace(/½/g,".5").replace(/¼/g,".25").replace(/¾/g,".75");
   const m=t.match(/(\d*\.?\d+)\s*(kg|g|ml|l|litres?|tbsp|tsp|cups?|tins?|cans?|handfuls?|slices?|sheets?)?\b/);
@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="11.0";
+const APP_VERSION="11.1";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1203,6 +1203,7 @@ function bakeList(mon,need){
     else if(cands.length){const best=cands.reduce((a,d)=>freshDishes(d)<freshDishes(a)?d:a,cands[0]);if(best!==md){md=best;part="afternoon"}}
     else if(hb&&[0,6].includes(parse(md).getDay())&&md>=mon){md=mon;part="afternoon"} // bread needed early in the week: Saturday afternoon, after Friday's shopping
     else if([0,6].includes(parse(md).getDay())){md=addDays(md,parse(md).getDay()===0?-2:-1);part="afternoon"}
+    if(BROTH.has(id)&&md<mon&&mon>=t){md=mon;part="first thing in the morning"} // needed on the Saturday itself: put it on to simmer first thing
     if(md<t){md=t;part="as soon as you can"}
     const dayName=d=>d===t?(part==="morning"?"This morning":part==="afternoon"?"This afternoon":"Today, as soon as you can"):`${DOW[parse(d).getDay()]} ${dmy(d).slice(0,5)} ${part}`;
     // Baked things stay fresh about 3 days: if the last one is eaten more than 3 days after making, freeze part of the batch straight away.
