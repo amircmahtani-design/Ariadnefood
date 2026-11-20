@@ -933,7 +933,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="12.8";
+const APP_VERSION="12.9";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1300,8 +1300,8 @@ function cookRow(k){
   const c=cookPlan(k),chk=dayCheck(k),rd=chk.ready.length?`<br><b>Already made:</b> ${chk.ready.map(esc).join(", ")}`:"",ms=chk.missing.length?`<br><b class="miss">Not ready:</b> ${chk.missing.map(esc).join("; ")}`:"";
   if(c.off)return `<div class="cookrow off">${I.alert}<span><b>Day off.</b> Everything is ready from Saturday: reheat and serve.${rd}${ms}</span></div>`;
   if(!c.cook.length&&!c.bake.length)return `<div class="cookrow${chk.missing.length?" bad":""}">${I.check}<span><b>Nothing to cook.</b> ${c.left?"Lunch and dinner are yesterday's leftovers.":""}${rd}${ms}</span></div>`;
-  const n=c.cook.length+(c.sides?.length||0)+c.bake.length;
-  return `<details class="cookrow cfold${chk.missing.length?" bad":""}" data-ck="${k}"${cookOpen.has(k)?" open":""}><summary>${I.clock}<span class="cf-t"><b>To cook</b> ${n} ${n===1?"thing":"things"}${c.bake.length?`, ${c.bake.length} to bake`:""}${chk.missing.length?` · <b class="miss">something isn't ready</b>`:""}</span>${I.down}</summary><span class="cf-b">${c.cook.length?`<b>Cook:</b> ${c.cook.map(t=>{const r=S.recipes.find(r=>t.replace(/ \((breakfast|for Sunday)\)$/,"")===r.title),pp=r&&(+r.serves||1)>1?portionPlan(r.id,k):null;return esc(t)+(pp&&pp.spare>0&&pp.fr?` (freeze ${halfTxt(pp.spare)})`:"")}).join(", ")}${c.sides?.length?`, plus ${c.sides.map(r=>esc(r.title.toLowerCase())).join(", ")}`:""}`:""}${c.cook.length&&c.bake.length?"<br>":""}${c.bake.length?`<b>Bake:</b> ${c.bake.map(esc).join("; ")}. Check the freezer first.`:""}${rd}${ms}</span></details>`;
+  const n=c.cook.length+(c.sides?.length||0),nb=c.bake.length;
+  return `<details class="cookrow cfold${chk.missing.length?" bad":""}" data-ck="${k}"${cookOpen.has(k)?" open":""}><summary>${I.clock}<span class="cf-t"><b>Cooking today</b> ${[n?`${n} to cook`:"",nb?`${nb} to bake`:""].filter(Boolean).join(", ")}${chk.missing.length?` · <b class="miss">something isn't ready</b>`:""}</span>${I.down}</summary><span class="cf-b">${c.cook.length?`<b>Cook:</b> ${c.cook.map(t=>{const r=S.recipes.find(r=>t.replace(/ \((breakfast|for Sunday)\)$/,"")===r.title),pp=r&&(+r.serves||1)>1?portionPlan(r.id,k):null;return esc(t)+(pp&&pp.spare>0&&pp.fr?` (freeze ${halfTxt(pp.spare)})`:"")}).join(", ")}${c.sides?.length?`, plus ${c.sides.map(r=>esc(r.title.toLowerCase())).join(", ")}`:""}`:""}${c.cook.length&&c.bake.length?"<br>":""}${c.bake.length?`<b>Bake:</b> ${c.bake.map(esc).join("; ")}. Check the freezer first.`:""}${rd}${ms}</span></details>`;
 }
 // Each day's cooking folds away in My Week; remembered so the 30-second refresh doesn't close it
 const cookOpen=new Set();
