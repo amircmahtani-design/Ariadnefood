@@ -159,6 +159,9 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .grp .subs .tk{width:28px;height:28px}
 .grp .subs .tx b{font-size:16px;font-weight:500}
 .grp .ariopen{margin-left:54px}
+.task:has(+.ariopen){border-bottom:0!important}
+.task+.ariopen{display:flex;width:fit-content;white-space:nowrap;margin:-12px 0 4px 118px}
+.tx .by svg{width:15px;height:15px}
 .xdel{flex:none;border:0;background:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
 .xdel svg{width:18px;height:18px}
 .rowx{display:flex;align-items:flex-start}
@@ -357,7 +360,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.6";
+const APP_VERSION="1.7";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -457,6 +460,8 @@ function buildDay(k){
   // laundry the working day before the ironing lady comes
   const iron=(h.ironing||[]).map(Number),laundryDay=iron.some(i=>(i===1?6:i-1)===dow);
   if(laundryDay){const nextIron=iron.map(i=>DOW[i]).join(" / ");const t=fit(30,start);if(t!=null){add({id:"wash",t,d:30,title:"Laundry: wash",sub:`So it's dry for the ironing lady (${nextIron})`});const t2=fit(30,t+150);if(t2!=null)add({id:"dry",t:t2,d:30,title:"Laundry: dry and fold, ready for ironing"})}}
+  // Thursday and Friday: check the shopping list (kitchen check in Ariadne's Table, so Lia can shop). Ticks itself once the check is done there.
+  if(dow===4||dow===5){const sh=A?.shop,t=fit(15,start);if(t!=null)add({id:"shopcheck",t,d:15,title:"Check the shopping list",sub:sh?.ready?"Kitchen check done: the list is ready for Lia":"In Ariadne's Table, tick what's already at home, then tap Done so Lia can shop",auto:!!sh?.ready,link:sh?.w?`/?shop=${sh.w}`:"/",linkText:"Open the list"})}
   // cooking, from Ariadne's Table
   const ck=A?A.cook:null,bm=A?A.bakes.filter(b=>b.part!=="afternoon"):[],ba=A?A.bakes.filter(b=>b.part==="afternoon"):[];
   const mins=list=>list.reduce((s,x)=>s+(x.mins||30),0);
@@ -485,7 +490,7 @@ function buildDay(k){
 const SECS=[["early","Early morning",0,hm("09:00")],["morning","Morning",hm("09:00"),hm("12:00")],["midday","Midday",hm("12:00"),hm("15:00")],["afternoon","Afternoon",hm("15:00"),hm("18:00")],["evening","Evening",hm("18:00"),9999]];
 const tickOf=(k,id)=>H.ticks?.[k]?.[id];
 // a task with sub-steps (cooking) is done when all its steps are
-const isDone=(k,it)=>it.subs&&it.subs.length?it.subs.every(s=>tickOf(k,s.id)):!!tickOf(k,it.id);
+const isDone=(k,it)=>it.auto?true:it.subs&&it.subs.length?it.subs.every(s=>tickOf(k,s.id)):!!tickOf(k,it.id);
 const tickable=it=>!it.marker;
 function dayCount(k,day){const t=day.items.filter(tickable);return {done:t.filter(it=>isDone(k,it)).length,all:t.length}}
 
@@ -517,7 +522,7 @@ function row(k,it,now){
       <a class="link ariopen" href="/">Recipes in Ariadne's Table ${I.right}</a></div>`;
   }
   const t=tickOf(k,it.id);
-  const btn=`<button class="task${t?" done":""}${now?" now":""}" data-tick="${esc(it.id)}" data-k="${k}"><span class="tk">${I.check}</span><span class="tm">${fmt(it.t)}</span><span class="tx"><b>${esc(it.title)}${now?'<i class="nowchip">Now</i>':""}</b>${it.sub?`<small>${esc(it.sub)}</small>`:""}${tags}${byLine(t)}</span></button>`;
+  const btn=`<button class="task${t||it.auto?" done":""}${now?" now":""}" data-tick="${esc(it.id)}" data-k="${k}"><span class="tk">${I.check}</span><span class="tm">${fmt(it.t)}</span><span class="tx"><b>${esc(it.title)}${now?'<i class="nowchip">Now</i>':""}</b>${it.sub?`<small>${esc(it.sub)}</small>`:""}${tags}${t?byLine(t):it.auto?`<em class="by">${I.check}Done in Ariadne's Table</em>`:""}</span></button>${it.link?`<a class="link ariopen" href="${esc(it.link)}">${esc(it.linkText||"Open")} ${I.right}</a>`:""}`;
   return it.del?`<div class="rowx">${btn}<button class="xdel" data-delx="${esc(it.del)}" data-k="${k}" aria-label="Remove this job">${I.close}</button></div>`:btn;
 }
 function nextItem(k,day){if(k!==todayKey())return null;const n=nowMin();
@@ -546,8 +551,8 @@ function viewDay(){
   const c=dayCount(k,day),pct=c.all?Math.round(c.done/c.all*100):0;
   h+=`<div class="prog"><div class="bar"><span style="width:${pct}%"></span></div><b>${c.done} of ${c.all} done</b></div>`;
   // Out of the ordinary today (sheets, laundry, afternoon baking, added chores): shown first so nothing is missed. Ticking here ticks it in the schedule too.
-  const special=day.items.filter(it=>!it.marker&&(["sheets","wash","dry","bakepm"].includes(it.id)||it.tag==="extra"));
-  if(special.length){const left=special.filter(it=>!(it.subs?.length?it.subs.every(x=>tickOf(k,x.id)):tickOf(k,it.id))).length;
+  const special=day.items.filter(it=>!it.marker&&(["sheets","wash","dry","bakepm","shopcheck"].includes(it.id)||it.tag==="extra"));
+  if(special.length){const left=special.filter(it=>!it.auto&&!(it.subs?.length?it.subs.every(x=>tickOf(k,x.id)):tickOf(k,it.id))).length;
     h+=`<section class="special${left?"":" alldone"}"><div class="sp-h">${I.star||I.info}<b>${left?(k===t?"Special for today":"Special that day"):"All special jobs done"}</b><span>${special.length-left} of ${special.length}</span></div>${special.map(it=>row(k,it,false)).join("")}</section>`}
   const nx=nextItem(k,day);
   if(k===t)h+=nx?`<div class="next"><span class="ic">${I.right}</span><span><small>${nx.t<=nowMin()?"Now":"Next"} · ${fmt(nx.t)}</small><b>${esc(nx.title)}</b>${nx.sub?`<span>${esc(nx.sub)}</span>`:""}</span></div>`
@@ -580,6 +585,7 @@ function viewWeek(){
       its.some(x=>x.id==="bakepm")?`<i class="c">Bake</i>`:"",
       its.some(x=>x.id==="sheets")?`<i class="h">Sheets &amp; towels</i>`:"",
       its.some(x=>x.id==="wash")?`<i class="h">Laundry</i>`:"",
+      its.some(x=>x.id==="shopcheck")?`<i class="h">Shopping list</i>`:"",
       its.filter(x=>x.tag==="extra").length?`<i class="h">+${its.filter(x=>x.tag==="extra").length} extra</i>`:""].join("");
     h+=`<details class="sec wday${isT?" today":""}" data-sec="${key}"${open?" open":""}><summary><span class="st"><b>${DOW[d.getDay()]} <em>${shortDate(k)}</em>${isT?'<i class="todaychip">Today</i>':""}</b><span class="dchips">${chips}</span></span><span class="cnt${c.done===c.all&&c.all?" all":""}">${c.done===c.all&&c.all?"Done":`${c.done}/${c.all}`}</span><span class="chev">${I.down}</span></summary>
       <div class="body">${its.map(it=>row(k,it,false)).join("")}</div></details>`;
