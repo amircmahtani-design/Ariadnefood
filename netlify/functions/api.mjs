@@ -234,9 +234,11 @@ export default async (req) => {
     const pantry = (await store.get("pantry", { type: "json" })) || {};
     const adults = (await store.get("adults", { type: "json" })) || {};
     const groceries = (await store.get("groceries", { type: "json" })) || {};
+    const ht = (await store.get("house-ticks", { type: "json" })) || {};
+    const cookTicks = {}; for (const k of Object.keys(ht).sort().slice(-10)) cookTicks[k] = Object.fromEntries(Object.entries(ht[k] || {}).filter(([id]) => /^(cook|bake):/.test(id)));
     // Ariadne's Table and Catherine's Day don't need Lia & Amir's recipe library: leave it out so the app loads fast
-    if (new URL(req.url).searchParams.has("lean") && adults._lib) { const { _lib, ...rest } = adults; return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults: rest, groceries }); }
-    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults, groceries });
+    if (new URL(req.url).searchParams.has("lean") && adults._lib) { const { _lib, ...rest } = adults; return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults: rest, groceries, cookTicks }); }
+    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults, groceries, cookTicks });
   }
 
   // Plain-text report for Claude (or anyone) to read: what she ate, gaps, plan, recipes, and how to write back.
