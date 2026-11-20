@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="10.3";
+const APP_VERSION="10.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1639,7 +1639,9 @@ window.ariDay=k=>{
   const bakes=[mondayOf(k),addDays(mondayOf(k),7)].flatMap(w=>weekBakes(w)).filter((x,i,a)=>x.mk===k&&a.findIndex(y=>y.r.id===x.r.id)===i)
     .map(x=>({id:x.r.id,title:x.r.title,mins:recipeMins(x.r),part:x.part,make:x.make}));
   const meals={};for(const [sl] of SLOTS)meals[sl]=mealTitle(ms[sl])||"";
-  return {off:!!c.off,left:!!c.left,cook,bakes,meals};
+  // Breakfast is made just before it's eaten, so it is returned on its own (not with the day's cooking).
+  const bid=ms.breakfast?.recipeId,br=bid&&recipeById(bid),bmins=!br?0:/^spanak/.test(bid)?15:NO_COOK_BF.has(bid)?5:COOKIE_OF[bid]?15:Math.min(Math.max(recipeMins(br)||10,5),25);
+  return {off:!!c.off,left:!!c.left,cook:cook.filter(x=>x.note!=="breakfast"),bakes,meals,bf:br?{id:bid,title:br.title,mins:bmins}:null};
 };
 function openPrintPage(kind,ids){
   const u=`/?print=${kind}&w=${ui.week}${ids?.length?"&ids="+encodeURIComponent(ids.join(",")):""}`;

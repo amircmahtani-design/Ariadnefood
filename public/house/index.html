@@ -374,8 +374,11 @@ function buildDay(k){
   let leave=null,back=null;
   if(act&&act.t){leave=hm(act.t)-15;back=leave+(+h.outMins||120)}
   const B=leave!=null&&leave<hm("09:00")?leave-25:hm("08:30");
-  const parkEnd=Math.min(hm("08:00"),B-10);
+  // breakfast is made fresh right before she eats it, never after
+  const bp=A?.bf?.mins||10;
+  const parkEnd=Math.min(hm("08:00"),B-bp-5);
   add({id:"park",t:360,d:parkEnd-360,title:"Park with Ariadne",sub:`Back home by ${fmt(parkEnd)}`,tag:"ari"});
+  if(A?.bf)add({id:"bfprep",t:B-bp,d:bp,title:/^spanak/.test(A.bf.id)?"Air-fry the spanakopita triangles for breakfast":`Make Ariadne's breakfast`,sub:`${A.bf.title} · about ${bp} min, ready for ${fmt(B)}`,tag:"cook",tagText:"Breakfast"});
   add({id:"breakfast",t:B,d:20,title:"Ariadne's breakfast",sub:A?.meals?.breakfast||"",tag:"ari"});
   const early=leave!=null&&leave<B+60;
   if(!early)add({id:"m-lia",t:B+20,marker:true,icon:I.swap,title:"Lia takes over with Ariadne",sub:"Your time for the house jobs"});
