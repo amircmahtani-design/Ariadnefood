@@ -577,7 +577,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="3.3";
+const APP_VERSION="3.4";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -734,8 +734,17 @@ function weekGrid(mon){
   ${SLOTS.map(([s,l,ic])=>`<div class="wg-sl">${ic}<span>${s==="breakfast"?"B'fast":l}</span></div>${ks.map(k=>{const a=A.adultMeal(k,s),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text;
     const am=a.amir,amT=am.mode==="out"?"eating out":am.mode==="own"?am.text:am.mode==="left"?"leftovers":gridName(am.mode==="swap"?am.text.replace(/^grilled\s+/i,"").replace(/\s+with\s.*$/i,""):am.text).main.toLowerCase();
     const inner=same?cellTxt(a.lia):`${cellTxt(a.lia)}<i class="wg-am">Amir: ${esc(amT)}</i>`,who=a.lia.dish?"lia":a.amir.dish?"amir":"";
-    const act=who&&a.lia.mode!=="out"?`data-rec="${k}|${s}|${who}"`:`data-edit="${k}|${s}"`;
+    const act=`data-cell="${k}|${s}"`;
     return `<button class="wg-c${k===t?" today":""}" ${act}>${inner}</button>`}).join("")}`).join("")}</div>`;
+}
+// Tapping a dish in the sideways week: see its recipe or change it
+function cellSheet(k,s){
+  const a=A.adultMeal(k,s),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text,sl=SLOTS.find(x=>x[0]===s)[1];
+  const recs=[["lia",a.lia],["amir",a.amir]].filter(([,p])=>p.dish&&p.mode!=="out");
+  const recB=!recs.length?"":same||recs.length===1?`<button class="btn wide" data-rec="${k}|${s}|${recs[0][0]}">${I.book}See the recipe</button>`
+    :recs.map(([w])=>`<button class="btn wide${w==="amir"?" ghost":""}" data-rec="${k}|${s}|${w}">${I.book}${w==="lia"?"Lia's recipe":"Amir's recipe"}</button>`).join("");
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">${esc(pText(a.lia))}</h2>${same?"":`<p class="small muted" style="margin-top:4px">Amir: ${esc(pText(a.amir))}</p>`}</div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <div class="sh-acts">${recB}<button class="btn ${recB?"ghost ":""}wide" data-edit="${k}|${s}">${I.pen}Change dish</button></div>`);
 }
 function viewShop(){
   const w=ui.shopW||A.planWeek(),mode=ui.shopFor,secs=A.shop(w,mode)||[],P=A.pantryOf(w),have=new Set(P.at?P.have||[]:[]),got=new Set(S().shop?.[w]||[]);
@@ -1080,6 +1089,7 @@ document.addEventListener("click",async e=>{
     if(t.dataset.pnew){const q=$("#dishQ").value.trim();if(!q)return;saveDish(k,s,{title:q.charAt(0).toUpperCase()+q.slice(1),ing:[],method:[],amir:null,locked:true});return}
     const r=library().find(x=>x.title===t.dataset.pick);if(!r)return;
     saveDish(k,s,{title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.lib||r.id||undefined,locked:true});return}
+  if(t.dataset.cell){const [k,s]=t.dataset.cell.split("|");cellSheet(k,s);return}
   if(t.dataset.omslot){const box=$("#onMenu"),r=LIB().find(x=>x.id===box.dataset.id);if(r)box.outerHTML=onMenu(r,t.dataset.omslot);return}
   if(t.dataset.omday){const r=LIB().find(x=>x.id=== $("#onMenu").dataset.id);if(!r)return;const k=t.dataset.omday,sl=omSlot;
     if(await saveDish(k,sl,{title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id,locked:true}))status(`Added to ${DOW[parse(k).getDay()]} ${SLOTS.find(x=>x[0]===sl)[1].toLowerCase()}`,true);return}
