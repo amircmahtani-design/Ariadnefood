@@ -402,10 +402,10 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .addrec{margin:0 0 14px}
 .rsearch{position:relative;display:block;margin:0 0 12px}
 .rsearch svg{position:absolute;left:14px;top:50%;width:20px;height:20px;transform:translateY(-50%);color:var(--ink-3)}
-.rsearch input{padding-left:44px;border-radius:999px;-webkit-appearance:none;appearance:none}
+.rsearch input{width:100%;min-height:50px;font-size:16.5px;padding-left:44px;border-radius:999px;-webkit-appearance:none;appearance:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.rcats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 6px}
-.rcats button{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;min-height:44px;padding:0 14px;font-size:15px;font-weight:600;color:var(--ink-2)}
+.rcats{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 10px}
+.rcats button{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;min-height:44px;padding:0 12px;font-size:14.5px;font-weight:600;color:var(--ink-2)}
 .rcats button span{font-weight:500;color:var(--ink-3);margin-left:2px}
 .rcats button[aria-pressed="true"]{background:var(--sage);border-color:var(--sage);color:#fff}
 .rcats button[aria-pressed="true"] span{color:rgb(255 255 255 / .8)}
@@ -435,7 +435,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .eat svg{width:22px;height:22px}
 .eat.on{background:var(--sage);border-color:var(--sage);color:#fff}
 .meal.eaten .px b{color:var(--ink-2)}
-.pair{margin-left:-34px;margin-top:14px;flex:none;border-radius:28%;box-shadow:0 0 0 2px var(--surface)}
+.duo{flex:none;display:flex;margin-top:2px}.duo .avt{box-shadow:0 0 0 2.5px var(--surface)}.duo .avt+.avt{margin-left:-12px}
 .pchip.baby{display:inline-flex;align-items:center;gap:5px;background:#EEE6F6;color:#5B4A78}
 .pchip.baby svg{width:14px;height:14px}
 .recrow{display:flex;flex-wrap:wrap;gap:0 18px;border-top:1px solid var(--line);padding-top:2px}
@@ -451,6 +451,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .streaming{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--sage);margin:0;min-height:50px}
 .streaming .dot{width:10px;height:10px;border-radius:50%;background:var(--sage);animation:bl 1s infinite}
 .rh{font:700 13px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin:18px 0 8px}
+.rh-s{font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--ink-3);margin-left:6px}
 .ring,.rmeth{margin:0;padding-left:22px;font-size:16.5px;line-height:1.5}
 .ring li,.rmeth li{padding:3px 0}
 .checks input[type=radio]{position:absolute;opacity:0}
@@ -487,7 +488,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.8";
+const APP_VERSION="1.9";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -566,7 +567,7 @@ function mealCard(k,slot,label,icon){
   const sub=(a.locked?`<span class="pick">Your pick</span>`:"")+(slot==="breakfast"?"":a.r?`<span>Ariadne: ${esc(a.r.title)}</span>`:`<span>Nothing planned for Ariadne</span>`);
   const rec=[...new Set([a.lia,a.amir].filter(p=>p.dish).map(p=>typeof p.dish==="string"?"ari":p.text))];
   const eaten=a.eaten;
-  const both=same?`<button class="prow" data-edit="${k}|${slot}|both">${avatar("Lia",34)}<span class="pair">${avatar("Amir",34)}</span><span class="px"><em>Both</em><b>${esc(a.lia.text)}</b>${(a.lia.mode==="same"&&a.lia.side)?`<small>With ${esc(a.lia.side)}</small>`:""}${a.lia.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:a.lia.mode==="out"?`<i class="pchip out">Eating out</i>`:a.lia.mode==="own"?`<i class="pchip own">Own meal</i>`:""}</span><span class="pen">${I.pen}</span></button>`
+  const both=same?`<button class="prow" data-edit="${k}|${slot}|both"><span class="duo">${avatar("Lia",34)}${avatar("Amir",34)}</span><span class="px"><em>Both</em><b>${esc(a.lia.text)}</b>${(a.lia.mode==="same"&&a.lia.side)?`<small>With ${esc(a.lia.side)}</small>`:""}${a.lia.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:a.lia.mode==="out"?`<i class="pchip out">Eating out</i>`:a.lia.mode==="own"?`<i class="pchip own">Own meal</i>`:""}</span><span class="pen">${I.pen}</span></button>`
     :PEOPLE.map(([w,n])=>personRow(k,slot,w,n,a[w])).join("");
   return `<section class="meal${eaten?" eaten":""}"><div class="meal-h"><span class="sic">${icon}</span><div><b>${label}</b>${sub}</div>
     <button class="eat${eaten?" on":""}" data-eat="${k}|${slot}" aria-pressed="${!!eaten}" aria-label="${eaten?"Eaten, tap to undo":"Mark as eaten"}">${I.check}</button></div>
@@ -638,6 +639,7 @@ function viewShop(){
 }
 
 // Recipe categories: worked out from the dish (or set by hand when editing), so a long list stays easy to browse
+const CHIP={"Fish & seafood":"Fish","Pasta & noodles":"Pasta","Sides & salads":"Sides","Basics & sauces":"Basics"};
 const CATS=["Poultry","Meat","Fish & seafood","Ladera","Pasta & noodles","Soups","Vegetarian","Sides & salads","Breakfast","Basics & sauces"];
 function catOf(r){if(r.cat&&CATS.includes(r.cat))return r.cat;const m=r.meals||[],t=(r.title||"").toLowerCase(),all=(t+" "+(r.ing||[]).join(" ")).toLowerCase();
   if(m.includes("basic")&&!m.some(x=>["lunch","dinner","breakfast"].includes(x)))return "Basics & sauces";
@@ -664,7 +666,7 @@ function viewRecipes(){
   return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>AI plans your week from these</p></div></div>
   <div class="house-acts addrec"><button class="btn sm" data-act="addRecipe">${I.plus}Add a dish</button><button class="btn ghost sm" data-act="recPhoto">${I.camera}From photos</button></div>
   <label class="rsearch"><span class="sr">Search recipes</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="recQ" placeholder="Search a dish or an ingredient" value="${esc(ui.recQ||"")}" autocomplete="off"></label>
-  <div class="rcats" role="group" aria-label="Recipe groups"><button data-rcat="" aria-pressed="${!cat}">All</button>${CATS.filter(c=>counts[c]).map(c=>`<button data-rcat="${esc(c)}" aria-pressed="${cat===c}">${c} <span>${counts[c]}</span></button>`).join("")}</div>
+  <div class="rcats" role="group" aria-label="Recipe groups"><button data-rcat="" aria-pressed="${!cat}">All</button>${CATS.filter(c=>counts[c]).map(c=>`<button data-rcat="${esc(c)}" aria-pressed="${cat===c}">${CHIP[c]||c} <span>${counts[c]}</span></button>`).join("")}</div>
   <div id="recList">${list}</div>
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
@@ -695,7 +697,7 @@ function libSheet(r,draft){
   const lst=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join("");
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${draft?"New recipe · check it, then save":esc(((r.meals||[]).map(m=>m==="basic"?"Basic":cap(m)).join(", ")))}${r.time?` · ${esc(r.time)}`:""}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   ${r.tip?`<p class="small muted" style="margin:-6px 0 12px">${esc(r.tip)}</p>`:""}
-  <h3 class="rh">Ingredients${r.serves?`, ${esc(r.serves)}`:", for two"}</h3><ul class="ring">${lst(r.ing)}</ul>
+  <h3 class="rh">Ingredients <span class="rh-s">${r.serves?(/^\d/.test(r.serves)?`serves ${esc(r.serves)}`:esc(r.serves)):"for two"}</span></h3><ul class="ring">${lst(r.ing)}</ul>
   <h3 class="rh">Method</h3><ol class="rmeth">${lst(r.method)}</ol>
   ${r.amir?`<div class="amirv"><h3 class="rh">For Amir: ${esc(r.amir.title)}</h3><ul class="ring">${lst(r.amir.ing)}</ul>${(r.amir.method||[]).length?`<ol class="rmeth">${lst(r.amir.method)}</ol>`:""}</div>`:""}
   <div class="sh-acts">${draft?`<button class="btn wide" data-act="saveRec">Save to our recipes</button><button class="btn ghost wide" data-act="addRecipe">Try again</button>`
