@@ -583,7 +583,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="3.8";
+const APP_VERSION="3.9";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -719,7 +719,7 @@ function viewWeek(){
   const fill=aiBusy?`<p class="streaming wfill"><span class="dot"></span>${esc(aiBusy)}</p>`
     :gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Plan ${gaps>1?`${gaps} lunches`:"1 lunch"} with AI</button>`:"";
   return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Lunches"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
-  <p class="rotatehint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3 14a9 9 0 0 0 6 6.5"/><path d="M3 18v-4h4"/></svg>Turn your phone sideways to see the whole week</p>
+  <p class="rotatehint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3 14a9 9 0 0 0 6 6.5"/><path d="M3 18v-4h4"/></svg>Turn sideways to see the whole week</p>
   ${weekGrid(mon)}<div class="wlist">${rows}</div>
   ${fill}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}
   <p class="note">Breakfast is simple and dinner is leftovers.</p>
