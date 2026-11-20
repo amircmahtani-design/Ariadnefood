@@ -572,7 +572,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="2.9";
+const APP_VERSION="3.0";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -753,7 +753,7 @@ function viewShop(){
 
 // Recipe categories: worked out from the dish (or set by hand when editing), so a long list stays easy to browse
 const CHIP={};
-const CATS=["Basics","Beef","Breakfast","Chicken","Desserts","Fish","Ladera","Lamb","Pasta","Pork","Sides","Soups","Vegetarian"]; // alphabetical, so they're easy to find
+const CATS=["Breakfast","Chicken","Beef","Lamb","Pork","Fish","Pasta","Ladera","Vegetarian","Soups","Sides","Basics","Desserts"]; // the order of a meal: breakfast, the mains by protein, veg dishes, then soups, sides, basics and desserts
 const OLDCAT={"Poultry":"Chicken","Fish & seafood":"Fish","Pasta & noodles":"Pasta","Sides & salads":"Sides","Basics & sauces":"Basics","Desserts & baking":"Desserts"};
 function meatOf(r){const t=(r.title||"").toLowerCase(),all=(t+" "+(r.ing||[]).join(" ")).toLowerCase();
   if(/\b(lamb|goat)\b/.test(t)||(!/\b(beef|veal|pork)\b/.test(t)&&/\b(lamb|goat)\b/.test(all)))return "Lamb";
