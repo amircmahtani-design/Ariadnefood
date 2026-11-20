@@ -487,7 +487,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.6";
+const APP_VERSION="1.7";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -857,6 +857,7 @@ async function aiPlan(focus){
           if(!cur?.locked||cur.share)return; // their own pick: keep it, only fill in a missing recipe or Amir's alternative
           const need=!(cur.ing||[]).length,needAmir=!cur.amir&&x.amir&&x.amir.title;
           if(need||needAmir)plans[k][s]={...cur,ing:need?x.ing||[]:cur.ing,method:need?x.method||[]:cur.method,time:cur.time||x.time||"",amir:cur.amir||(x.amir&&x.amir.title?x.amir:null),locked:true};return}
+        if(!x.lib&&x.title){const m=LIB().find(l=>l.title.toLowerCase()===String(x.title).toLowerCase());if(m)x.lib=m.id}
         if(x.lib){const r=LIB().find(l=>l.id===x.lib);if(r){plans[k][s]={title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id};return}}
         if(x.share){const a=A.adultMeal(k,s),r=a.r;if(s!=="breakfast"&&r&&r.id===x.share&&!a.kid){plans[k][s]={share:r.id};return}if(!x.title){plans[k][s]=null;return}}
         if(x.title)plans[k][s]={title:x.title,time:x.time||"",ing:x.ing||[],method:x.method||[],amir:x.amir&&x.amir.title?x.amir:null}})});
