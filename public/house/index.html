@@ -329,7 +329,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
 
 <script>
 "use strict";
-const APP_VERSION="1.1";
+const APP_VERSION="1.2";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -449,7 +449,7 @@ function buildDay(k){
   ex.forEach(x=>{const d=+x.mins||30;let t=x.time?hm(x.time):fit(d,start);if(t==null)t=fit(d,start,hm("21:00"))??hm("18:00");add({id:x.one?x.id:x.id,t,d:x.time?0:d,title:x.text,sub:x.by&&x.one?`Added by ${x.by}`:x.one?"":`Every ${DOW[dow]}`,tag:"extra",tagText:x.one?"Extra":"Weekly",del:x.one?x.id:null})});
   // night handover
   const nf=hm(h.night?.from||"19:00");
-  add({id:"m-night",t:nf,marker:true,icon:I.out,title:`${h.night?.name?esc(h.night.name)+" takes":"Night handover:"} over until ${fmt(hm(h.night?.to||"06:00"))}`,sub:"Your day ends here"});
+  add({id:"m-night",t:nf,marker:true,icon:I.out,title:"Your day with Ariadne is done",sub:`${h.night?.name?esc(h.night.name)+" has her until "+fmt(hm(h.night?.to||"06:00"))+". ":""}Check with Amir and Lia if they need anything from you, like dinner.`});
   items.sort((a,b)=>a.t-b.t||(b.marker?1:0)-(a.marker?1:0));
   return {off:false,items,act,leave,back,A};
 }
