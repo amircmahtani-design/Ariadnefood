@@ -252,6 +252,23 @@ select.bare{border:0;background:none;box-shadow:none;padding:4px 26px 4px 0;min-
 select.bare:focus{box-shadow:none}
 .wfields .side,.wfields .cust{min-height:40px;padding:8px 12px;font-size:16px;border-radius:12px;background:var(--bg);border-color:transparent}
 .wfields .side::placeholder{color:var(--ink-3)}
+.wrec{justify-self:start;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:2px 0;min-height:36px;font:inherit;font-size:15px;font-weight:600;color:var(--sage)}.wrec svg{width:17px;height:17px}
+.wgrid{display:none}
+@media (orientation:landscape) and (min-width:640px){
+  .wgrid{display:grid;grid-template-columns:84px repeat(7,minmax(0,1fr));gap:4px;width:min(calc(100vw - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)),1180px);margin:0 0 var(--s5);position:relative;left:50%;transform:translateX(-50%)}
+  .wgrid~.wday,.daystrip{display:none}
+  .wg-h{text-align:center;padding:6px 2px;border-radius:12px;line-height:1.15}
+  .wg-h b{display:block;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+  .wg-h span{font-family:var(--serif);font-size:20px;font-weight:560}
+  .wg-h.today{background:var(--sage);color:#fff}.wg-h.today b{color:#E9EFE2}
+  .wg-sl{display:flex;flex-direction:column;justify-content:center;gap:2px;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+  .wg-sl svg{width:16px;height:16px;color:var(--sage-2)}
+  .wg-c{display:block;width:100%;text-align:left;border:0;margin:0;padding:8px 9px;min-height:64px;border-radius:12px;background:var(--surface);box-shadow:var(--sh-1);font:inherit;color:var(--ink)}
+  .wg-c b{display:block;font-size:14px;font-weight:600;line-height:1.3;hyphens:auto;overflow-wrap:anywhere}
+  .wg-c small{display:block;font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.3}
+  .wg-c.today{box-shadow:0 0 0 2px var(--sage-2),var(--sh-1)}
+  .wg-c.none b{color:var(--ink-3);font-weight:400}
+}
 
 /* recipes */
 .ask{padding:var(--s5);margin-bottom:var(--s6);background:linear-gradient(160deg,var(--peach-2),var(--surface) 60%);display:grid;gap:var(--s3)}
@@ -915,7 +932,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="12.5";
+const APP_VERSION="12.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1313,7 +1330,7 @@ function viewWeek(){
     <button class="btn wide ghost shopbtn" data-act="shopList">${I.note}Shopping list${shopReady(mon)?` · ready ✓${(S.shop?.[mon]||[]).length?` · ${(S.shop[mon]).length} in the bag`:""}`:" · kitchen check needed"}</button>
     <button class="btn wide" data-act="aiPlan"${busy?" disabled":""}>${I.spark}${busy==="plan"?"Planning…":"Plan this week with AI"}</button>
     <div class="pair"><button class="btn ghost" data-act="print">${I.print}Print</button><button class="btn ghost" data-act="copyWeek">${I.copy}Copy last week</button></div>
-  </div><div id="planlive"></div>${bakesCard(mon)}`;
+  </div><div id="planlive"></div>${bakesCard(mon)}${weekGrid(mon)}`;
   for(let i=0;i<7;i++){
     const k=addDays(mon,i),day=S.days[k]||{},meals=day.meals||{},d=parse(k);
     const logged=SLOTS.filter(([s])=>Object.keys(meals[s]?.log||{}).length).length;
@@ -1325,6 +1342,7 @@ function viewWeek(){
         return `<div class="wrow" data-slot="${s}">${pic(r,"wthumb",m.custom||"")}
           <div class="wfields"><span class="wl">${SLOT_ICON[s]}${l}</span>
           <span class="selwrap"><select class="bare" data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel,m.custom)}</select>${I.down}</span>
+          ${r?`<button class="wrec" data-act="recipe" data-id="${esc(r.id)}" data-day="${k}">${I.bowl}See the recipe</button>`:""}
           ${sel==="__custom"?`<input class="cust" data-wcustom value="${esc(m.custom)}" placeholder="What is it?" aria-label="Custom ${l.toLowerCase()} on ${shortDay(k)}">`:""}
           ${(s==="lunch"||s==="dinner")&&(m.recipeId||m.custom)?plateTags(m):""}
           ${m.side?"":`<button class="addside" data-act="showSide" aria-label="Add a side for ${l.toLowerCase()} on ${shortDay(k)}">+ side</button>`}
@@ -1332,6 +1350,15 @@ function viewWeek(){
     </section>`;
   }
   return h;
+}
+
+/* Phone on its side: the whole week at once, one column per day. Tap a dish for its recipe. */
+function weekGrid(mon){
+  const t=todayKey(),ks=[...Array(7)].map((_,i)=>addDays(mon,i));
+  return `<div class="wgrid"><div class="wg-h"></div>${ks.map(k=>{const d=parse(k);return `<div class="wg-h${k===t?" today":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()}</span></div>`}).join("")}
+  ${SLOTS.map(([s,l])=>`<div class="wg-sl">${SLOT_ICON[s]}<span>${l}</span></div>${ks.map(k=>{const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),title=mealTitle(m);
+    const inner=`<b>${esc(title||"–")}</b>${m.side&&!String(title).includes(m.side)?`<small>+ ${esc(m.side)}</small>`:""}`;
+    return r?`<button class="wg-c${k===t?" today":""}" data-act="recipe" data-id="${esc(r.id)}" data-day="${k}">${inner}</button>`:`<div class="wg-c${k===t?" today":""}${title?"":" none"}">${inner}</div>`}).join("")}`).join("")}</div>`;
 }
 
 /* Recipes */
