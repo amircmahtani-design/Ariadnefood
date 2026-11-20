@@ -118,6 +118,7 @@ textarea{resize:vertical;line-height:1.5}
 .sec .sic svg{width:20px;height:20px}
 .sec .st{flex:1;min-width:0}
 .sec .st b{display:block;font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:19px;letter-spacing:-.01em;line-height:1.2}
+.sec .st>span:not(.dchips){white-space:pre-line}
 .sec .st span{font-size:14px;color:var(--ink-3)}
 .cnt{font-size:14px;font-weight:600;color:var(--ink-2);background:var(--bg);border-radius:999px;padding:4px 10px;white-space:nowrap}
 .cnt.all{background:var(--sage);color:#fff}
@@ -360,7 +361,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.7";
+const APP_VERSION="1.8";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -399,7 +400,7 @@ const I={
   info:sv('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>',1.9),
   out:sv('<path d="M14 4.5h4.5v15H14M10 8l-4 4 4 4M6 12h9"/>'),
 };
-const SEC_IC={early:I.sunrise,morning:I.sun,midday:I.midday,afternoon:I.sunset,evening:I.moon};
+const SEC_IC={morning:I.sunrise,house:I.sun,midday:I.midday,afternoon:I.sunset,evening:I.moon};
 
 /* ---------- state ---------- */
 let H={house:{activities:{},outMins:120,sheetsDay:2,ironing:[],night:{name:"",from:"19:00",to:"06:00"},weekly:[]},ticks:{},extras:{},asks:[],people:["Amir","Catherine","Lia"],avatars:{}};
@@ -445,7 +446,7 @@ function buildDay(k){
   if(A?.bf)add({id:"bfprep",t:B-bp,d:bp,title:/^spanak/.test(A.bf.id)?"Air-fry the spanakopita triangles for breakfast":`Make Ariadne's breakfast`,sub:`${A.bf.title} · about ${bp} min, ready for ${fmt(B)}`,tag:"cook",tagText:"Breakfast"});
   add({id:"breakfast",t:B,d:20,title:"Ariadne's breakfast",sub:A?.meals?.breakfast||"",tag:"ari"});
   const early=leave!=null&&leave<B+60;
-  if(!early)add({id:"m-lia",t:B+20,marker:true,icon:I.swap,title:"Lia takes over with Ariadne",sub:"Your time for the house jobs"});
+  if(!early)add({id:"m-lia",t:B+20,marker:true,icon:I.swap,title:"Lia takes over with Ariadne",sub:"Lia has her until about 1 pm: your time for the house jobs"});
   if(act&&act.t){const snack=A?.meals?.snack;add({id:"activity",t:leave,d:back-leave,title:`Take Ariadne to ${act.label&&act.label!=="Activity"?act.label:"her activity"}`,sub:`Starts ${fmt(hm(act.t))} · leave by ${fmt(leave)} · home about ${fmt(back)}${snack?` · take her snack: ${snack}`:""}`,tag:"ari"})}
   add({id:"lunchready",t:hm("12:45"),d:15,title:"Ariadne's lunch ready by 1:00 pm",sub:A?.meals?.lunch||"",tag:"ari"});
   const dinT=back&&back>hm("17:20")?back+10:hm("17:30");
@@ -487,7 +488,9 @@ function buildDay(k){
   items.sort((a,b)=>a.t-b.t||(b.marker?1:0)-(a.marker?1:0));
   return {off:false,items,act,leave,back,A};
 }
-const SECS=[["early","Early morning",0,hm("09:00")],["morning","Morning",hm("09:00"),hm("12:00")],["midday","Midday",hm("12:00"),hm("15:00")],["afternoon","Afternoon",hm("15:00"),hm("18:00")],["evening","Evening",hm("18:00"),9999]];
+// Catherine has Ariadne 6 to 9 (park, breakfast); Lia has her from 9 until about 1 pm, so that block is Catherine's house-job time.
+const SECS=[["morning","Morning",0,hm("09:00")],["house","House jobs",hm("09:00"),hm("13:00")],["midday","Midday",hm("13:00"),hm("15:00")],["afternoon","Afternoon",hm("15:00"),hm("18:00")],["evening","Evening",hm("18:00"),9999]];
+const secSpan=(id,a,b,day)=>id==="morning"?"6:00 am to 9:00 am":id==="house"?(day.leave!=null&&day.leave<hm("09:00")?`${fmt(day.back)} to 1:00 pm\nafter the activity`:"9:00 am to 1:00 pm\nLia has Ariadne"):id==="evening"?`6:00 pm to ${fmt(hm(H.house.night?.from||"19:00"))}`:`${fmt(a)} to ${fmt(b)}`;
 const tickOf=(k,id)=>H.ticks?.[k]?.[id];
 // a task with sub-steps (cooking) is done when all its steps are
 const isDone=(k,it)=>it.auto?true:it.subs&&it.subs.length?it.subs.every(s=>tickOf(k,s.id)):!!tickOf(k,it.id);
@@ -536,7 +539,7 @@ function sections(k,day,compact){
     const key=k+":"+id;let open=ui.open[key];
     if(open==null)open=isToday?(n<b&&done<all)||(n>=b&&done<all):false;
     if(open==null)open=false;
-    const span=`${fmt(its[0].t)} to ${fmt(Math.max(...its.map(it=>it.t+(it.d||0))))}`;
+    const span=secSpan(id,a,b,day);
     return `<details class="sec" data-sec="${key}"${open?" open":""}><summary><span class="sic">${SEC_IC[id]}</span><span class="st"><b>${label}</b><span>${span}</span></span>${all?`<span class="cnt${done===all?" all":""}">${done===all?"Done":`${done} of ${all}`}</span>`:""}<span class="chev">${I.down}</span></summary>
       <div class="body">${its.map(it=>row(k,it,nx===it&&isToday&&it.t<=n+5)).join("")}</div></details>`}).join("");
 }
