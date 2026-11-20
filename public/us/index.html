@@ -342,6 +342,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .prow{display:flex;align-items:flex-start;gap:14px;width:100%;border:0;border-top:1px solid var(--line);background:none;text-align:left;padding:14px 0;min-height:64px;color:var(--ink)}
 .wday .body .prow:first-of-type{border-top:0}
 .prow .avt{margin-top:2px}
+.prow.one{padding:12px 0 14px}.prow.one .px b{font-size:18px}
 .px{flex:1;min-width:0}
 .px em{display:block;font-style:normal;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .px b{display:block;font-size:17.5px;font-weight:600;line-height:1.3;margin-top:1px}
@@ -488,7 +489,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.9";
+const APP_VERSION="2.0";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -557,17 +558,24 @@ const cap=s=>String(s||"").charAt(0).toUpperCase()+String(s||"").slice(1);
 const alList=al=>al.map(a=>AL_NAME[a]||a).join(" and ");
 
 function personRow(k,slot,who,name,p){
-  const chip=p.mode==="swap"?`<i class="pchip warn">No ${esc(alList(p.al))} for Amir</i>`:p.mode==="alt"?`<i class="pchip warn">Amir's alternative</i>`:p.mode==="own"?`<i class="pchip own">Own meal</i>`:p.mode==="out"?`<i class="pchip out">Eating out</i>`:p.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:"";
-  const side=(p.mode==="same"||p.mode==="swap")&&p.side?`<small>With ${esc(p.side)}</small>`:"";
-  return `<button class="prow" data-edit="${k}|${slot}|${who}">${avatar(name,40)}<span class="px"><em>${name}</em><b>${esc(p.text)}</b>${side}${chip}</span><span class="pen">${I.pen}</span></button>`;
+  const chip=p.mode==="swap"?`<i class="pchip warn">No ${esc(alList(p.al))} for Amir</i>`:p.mode==="alt"?`<i class="pchip warn">Amir's version</i>`:p.mode==="own"?`<i class="pchip own">Own meal</i>`:p.mode==="out"?`<i class="pchip out">Eating out</i>`:"";
+  const side=(p.mode==="same"||p.mode==="swap")&&p.side?`<small>With ${esc(p.side)}</small>`:p.mode==="left"&&p.fridge?.length?`<small>${esc(p.fridge.join(" · "))}</small>`:"";
+  return `<button class="prow" data-edit="${k}|${slot}">${avatar(name,36)}<span class="px"><em>${name}</em><b>${esc(p.text)}</b>${side}${chip}</span><span class="pen">${I.pen}</span></button>`;
 }
-// The two of them usually eat the same thing: show it once, and split only when they differ
+// One row when they eat the same (that's the norm); a row each only when it differs, e.g. fish for Lia
+function mealRows(k,slot,a){
+  const same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text&&(a.lia.fridge||[]).join()===(a.amir.fridge||[]).join();
+  if(!same)return PEOPLE.map(([w,n])=>personRow(k,slot,w,n,a[w])).join("");
+  const p=a.lia,sub=p.mode==="same"&&p.side?`<small>With ${esc(p.side)}</small>`:p.mode==="left"?`<small>${p.fridge?.length?"In the fridge: "+esc(p.fridge.join(" · ")):"Whatever's in the fridge"}</small>`:"";
+  const chip=p.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Ariadne's dish</i>`:p.mode==="out"?`<i class="pchip out">Eating out</i>`:p.mode==="own"?`<i class="pchip own">Own meal</i>`:"";
+  return `<button class="prow one" data-edit="${k}|${slot}"><span class="px"><b>${esc(p.text)}</b>${sub}${chip}</span><span class="pen">${I.pen}</span></button>`;
+}
 function mealCard(k,slot,label,icon){
   const a=A.adultMeal(k,slot),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text&&a.lia.mode!=="none";
   const sub=(a.locked?`<span class="pick">Your pick</span>`:"")+(slot==="breakfast"?"":a.r?`<span>Ariadne: ${esc(a.r.title)}</span>`:`<span>Nothing planned for Ariadne</span>`);
   const rec=[...new Set([a.lia,a.amir].filter(p=>p.dish).map(p=>typeof p.dish==="string"?"ari":p.text))];
   const eaten=a.eaten;
-  const both=same?`<button class="prow" data-edit="${k}|${slot}|both"><span class="duo">${avatar("Lia",34)}${avatar("Amir",34)}</span><span class="px"><em>Both</em><b>${esc(a.lia.text)}</b>${(a.lia.mode==="same"&&a.lia.side)?`<small>With ${esc(a.lia.side)}</small>`:""}${a.lia.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:a.lia.mode==="out"?`<i class="pchip out">Eating out</i>`:a.lia.mode==="own"?`<i class="pchip own">Own meal</i>`:""}</span><span class="pen">${I.pen}</span></button>`
+  const both=mealRows(k,slot,a);const _old=same?`<button class="prow" data-edit="${k}|${slot}|both"><span class="duo">${avatar("Lia",34)}${avatar("Amir",34)}</span><span class="px"><em>Both</em><b>${esc(a.lia.text)}</b>${(a.lia.mode==="same"&&a.lia.side)?`<small>With ${esc(a.lia.side)}</small>`:""}${a.lia.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:a.lia.mode==="out"?`<i class="pchip out">Eating out</i>`:a.lia.mode==="own"?`<i class="pchip own">Own meal</i>`:""}</span><span class="pen">${I.pen}</span></button>`
     :PEOPLE.map(([w,n])=>personRow(k,slot,w,n,a[w])).join("");
   return `<section class="meal${eaten?" eaten":""}"><div class="meal-h"><span class="sic">${icon}</span><div><b>${label}</b>${sub}</div>
     <button class="eat${eaten?" on":""}" data-eat="${k}|${slot}" aria-pressed="${!!eaten}" aria-label="${eaten?"Eaten, tap to undo":"Mark as eaten"}">${I.check}</button></div>
@@ -597,8 +605,7 @@ function viewDay(){
     <button class="iconbtn" data-go="1" aria-label="Next day">${I.right}</button></div>
     ${k!==todayKey()?`<button class="link backtoday" data-today>Back to today</button>`:""}</div>
   ${SLOTS.map(([s,l,ic])=>mealCard(k,s,l,ic)).join("")}
-  ${sharedNote(k)}
-  <p class="note">Tap a meal to pick your own dish. AI fills the rest of the week around it.</p>
+  <p class="note">Tap a meal to change it.</p>
   ${houseCard()}
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
@@ -609,12 +616,12 @@ function viewWeek(){
     const chips=[swaps?`<i class="c">Amir swap ×${swaps}</i>`:"",outs?`<i>Eating out ×${outs}</i>`:"",own?`<i class="h">Own meal ×${own}</i>`:""].join("");
     const open=k===t||ui.openDay===k;
     return `<details class="sec wday${k===t?" today":""}" data-day="${k}"${open?" open":""}><summary><span class="st"><b>${DOW[parse(k).getDay()]} <em>${shortDate(k)}</em>${k===t?'<i class="todaychip">Today</i>':""}</b>
-      <span>${ms.map((a,i)=>`${SLOTS[i][1]}: ${esc(a.lia.mode!=="none"?a.lia.text:a.amir.text)}`).join("\n")}</span>${chips?`<span class="dchips">${chips}</span>`:""}</span><span class="chev">${I.down}</span></summary>
-      <div class="body">${SLOTS.map(([s,l])=>`<h3 class="wk-sl">${l}</h3>${PEOPLE.map(([w,n])=>personRow(k,s,w,n,ms[SLOTS.findIndex(x=>x[0]===s)][w])).join("")}<button class="link" data-rec="${k}|${s}|lia">${I.book}Recipe</button>`).join("")}</div></details>`}).join("");
+      <span>${ms.map((a,i)=>`${SLOTS[i][1]}: ${esc(a.lia.mode==="left"?"Leftovers":a.lia.mode!=="none"?a.lia.text:a.amir.text)}`).join("\n")}</span>${chips?`<span class="dchips">${chips}</span>`:""}</span><span class="chev">${I.down}</span></summary>
+      <div class="body">${SLOTS.map(([s,l],si)=>`<h3 class="wk-sl">${l}</h3>${mealRows(k,s,ms[si])}${[ms[si].lia,ms[si].amir].some(p=>p.dish)?`<button class="link" data-rec="${k}|${s}|lia">${I.book}Recipe</button>`:""}`).join("")}</div></details>`}).join("");
   const cells=[...Array(7)].flatMap((_,i)=>SLOTS.map(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan));
   const planned=cells.some(x=>x&&!x.locked),picks=cells.filter(x=>x?.locked).length,gaps=gapCount(mon);
-  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${!gaps?"Every meal is set":picks||planned?`${gaps} ${gaps>1?"meals":"meal"} still empty`:"Plan your week"}</b><span>${!gaps?"Tap any meal to change it. Set it to “Let AI choose” and AI fills it next time.":"Tap a meal to pick your own dish. AI fills only the empty ones from your own recipes, balanced across the week."}</span></div>
-    ${gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Fill ${gaps===21?"the week":`the ${gaps} empty ${gaps>1?"meals":"meal"}`} with AI</button>`:""}`}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}</section>`;
+  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${!gaps?"Every meal is set":picks||planned?`${gaps} ${gaps>1?"lunches":"lunch"} still empty`:"Plan your week"}</b><span>${!gaps?"Tap any meal to change it. Set it to “Let AI choose” and AI fills it next time.":"Breakfasts are simple and dinner is leftovers. Tap a lunch to pick a dish, and AI fills the empty lunches from your recipes: protein, veg and a carb each."}</span></div>
+    ${gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Fill ${gaps===7?"the week's lunches":`the ${gaps} empty ${gaps>1?"lunches":"lunch"}`} with AI</button>`:""}`}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}</section>`;
   return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
   ${aiCard}${days}${houseCard()}<p class="ver">Version ${APP_VERSION}</p>`;
 }
@@ -729,7 +736,7 @@ function dishSheet(k,slot){
   const a=A.adultMeal(k,slot),pl=S().adults?.[k]?.[slot]?.plan,sl=SLOTS.find(x=>x[0]===slot)[1],lib=library();
   const cur=!pl?"ai":pl.share?"ari":"pick";
   const opt=(v,t,d,extra="")=>`<label class="opt"><input type="radio" name="d" value="${v}"${cur===v?" checked":""}><span class="ob"></span><span><b>${t}</b>${d?`<small>${d}</small>`:""}${extra}</span></label>`;
-  const aiDesc="Leaves this meal empty, and AI fills it next time you tap Fill";
+  const aiT=slot==="breakfast"?"Simple breakfast":slot==="dinner"?"Leftovers from the fridge":"Let AI choose",aiDesc=slot==="breakfast"?`Today: ${a.bf?.t||""}`:slot==="dinner"?"What's left from lunch, or Ariadne's food":"Leaves this lunch empty, and AI fills it next time you tap Fill";
   const now=pl?`<p class="nowis">Now: <b>${esc(pl.share?(a.r?.title||"")+" (Ariadne's)":pl.title)}</b>${pl.locked?" · your pick":" · from AI"}</p>`:"";
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">What are you having?</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>${now}
   <form id="dishForm" data-k="${k}" data-slot="${slot}" class="stack"><div class="opts">
@@ -738,8 +745,8 @@ function dishSheet(k,slot){
       <span class="newbox"${pl?.locked&&lib.some(r=>r.title===pl.title)?" hidden":""}><input name="title" maxlength="120" placeholder="e.g. Chicken souvlaki with Greek salad" value="${pl?.locked&&!pl.share?esc(pl.title):""}">
       <textarea name="ing" rows="4" placeholder="Ingredients for two, one per line (optional: AI writes them if you leave this empty)">${pl?.locked&&!pl.share?esc((pl.ing||[]).join("\n")):""}</textarea>
       <textarea name="method" rows="3" placeholder="Method, one step per line (optional)">${pl?.locked&&!pl.share?esc((pl.method||[]).join("\n")):""}</textarea></span></span>`)}
-    ${slot!=="breakfast"&&a.r&&!a.kid?opt("ari","Same as Ariadne",esc(a.r.title)+(a.al.length?` (Amir gets ${esc(swapOf(a).charAt(0).toLowerCase()+swapOf(a).slice(1))})`:"")):""}
-    ${opt("ai","Let AI choose",aiDesc)}
+    ${slot==="lunch"&&a.r&&!a.kid?opt("ari","Same as Ariadne",esc(a.r.title)+(a.al.length?` (Amir gets ${esc(swapOf(a).charAt(0).toLowerCase()+swapOf(a).slice(1))})`:"")):""}
+    ${opt("ai",aiT,aiDesc)}
   </div>
   <div class="setgrp who2"><h3 class="grph">Just for one of you</h3>${PEOPLE.map(([w,n])=>{const o=S().adults?.[k]?.[slot]?.[w]?.mode||"";return `<div class="whorow"><span>${avatar(n,30)}${n}</span><select name="p_${w}"><option value="">Having this</option><option value="own"${o==="own"?" selected":""}>Own meal</option><option value="out"${o==="out"?" selected":""}>Eating out</option></select></div>
     <input name="t_${w}" maxlength="140" placeholder="What ${n} is having" value="${o==="own"?esc(S().adults[k][slot][w].text||""):""}"${o==="own"?"":" hidden"}>`}).join("")}</div>
@@ -811,7 +818,7 @@ async function shareList(){
 }
 
 /* ---------- AI week plan ---------- */
-const isGap=(k,s)=>{const pl=S().adults?.[k]?.[s]?.plan;return !pl||(pl.share&&!pl.locked&&A.adultMeal(k,s).kid)};
+const isGap=(k,s)=>{if(s!=="lunch")return false;const pl=S().adults?.[k]?.[s]?.plan;return !pl||(pl.share&&!pl.locked&&A.adultMeal(k,s).kid)};
 const gapCount=mon=>[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>isGap(addDays(mon,i),s)).length,0);
 let aiBusy="",aiNote="";
 async function streamAI(body,onTick){
@@ -825,46 +832,43 @@ async function streamAI(body,onTick){
   const a=text.indexOf("{"),b=text.lastIndexOf("}");if(a<0)throw new Error("Couldn't read the answer. Try again.");
   return JSON.parse(text.slice(a,b+1));
 }
-function planContext(mon,keepAll){
-  const P=A.prefs(),lines=[`Week: Saturday ${mon} to Friday ${addDays(mon,6)}.`,`Ariadne's lunches and dinners this week (id: title; contains):`];
-  for(let i=0;i<7;i++){const k=addDays(mon,i);lines.push(`${DOW[parse(k).getDay()]} ${k}:`);
-    ["lunch","dinner"].forEach(s=>{const a=A.adultMeal(k,s);lines.push(a.r?`  Ariadne ${s}: ${a.r.id}: ${a.r.title}; ${(a.r.ingredients||[]).slice(0,7).join(", ")}${a.al.length?` [has ${a.al.join(", ")}]`:""}${a.kid?" [toddler only]":""}`:`  Ariadne ${s}: nothing planned`)});
-    SLOTS.forEach(([s])=>{const pl=S().adults?.[k]?.[s]?.plan;if(isGap(k,s)){lines.push(`  EMPTY ${s}`);return}
-      if(pl.share){const r=A.adultMeal(k,s).r;if(r)lines.push(`  CHOSEN ${s}: shared with Ariadne: ${r.title} (keep as {"share":"${r.id}"})`);return}
-      lines.push(`  CHOSEN ${s}: ${pl.title}${(pl.ing||[]).length?`; ${pl.ing.join(", ")}`:" (NEEDS RECIPE)"}`)})}
-  const prev=[];for(let i=1;i<=7;i++){const k=addDays(mon,-i);SLOTS.forEach(([s])=>{const t=S().adults?.[k]?.[s]?.plan?.title;if(t)prev.push(t)})}
-  const all=LIB(),lib=all.filter(r=>(r.meals||[]).some(m=>["breakfast","lunch","dinner"].includes(m))),sides=all.filter(r=>(r.meals||[]).includes("side"));
-  if(sides.length)lines.push(`Side dishes and salads they like (you may mention one in a meal's title, e.g. "Grilled chicken with coleslaw"): ${sides.map(r=>r.title).join("; ")}`);
-  if(lib.length)lines.push(`LIBRARY (id: title [meals]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${(r.meals||[]).filter(m=>m!=="side").join("/")}]; ${(r.ing||[]).slice(0,5).join(", ")}${r.amir?" (has a version for Amir)":""}`).join("\n")}`);
-  if(prev.length)lines.push(`Last week they had (avoid repeating): ${[...new Set(prev)].join("; ")}`);
+function planContext(mon){
+  const P=A.prefs(),lines=[`Week: Saturday ${mon} to Friday ${addDays(mon,6)}. Lunches:`];
+  for(let i=0;i<7;i++){const k=addDays(mon,i),pl=S().adults?.[k]?.lunch?.plan;
+    lines.push(`${DOW[parse(k).getDay()]} ${k}: ${isGap(k,"lunch")?"EMPTY":pl.share?`CHOSEN (Ariadne's ${A.adultMeal(k,"lunch").r?.title||"dish"})`:`CHOSEN ${pl.title}${(pl.ing||[]).length?"":" (NEEDS RECIPE)"}`}`)}
+  const prev=[];for(let i=1;i<=7;i++){const t=S().adults?.[addDays(mon,-i)]?.lunch?.plan?.title;if(t)prev.push(t)}
+  const lib=LIB().filter(r=>(r.meals||[]).some(m=>m==="lunch"||m==="dinner")),sides=LIB().filter(r=>(r.meals||[]).includes("side"));
+  lines.push(`LIBRARY (id: title [group]; main ingredients):\n${lib.map(r=>`${r.id}: ${r.title} [${catOf(r)}]; ${(r.ing||[]).slice(0,6).join(", ")}${r.amir?" (has Amir's version)":""}`).join("\n")}`);
+  if(sides.length)lines.push(`Their side dishes (good for "side"): ${sides.map(r=>r.title).join("; ")}`);
+  if(prev.length)lines.push(`Last week's lunches (avoid repeating): ${[...new Set(prev)].join("; ")}`);
   lines.push(`Amir avoids: ${[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")}.`);
   return lines.join("\n");
 }
 function askPlan(){
   const mon=ui.week,gaps=gapCount(mon),picks=[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan?.locked).length,0);
   if(!gaps){status("Every meal this week is set",true);return}
-  openSheet(`<div class="sh-h"><div><p class="eyebrow">${esc(A.shortRange(mon))}</p><h2 class="display">Fill ${gaps===21?"the week":`the ${gaps} empty ${gaps>1?"meals":"meal"}`}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <form id="planForm" class="stack"><p class="muted">AI fills only the empty meals${picks?`, balanced around the ${picks} you chose`:""}, from your own recipes. Everything already set stays as it is. Amir's allergies are always covered.</p>
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${esc(A.shortRange(mon))}</p><h2 class="display">Fill ${gaps===7?"the lunches":`the ${gaps} empty ${gaps>1?"lunches":"lunch"}`}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <form id="planForm" class="stack"><p class="muted">AI fills only the empty lunches${picks?`, around the ${picks} you chose`:""}, from your own recipes: a protein, a vegetable and a carb each, balanced across the week. Everything already set stays. Amir's allergies are always covered.</p>
   <label><span class="lbl">Anything to keep in mind? (optional)</span><textarea name="focus" rows="3" placeholder="e.g. Lighter dinners, Lia away Tuesday"></textarea></label>
-  <button class="btn wide">${I.spark}Fill ${gaps>1?`${gaps} meals`:"1 meal"}</button></form>`);
+  <button class="btn wide">${I.spark}Fill ${gaps>1?`${gaps} lunches`:"1 lunch"}</button></form>`);
 }
 async function aiPlan(focus){
-  const mon=ui.week;closeSheet();aiBusy="Filling the empty meals…";aiNote="";render();
+  const mon=ui.week;closeSheet();aiBusy="Filling the empty lunches…";aiNote="";render();
   try{
     const res=await streamAI({task:"adultplan",weekStart:mon,today:todayKey(),focus,allergies:[...A.prefs().allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),A.prefs().other].filter(Boolean).join(", "),context:planContext(mon)},t=>{const n=(t.match(/"date"/g)||[]).length;const el=$(".aiplan .streaming");if(el)el.innerHTML=`<span class="dot"></span>Writing the menu… day ${Math.min(7,Math.max(1,n))} of 7`});
     const plans={};
     (res.days||[]).slice(0,7).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);plans[k]={};
-      SLOTS.forEach(([s])=>{const x=d[s],cur=S().adults?.[k]?.[s]?.plan;if(!x)return;
+      ["lunch"].forEach(s=>{const x=d[s],cur=S().adults?.[k]?.[s]?.plan;if(!x)return;
         if(!isGap(k,s)){ // already set: only fill in a missing recipe for their own pick
           if(!cur?.locked||cur.share)return; // their own pick: keep it, only fill in a missing recipe or Amir's alternative
           const need=!(cur.ing||[]).length,needAmir=!cur.amir&&x.amir&&x.amir.title;
           if(need||needAmir)plans[k][s]={...cur,ing:need?x.ing||[]:cur.ing,method:need?x.method||[]:cur.method,time:cur.time||x.time||"",amir:cur.amir||(x.amir&&x.amir.title?x.amir:null),locked:true};return}
         if(!x.lib&&x.title){const m=LIB().find(l=>l.title.toLowerCase()===String(x.title).toLowerCase());if(m)x.lib=m.id}
-        if(x.lib){const r=LIB().find(l=>l.id===x.lib);if(r){plans[k][s]={title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id};return}}
+        if(x.lib){const r=LIB().find(l=>l.id===x.lib);if(r){const sd=String(x.side||"").trim();plans[k][s]={title:r.title+(sd&&!r.title.toLowerCase().includes(sd.toLowerCase())?` with ${sd}`:""),ing:[...(r.ing||[]),...(sd?[`Side: ${sd}`]:[])],method:r.method||[],time:r.time||"",amir:r.amir||(x.amir&&x.amir.title?x.amir:null),lib:r.id};return}}
         if(x.share){const a=A.adultMeal(k,s),r=a.r;if(s!=="breakfast"&&r&&r.id===x.share&&!a.kid){plans[k][s]={share:r.id};return}if(!x.title){plans[k][s]=null;return}}
         if(x.title)plans[k][s]={title:x.title,time:x.time||"",ing:x.ing||[],method:x.method||[],amir:x.amir&&x.amir.title?x.amir:null}})});
     if(!Object.keys(plans).length)throw new Error("The plan came back empty. Try again.");
-    const d=await post("adult-plan-save",{plans});S().adults=d.adults;aiBusy="";aiNote=res.note||"";render();status("Week planned",true);
+    const d=await post("adult-plan-save",{plans});S().adults=d.adults;aiBusy="";aiNote=res.note||"";render();status("Lunches planned",true);
   }catch(e){aiBusy="";render();status(e.message||"Couldn't plan the week",true,true)}
 }
 function openSettings(){
