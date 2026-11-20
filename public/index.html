@@ -695,6 +695,7 @@ label.f>span,.lbl{font-weight:600}
 .addside{justify-self:start;border:0;background:none;padding:6px 2px;min-height:32px;font:600 13.5px var(--sans);color:var(--sage);opacity:.85}
 .freeze-note{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#E9F1F3;font-size:14.5px;line-height:1.45;color:var(--ink-2)}.freeze-note svg{flex:none;width:16px;height:16px;margin-top:2px;color:#3F6E7A}.freeze-note b{color:var(--ink);margin-right:4px}
 .bakes{padding:14px 16px;margin:0 0 14px}.bakes h2{font:600 18px/1.2 var(--serif);margin:0 0 4px}.bakes ul{list-style:none;margin:10px 0 0;padding:0}.bakes li{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid var(--line)}.bakes li .link{font-weight:600;text-align:left;padding:0;font-size:15.5px;color:var(--ink)}.bakes li span{font-size:14px;color:var(--ink-2)}.bakes li .bk-when{font-size:14px;color:var(--ink-2)}.bakes li .bk-when svg{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:4px}.bakes li .bk-when b{color:#A65A3D}.dayoff.make{background:#FBEFC8;color:#4A3F1E}.dayoff.make svg{color:#8A6D1E}
+.bakes summary{display:flex;align-items:center;gap:10px;min-height:44px;list-style:none;cursor:pointer}.bakes summary::-webkit-details-marker{display:none}.bakes summary>span{flex:1;min-width:0}.bakes summary h2{margin:0}.bakes .bk-n{display:block;font-size:14.5px;color:var(--ink-2);margin-top:2px;line-height:1.4}.bakes summary>svg{flex:none;width:20px;height:20px;color:var(--ink-3);transition:transform .3s}.bakes[open] summary>svg{transform:rotate(180deg)}.bakes[open] .bk-n{display:none}.bakes[open]>p{margin-top:6px}
 .bakes li .bk-make{color:var(--sage);font-weight:600;font-size:15px}.bakes li .bk-make em{font-style:normal;font-weight:400;color:var(--ink-2)}
 .cookrow{display:flex;gap:8px;align-items:flex-start;margin:4px 0 6px;padding:9px 12px;border-radius:12px;background:#FBEFC8;font-size:14.5px;line-height:1.45;color:#4A3F1E}.cookrow svg{flex:none;width:16px;height:16px;margin-top:2px;color:#8A6D1E}.cookrow b{color:#3A3115;margin-right:3px}.cookrow.bad{background:#FBE3DC;color:#6B2A1A}.cookrow b.miss{color:#B4432A}.cookrow.off{background:#EEF3E8;color:#3F4A38}.cookrow.off svg{color:#526447}
 .wk .c.ck{min-height:10mm;background:#FFF8E1}.wk .c.ck b{font-size:7.6pt;line-height:1.2;margin-bottom:.6mm}.wk .c.ck i{display:block;font-style:normal;font-size:7.3pt;color:#8A6D1E;margin-top:.8mm}
@@ -914,7 +915,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="12.4";
+const APP_VERSION="12.5";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1285,15 +1286,18 @@ function cookRow(k){
 }
 function bakesCard(mon){
   const L=weekBakes(mon),cur=mon===mondayOf(todayKey());if(!L.length)return "";
-  return `<section class="card bakes"><h2>${cur?"Baking for the rest of the week":"Baking for this week"}</h2>
+  return `<details class="card bakes"${bakesOpen?" open":""}><summary><span><h2>${cur?"Baking for the rest of the week":"Baking for this week"}</h2><span class="bk-n">${L.length} ${L.length===1?"recipe":"recipes"}: ${L.map(x=>esc(x.r.title)).join(", ")}</span></span>${I.down}</summary>
   <p class="muted small">How much of each recipe to make, so she eats it fresh and almost nothing goes in the freezer.</p>
   <ul>${L.map(x=>`<li><button class="link" data-act="recipe" data-id="${esc(x.r.id)}">${esc(x.r.title)}</button>
     <span class="bk-when">${I.clock||""}Make it: <b>${x.when}</b>. If the freezer already has some with a sticker, use those instead.</span>
     <span class="bk-make">${x.make} <em>(${halfTxt(x.makes)} of her portions)</em></span>
     <span>She eats: ${x.uses.map(esc).join(", ")}</span>
     ${x.thaw?`<span class="bk-when">To keep it fresh: freeze the ones for ${[...new Set(x.days.filter(d=>d>addDays(x.mk,3)).map(d=>DOW[parse(d).getDay()].slice(0,3)))].join(", ")} on the day you make them, and take each one out the evening before.</span>`:""}
-    <span>${x.spare>=1?`Leftover: ${x.spare} to freeze, with a sticker: name and date made`:"Nothing left over"}</span></li>`).join("")}</ul></section>`;
+    <span>${x.spare>=1?`Leftover: ${x.spare} to freeze, with a sticker: name and date made`:"Nothing left over"}</span></li>`).join("")}</ul></details>`;
 }
+// Baking card stays folded unless opened; remembered so the 30-second refresh doesn't close it
+let bakesOpen=false;
+document.addEventListener("toggle",e=>{if(e.target.matches?.("details.bakes"))bakesOpen=e.target.open},true);
 function viewWeek(){
   const mon=ui.week,t=todayKey();
   let h=`<header class="pagehead">
