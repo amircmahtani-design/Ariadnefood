@@ -934,7 +934,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="13.1";
+const APP_VERSION="13.2";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1732,7 +1732,9 @@ function allergyRules(){const P=PREFS(),on=ALLERGY.filter(([n])=>P.allergies.inc
   return words.length?[...on,...words.map(w=>[w.toLowerCase(),new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i")])]:on}
 function allergensOf(r,side){const t=[r?.title||"",...(r?.ingredients||[]),side||""].join(" | ");return allergyRules().filter(([,re])=>re.test(t)).map(([n])=>n)}
 function sideNoAllergen(side){const R=allergyRules();return String(side||"").split(/\s*\+\s*/).filter(t=>t&&!R.some(([,re])=>re.test(t))).join(" + ")}
-function swapText(al){return al.includes("fish")||al.includes("seafood")?"Grilled chicken breast with lemon and oregano":al.includes("chickpeas")?"Lean beef or chicken patties":al.includes("nuts")?"The same dish, made without nuts":`Something without ${al.join(" or ")}`}
+// Amir's swap when the dish has fish or seafood: rotates by day so it isn't always chicken
+const AMIR_SWAPS=["Grilled steak with chimichurri","Grilled chicken breast with lemon and oregano","Lamb chops with rosemary","Lean beef burger patty"];
+function swapText(al,k){const i=k?Math.round(parse(k).getTime()/864e5)%AMIR_SWAPS.length:1;return al.includes("fish")||al.includes("seafood")?AMIR_SWAPS[i]:al.includes("chickpeas")?"Lean beef or chicken patties":al.includes("nuts")?"The same dish, made without nuts":`Something without ${al.join(" or ")}`}
 function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
   if(slot==="breakfast"){const b=pl&&pl.title&&pl.locked?{t:pl.title,i:pl.ing||[],method:pl.method||[]}:adultBf(k);const one=who=>{const o=ov[who];return o?.mode==="out"?{mode:"out",text:"Eating out"}:o?.mode==="own"?{mode:"own",text:o.text||"Own breakfast"}:{mode:"same",text:b.t,dish:{title:b.t,ing:b.i,method:b.method||[]}}};return {r:null,bf:b,side:"",al:[],lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
   const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=(pl?.share&&pl.side)||m?.side||"",al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
@@ -1747,10 +1749,10 @@ function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
     return {r,side,al,own:null,kid,locked:false,left:true,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
   const one=who=>{const o=ov[who];if(o?.mode==="out")return {mode:"out",text:"Eating out"};if(o?.mode==="own")return {mode:"own",text:o.text||"Own meal"};
     if(own){if(who==="amir"&&own.amir?.title)return {mode:"alt",text:own.amir.title,dish:own.amir,al:oal};
-      if(who==="amir"&&oal.length)return {mode:"swap",text:swapText(oal),side:"",al:oal,dish:null};
+      if(who==="amir"&&oal.length)return {mode:"swap",text:swapText(oal,k),side:"",al:oal,dish:null};
       return {mode:"plan",text:own.title,dish:own}}
     if(!r||kid)return {mode:"none",text:"Not planned yet"};
-    if(who==="amir"&&al.length)return {mode:"swap",text:swapText(al),side:sideNoAllergen(side),al,dish:r.title};
+    if(who==="amir"&&al.length)return {mode:"swap",text:swapText(al,k),side:sideNoAllergen(side),al,dish:r.title};
     return {mode:"same",text:r.title,side,dish:r.title}};
   return {r,side,al,own,kid,locked:!!pl?.locked,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
 // What Catherine cooks on day k on top of Ariadne's batch: extra recipe for the dishes they share, and chicken for Amir's swaps
