@@ -489,7 +489,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="2.0";
+const APP_VERSION="2.1";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -646,9 +646,10 @@ function viewShop(){
 }
 
 // Recipe categories: worked out from the dish (or set by hand when editing), so a long list stays easy to browse
-const CHIP={"Fish & seafood":"Fish","Pasta & noodles":"Pasta","Sides & salads":"Sides","Basics & sauces":"Basics"};
-const CATS=["Poultry","Meat","Fish & seafood","Ladera","Pasta & noodles","Soups","Vegetarian","Sides & salads","Breakfast","Basics & sauces"];
+const CHIP={"Fish & seafood":"Fish","Pasta & noodles":"Pasta","Sides & salads":"Sides","Basics & sauces":"Basics","Desserts & baking":"Desserts"};
+const CATS=["Poultry","Meat","Fish & seafood","Ladera","Pasta & noodles","Soups","Vegetarian","Sides & salads","Breakfast","Desserts & baking","Basics & sauces"];
 function catOf(r){if(r.cat&&CATS.includes(r.cat))return r.cat;const m=r.meals||[],t=(r.title||"").toLowerCase(),all=(t+" "+(r.ing||[]).join(" ")).toLowerCase();
+  if(m.includes("dessert"))return "Desserts & baking";
   if(m.includes("basic")&&!m.some(x=>["lunch","dinner","breakfast"].includes(x)))return "Basics & sauces";
   if(m.includes("breakfast")&&!m.some(x=>["lunch","dinner"].includes(x)))return "Breakfast";
   if(/soup|σούπα|sopa/.test(t))return "Soups";
@@ -714,7 +715,7 @@ function editRec(r){
   const ta=(n,a,rows)=>`<textarea name="${n}" rows="${rows}">${esc((a||[]).join("\n"))}</textarea>`;
   openSheet(`<div class="sh-h"><div><p class="eyebrow">Edit recipe</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <form id="recEdit" data-id="${esc(r.id)}" class="stack"><label><span class="lbl">Name</span><input name="title" maxlength="120" value="${esc(r.title)}" required></label>
-  <div><span class="lbl">Good for</span><div class="checks">${[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["side","Side"],["basic","Basic / sauce"]].map(([m,l])=>`<label><input type="checkbox" name="meals" value="${m}"${(r.meals||[]).includes(m)?" checked":""}><span>${l}</span></label>`).join("")}</div></div>
+  <div><span class="lbl">Good for</span><div class="checks">${[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["side","Side"],["dessert","Dessert"],["basic","Basic / sauce"]].map(([m,l])=>`<label><input type="checkbox" name="meals" value="${m}"${(r.meals||[]).includes(m)?" checked":""}><span>${l}</span></label>`).join("")}</div></div>
   <div class="grid2"><label><span class="lbl">Group</span><select name="cat">${CATS.map(c=>`<option${catOf(r)===c?" selected":""}>${c}</option>`).join("")}</select></label>
   <label><span class="lbl">Takes about</span><input name="time" maxlength="30" value="${esc(r.time||"")}"></label></div>
   <label><span class="lbl">Ingredients for two, one per line</span>${ta("ing",r.ing,7)}</label>
