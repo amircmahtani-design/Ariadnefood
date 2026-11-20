@@ -588,7 +588,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.1";
+const APP_VERSION="4.2";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -1014,7 +1014,10 @@ const isGap=(k,s)=>{if(s!=="lunch")return false;const pl=S().adults?.[k]?.[s]?.p
 const gapCount=mon=>[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>isGap(addDays(mon,i),s)).length,0);
 let aiBusy="",aiNote="";
 async function streamAI(body,onTick){
-  const r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  // The AI can be briefly unavailable (e.g. just after an update): try up to 3 times, a few seconds apart, before showing an error
+  let r;for(let t=0;t<3;t++){try{r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})}catch(e){r=null}
+    if(r&&(r.ok||r.status<500))break;if(t<2)await new Promise(ok=>setTimeout(ok,4000*(t+1)))}
+  if(!r)throw new Error("No connection. Check the internet and try again.");
   if(!r.ok||!r.body){const j=await r.json().catch(()=>({}));throw new Error(j.error||"The AI didn't answer. Try again in a minute.")}
   const reader=r.body.getReader(),dec=new TextDecoder();let buf="",text="";
   for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;

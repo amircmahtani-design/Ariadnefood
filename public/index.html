@@ -921,7 +921,10 @@ document.addEventListener("visibilitychange",()=>{if(!PMODE&&!document.hidden&&i
 
 /* ---------- AI streaming ---------- */
 async function streamAI(body,onTick){
-  const r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  // The AI can be briefly unavailable (e.g. just after an update): try up to 3 times, a few seconds apart, before showing an error
+  let r;for(let t=0;t<3;t++){try{r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})}catch(e){r=null}
+    if(r&&(r.ok||r.status<500))break;if(t<2)await new Promise(ok=>setTimeout(ok,4000*(t+1)))}
+  if(!r)throw new Error("No connection. Check the internet and try again.");
   if(!r.ok||!r.body){const j=await r.json().catch(()=>({}));throw new Error(j.error||"The AI didn't answer. Try again in a minute.")}
   const reader=r.body.getReader(),dec=new TextDecoder();let buf="",text="";
   for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
@@ -939,7 +942,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="13.9";
+const APP_VERSION="14.0";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
