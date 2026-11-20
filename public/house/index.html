@@ -233,7 +233,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .wlist{list-style:none;margin:0;padding:0}
 .wlist li{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:15.5px}
 .wlist li span{flex:1}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 .ver{margin-top:var(--s6);text-align:center;font-size:13px;color:var(--ink-3)}
 .status{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;font-size:14px;font-weight:600;padding:9px 16px;border-radius:999px;z-index:60;pointer-events:none;transition:opacity var(--med);white-space:nowrap;box-shadow:var(--sh-2)}
 .status.err{background:var(--terra-ink)}
@@ -298,6 +298,16 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .todaychip{font-style:normal;font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--sage);border-radius:999px;padding:2px 9px;align-self:center}
 .dchips{margin-top:8px}
 #jobForm label{display:block;margin-bottom:14px}#jobForm .grid2 label{margin-bottom:0}#jobForm .grid2{margin-bottom:14px}
+
+input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;display:block}
+.tpick{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px}
+.tpick select{padding-left:12px;padding-right:28px;background-position:right 10px center}
+.toggle{display:flex!important;align-items:center;gap:12px;min-height:48px;margin:2px 0 6px;font-size:16px;font-weight:500;cursor:pointer}
+.toggle input{position:absolute;opacity:0;pointer-events:none}
+.toggle .box{flex:none;width:28px;height:28px;border-radius:8px;border:2px solid var(--sage-2);display:grid;place-items:center;color:transparent;background:var(--surface);transition:background var(--fast),border-color var(--fast)}
+.toggle .box svg{width:18px;height:18px}
+.toggle input:checked+.box{background:var(--sage);border-color:var(--sage);color:#fff}
+.toggle input:focus-visible+.box{outline:2px solid var(--sage);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -329,7 +339,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
 
 <script>
 "use strict";
-const APP_VERSION="1.2";
+const APP_VERSION="1.3";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -618,13 +628,15 @@ function askWho(){
   openSheet(`<div class="who-sheet"><h2 class="display">Who's using this phone?</h2><p class="muted">So everyone can see who ticked each job.</p>
   <div class="who">${(H.people||["Amir","Catherine","Lia"]).map(p=>`<button class="btn ghost wide who-row" data-who="${esc(p)}">${avatar(p,34)}<span>${esc(p)}</span></button>`).join("")}</div></div>`);
 }
+function timePick(){const hs=[...Array(15)].map((_,i)=>pad(i+6)),ms=["00","15","30","45"];
+  return `<span class="tpick"><select name="th" aria-label="Hour"><option value="">Any time</option>${hs.map(h=>`<option value="${h}">${fmt(+h*60).replace(":00","")}</option>`).join("")}</select><select name="tm" aria-label="Minutes">${ms.map(m=>`<option>${m}</option>`).join("")}</select></span>`}
 function addChore(){
   const mon=ui.week,t=todayKey(),days=[...Array(7)].map((_,i)=>addDays(mon,i)).filter(k=>parse(k).getDay()!==0),def=days.find(k=>k>=t)||days[0];
   openSheet(`<div class="sh-h"><h2 class="display">Add a chore</h2><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <form id="jobForm" class="stack"><label><span class="lbl">What needs doing</span><input name="text" required maxlength="200" placeholder="e.g. Clean the fridge"></label>
   <label><span class="lbl">Which day</span><select name="day">${days.map(k=>`<option value="${k}"${k===def?" selected":""}>${DOW[parse(k).getDay()]} ${shortDate(k)}${k===t?" (today)":""}</option>`).join("")}</select></label>
-  <div class="grid2"><label><span class="lbl">Time (optional)</span><input type="time" name="time"></label><label><span class="lbl">Takes about</span><select name="mins">${[10,15,20,30,45,60,90].map(m=>`<option value="${m}"${m===30?" selected":""}>${m} min</option>`).join("")}</select></label></div>
-  ${isParent()?`<div class="checks"><label><input type="checkbox" name="weekly"><span>Repeat every week on that day</span></label></div>`:""}
+  <div class="grid2"><label><span class="lbl">Time (optional)</span>${timePick()}</label><label><span class="lbl">Takes about</span><select name="mins">${[10,15,20,30,45,60,90].map(m=>`<option value="${m}"${m===30?" selected":""}>${m} min</option>`).join("")}</select></label></div>
+  ${isParent()?`<label class="toggle"><input type="checkbox" name="weekly"><span class="box">${I.check}</span><span>Repeat every week on that day</span></label>`:""}
   <p class="small muted">No time: it goes into the first free gap that day, around the fixed times.</p>
   <button class="btn wide">Add chore</button></form>`);
 }
@@ -632,8 +644,8 @@ function addJob(){
   const k=ui.date,dow=parse(k).getDay();
   openSheet(`<div class="sh-h"><h2 class="display">Add a job</h2><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <form id="jobForm" class="stack"><label><span class="lbl">What needs doing</span><input name="text" required maxlength="200" placeholder="e.g. Take the parcel to reception"></label>
-  <div class="grid2"><label><span class="lbl">Time (optional)</span><input type="time" name="time"></label><label><span class="lbl">Takes about</span><select name="mins">${[10,15,20,30,45,60,90].map(m=>`<option value="${m}"${m===30?" selected":""}>${m} min</option>`).join("")}</select></label></div>
-  ${isParent()?`<div class="checks"><label><input type="checkbox" name="weekly"><span>Every ${DOW[dow]}</span></label></div>`:""}
+  <div class="grid2"><label><span class="lbl">Time (optional)</span>${timePick()}</label><label><span class="lbl">Takes about</span><select name="mins">${[10,15,20,30,45,60,90].map(m=>`<option value="${m}"${m===30?" selected":""}>${m} min</option>`).join("")}</select></label></div>
+  ${isParent()?`<label class="toggle"><input type="checkbox" name="weekly"><span class="box">${I.check}</span><span>Every ${DOW[dow]}</span></label>`:""}
   <p class="small muted">No time: it goes into the next free gap on ${k===todayKey()?"today":DOW[dow]+" "+shortDate(k)}.</p>
   <button class="btn wide">Add job</button></form>`);
 }
@@ -692,9 +704,9 @@ document.addEventListener("input",e=>{if(e.target.id==="askIn")ui.askDraft=e.tar
 document.addEventListener("change",e=>{if(e.target.closest("#setForm"))saveSettings()});
 document.addEventListener("submit",async e=>{
   e.preventDefault();const f=e.target;
-  if(f.id==="jobForm"){const fd=new FormData(f),text=(fd.get("text")||"").trim();if(!text)return;const dk=fd.get("day")||ui.date;
-    try{if(fd.get("weekly")){const j=await post("house-settings",{house:{weekly:[...(H.house.weekly||[]),{dow:parse(dk).getDay(),text,time:fd.get("time")||"",mins:+fd.get("mins")}]}});H.house=j.house}
-      else{const j=await post("house-extra",{date:dk,text,time:fd.get("time")||"",mins:+fd.get("mins"),by:me});H.extras=j.extras}
+  if(f.id==="jobForm"){const fd=new FormData(f),text=(fd.get("text")||"").trim();if(!text)return;const dk=fd.get("day")||ui.date;const th=fd.get("th"),tme=th?`${th}:${fd.get("tm")||"00"}`:"";
+    try{if(fd.get("weekly")){const j=await post("house-settings",{house:{weekly:[...(H.house.weekly||[]),{dow:parse(dk).getDay(),text,time:tme,mins:+fd.get("mins")}]}});H.house=j.house}
+      else{const j=await post("house-extra",{date:dk,text,time:tme,mins:+fd.get("mins"),by:me});H.extras=j.extras}
       closeSheet();render();status(fd.get("day")?`Added to ${DOW[parse(dk).getDay()]}`:"Job added",true)}catch(err){status(err.message||"Couldn't add. Try again.",true,true)}}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet()});
