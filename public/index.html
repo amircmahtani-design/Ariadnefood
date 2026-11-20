@@ -934,7 +934,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="13.2";
+const APP_VERSION="13.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1717,7 +1717,14 @@ async function shrink(file){
 const adultTxt=f=>f===.5?"half a recipe":f===1?"1 more recipe":`${String(f).replace(".5","½")} more recipes`;
 const PREFS=()=>({allergies:["fish","seafood","chickpeas","nuts"],other:"",portion:3,...(S.adults?._prefs||{})});
 // Toddler-style dishes are Ariadne's alone: never shared with Lia and Amir
-const TODDLER_ONLY=/\b(bites?|patt(y|ies)|fingers?|fritters?|nuggets?|puree|purée|mash)\b/i;
+const TODDLER_ONLY=/\b(puree|purée)\b/i; // Lia & Amir now eat Ariadne's menu: only purées stay hers
+// Her dish named for grown-ups: "Salmon bites with potato wedges" becomes "Salmon with potato wedges"
+const adultTitle=t=>String(t||"").replace(/\s*\b(bites?|fingers?|nuggets?)\b/gi,"").replace(/\s{2,}/g," ").replace(/\s+(with|&)\s*$/i,"").trim();
+// Grown-up sides when they share her dish: a carb and a salad, rotating through the week (fries only on Saturday)
+const ADULT_SIDES={6:"French fries and Greek salad",0:"orzo and Greek salad",1:"baked sweet potato and green salad",2:"roast potatoes and Greek salad",3:"rice and green salad",4:"potato wedges and peas",5:"wholewheat pitta and Greek salad"};
+function autoSide(k,r){const dow=parse(k).getDay(),t=(r?.title||"").toLowerCase();
+  if(/\b(pasta|orzo|rice|potato|potatoes|wedges|spaghetti|penne|noodles|bread|pitta|pie|lasagn\w*|risotto|couscous|quinoa|chips|fries|giouvetsi|bolognese)\b/.test(t))return ["Greek salad","green salad","steamed greens"][dow%3];
+  return ADULT_SIDES[dow]}
 const ADULT_P_=()=>+PREFS().portion||3; // one grown-up portion, in Ariadne's portions
 // Their own breakfast (Ariadne's is too small and too soft): a weekly rotation, high in protein, no nuts
 const ADULT_BF=[
@@ -1737,14 +1744,14 @@ const AMIR_SWAPS=["Grilled steak with chimichurri","Grilled chicken breast with 
 function swapText(al,k){const i=k?Math.round(parse(k).getTime()/864e5)%AMIR_SWAPS.length:1;return al.includes("fish")||al.includes("seafood")?AMIR_SWAPS[i]:al.includes("chickpeas")?"Lean beef or chicken patties":al.includes("nuts")?"The same dish, made without nuts":`Something without ${al.join(" or ")}`}
 function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
   if(slot==="breakfast"){const b=pl&&pl.title&&pl.locked?{t:pl.title,i:pl.ing||[],method:pl.method||[]}:adultBf(k);const one=who=>{const o=ov[who];return o?.mode==="out"?{mode:"out",text:"Eating out"}:o?.mode==="own"?{mode:"own",text:o.text||"Own breakfast"}:{mode:"same",text:b.t,dish:{title:b.t,ing:b.i,method:b.method||[]}}};return {r:null,bf:b,side:"",al:[],lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
-  const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=(pl?.share&&pl.side)||m?.side||"",al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
+  const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=(pl?.share&&pl.side)||(r&&(!pl||pl.share)?autoSide(k,r):m?.side||""),al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
   const own=pl&&pl.title&&!pl.share?pl:null,oal=own?allergensOf({title:own.title,ingredients:own.ing||[]},""):[];
   // Dinner is usually leftovers: theirs from lunch, or Ariadne's dishes in the fridge
   if(slot==="dinner"&&!pl){const lu=adultMeal(k,"lunch");
     // What should be in the fridge tonight: Ariadne's batches already cooked by today (yesterday's, today's, and anything made today for tomorrow)
     const madeOn=(id,d)=>{let x=d;for(let n=0;n<4;n++){const p=addDays(x,-1);if(!["lunch","dinner"].some(s2=>S.days[p]?.meals?.[s2]?.recipeId===id))break;x=p}return x};
     const hers=[];[-1,0,1].forEach(o=>{const d=addDays(k,o);["lunch","dinner"].forEach(s2=>{const id=S.days[d]?.meals?.[s2]?.recipeId,rr=id&&recipeById(id);if(!rr||TODDLER_ONLY.test(rr.title)||hers.includes(rr))return;const mk=madeOn(id,d);if(mk<=k&&mk>=addDays(k,-2))hers.push(rr)})});
-    const fr=who=>{const l=[];hers.forEach(rr=>{if(who==="amir"&&allergensOf(rr,"").length)return;l.push(rr.title+" (Ariadne's)")});const mine=lu[who];if(["plan","same","alt","swap"].includes(mine.mode)&&!l.some(x=>x.startsWith(mine.text)))l.push(mine.text+" (from lunch)");return l};
+    const fr=who=>{const l=[];hers.forEach(rr=>{if(who==="amir"&&allergensOf(rr,"").length)return;l.push(adultTitle(rr.title)+" (Ariadne's)")});const mine=lu[who];if(["plan","same","alt","swap"].includes(mine.mode)&&!l.some(x=>x.startsWith(mine.text)))l.push(mine.text+" (from lunch)");return l};
     const one=who=>{const o=ov[who];if(o?.mode==="out")return {mode:"out",text:"Eating out"};if(o?.mode==="own")return {mode:"own",text:o.text||"Own meal"};return {mode:"left",text:"Leftovers from the fridge",fridge:fr(who)}};
     return {r,side,al,own:null,kid,locked:false,left:true,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
   const one=who=>{const o=ov[who];if(o?.mode==="out")return {mode:"out",text:"Eating out"};if(o?.mode==="own")return {mode:"own",text:o.text||"Own meal"};
@@ -1753,7 +1760,7 @@ function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
       return {mode:"plan",text:own.title,dish:own}}
     if(!r||kid)return {mode:"none",text:"Not planned yet"};
     if(who==="amir"&&al.length)return {mode:"swap",text:swapText(al,k),side:sideNoAllergen(side),al,dish:r.title};
-    return {mode:"same",text:r.title,side,dish:r.title}};
+    return {mode:"same",text:adultTitle(r.title),side,dish:r.title}};
   return {r,side,al,own,kid,locked:!!pl?.locked,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
 // What Catherine cooks on day k on top of Ariadne's batch: extra recipe for the dishes they share, and chicken for Amir's swaps
 const ADULT_COOK=false; // Catherine doesn't cook for Lia & Amir yet: Amir will say when

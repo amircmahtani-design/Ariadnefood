@@ -514,7 +514,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
   .wg-c b{display:block;font-size:14px;font-weight:700;line-height:1.25;overflow-wrap:normal;word-break:normal}
   .wg-c small{display:block;font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.25}
   .wg-c small+small{margin-top:1px}
-  .wg-c .wg-am{display:block;font-style:normal;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--terra-ink);margin-top:7px;padding-top:5px;border-top:1px solid var(--line)}
+  .wg-c .wg-am{display:block;font-style:normal;font-size:12.5px;font-weight:700;line-height:1.25;color:var(--terra-ink);background:var(--terra-soft);border-radius:8px;padding:3px 7px;margin-top:6px;align-self:flex-start}
   .wg-c.today{box-shadow:0 0 0 2px var(--sage-2),var(--sh-1)}
 }
 .wrow:first-child{border-top:0}
@@ -577,7 +577,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="3.2";
+const APP_VERSION="3.3";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -732,7 +732,8 @@ function weekGrid(mon){
     const g=gridName(p.text);return `<b>${esc(g.main)}</b>${g.wth?`<small>with ${esc(g.wth)}</small>`:""}${g.plus.map(x=>`<small>+ ${esc(x)}</small>`).join("")}${(p.mode==="same"||p.mode==="swap")&&p.side?p.side.split(/,\s*|\s+and\s+|\s*\+\s*/).map(x=>x.trim().replace(/^an?\s+/i,"").toLowerCase().replace(/\bgreek\b/g,"Greek")).filter(Boolean).slice(0,3).map(x=>`<small>+ ${esc(x)}</small>`).join(""):""}`};
   return `<div class="wgrid"><div class="wg-h"></div>${ks.map(k=>{const d=parse(k);return `<div class="wg-h${k===t?" today":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()}</span></div>`}).join("")}
   ${SLOTS.map(([s,l,ic])=>`<div class="wg-sl">${ic}<span>${s==="breakfast"?"B'fast":l}</span></div>${ks.map(k=>{const a=A.adultMeal(k,s),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text;
-    const inner=same?cellTxt(a.lia):`${cellTxt(a.lia)}<i class="wg-am">Amir</i>${cellTxt(a.amir)}`,who=a.lia.dish?"lia":a.amir.dish?"amir":"";
+    const am=a.amir,amT=am.mode==="out"?"eating out":am.mode==="own"?am.text:am.mode==="left"?"leftovers":gridName(am.mode==="swap"?am.text.replace(/^grilled\s+/i,"").replace(/\s+with\s.*$/i,""):am.text).main.toLowerCase();
+    const inner=same?cellTxt(a.lia):`${cellTxt(a.lia)}<i class="wg-am">Amir: ${esc(amT)}</i>`,who=a.lia.dish?"lia":a.amir.dish?"amir":"";
     const act=who&&a.lia.mode!=="out"?`data-rec="${k}|${s}|${who}"`:`data-edit="${k}|${s}"`;
     return `<button class="wg-c${k===t?" today":""}" ${act}>${inner}</button>`}).join("")}`).join("")}</div>`;
 }
@@ -978,7 +979,7 @@ async function shareList(){
 }
 
 /* ---------- AI week plan ---------- */
-const isGap=(k,s)=>{if(s!=="lunch")return false;const pl=S().adults?.[k]?.[s]?.plan;return !pl||(pl.share&&!pl.locked&&A.adultMeal(k,s).kid)};
+const isGap=(k,s)=>{if(s!=="lunch")return false;const pl=S().adults?.[k]?.[s]?.plan;return !pl&&!A.adultMeal(k,s).r}; // their lunch is Ariadne's unless they change it
 const gapCount=mon=>[...Array(7)].reduce((n,_,i)=>n+SLOTS.filter(([s])=>isGap(addDays(mon,i),s)).length,0);
 let aiBusy="",aiNote="";
 async function streamAI(body,onTick){
