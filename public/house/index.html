@@ -290,7 +290,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .routine dl{margin:0}
 .routine dl>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:15.5px}
 .routine dt{font-weight:600}
-.routine dd{margin:0;color:var(--ink-2);text-align:right}
+.routine dd{margin:0;color:var(--ink-2);text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:4px}.routine dd{white-space:nowrap}.routine dt{min-width:0}.routine .xdel.sm{width:36px;height:36px;margin-right:-8px}.routine .xdel.sm svg{width:15px;height:15px}
 .routine .link{font:inherit;color:var(--terra-ink);font-weight:600;min-height:0;padding:0}
 .wday>summary{padding:14px 20px}
 .wday .st b{font-size:21px;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
@@ -346,7 +346,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.4";
+const APP_VERSION="1.5";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -552,7 +552,8 @@ function viewWeek(){
   h+=`<section class="routine"><h2>Weekly routine</h2><h3>Ariadne's activities</h3><dl>${acts.length?"":`<div><dt>None set</dt><dd></dd></div>`}${acts.map(i=>`<div><dt>${DOW[i]}</dt><dd>${esc(h0.activities[i].label&&h0.activities[i].label!=="Activity"?h0.activities[i].label:"Activity")} ${fmt(hm(h0.activities[i].t))}</dd></div>`).join("")}
     </dl><h3>House jobs</h3><dl><div><dt>Sheets &amp; towels</dt><dd>${DOW[+h0.sheetsDay||2]}</dd></div>
     <div><dt>Laundry</dt><dd>${(h0.ironing||[]).length?(h0.ironing).map(i=>DOW[+i===1?6:+i-1]).join(", "):isParent()?`<button class="link" data-act="settings" data-at="setHouse">Set the ironing day</button>`:"Not set"}</dd></div>
-    ${(h0.weekly||[]).map(w=>`<div><dt>${DOW[+w.dow]}</dt><dd>${esc(w.text)}${w.time?" · "+fmt(hm(w.time)):""}</dd></div>`).join("")}</dl></section>`;
+    ${(h0.weekly||[]).map(w=>`<div><dt>${esc(w.text)}</dt><dd>Every ${DOW[+w.dow].slice(0,3)}${w.time?" · "+fmt(hm(w.time)).replace(":00",""):""}</dd></div>`).join("")}
+    ${[...Array(7)].map((_,i)=>addDays(mon,i)).flatMap(k=>(H.extras[k]||[]).map(x=>`<div><dt>${esc(x.text)}</dt><dd>${DOW[parse(k).getDay()].slice(0,3)} ${shortDate(k)}${x.time?" · "+fmt(hm(x.time)).replace(":00",""):""}<button class="xdel sm" data-delx="${esc(x.id)}" data-k="${k}" aria-label="Remove this chore">${I.close}</button></dd></div>`)).join("")}</dl></section>`;
   for(let i=0;i<7;i++){
     const k=addDays(mon,i),d=parse(k),day=buildDay(k),isT=k===t;
     if(day.off){h+=`<details class="sec wday off${isT?" today":""}"><summary><span class="st"><b>${DOW[d.getDay()]} <em>${shortDate(k)}</em>${isT?'<i class="todaychip">Today</i>':""}</b><span class="dchips"><i class="h">Catherine's day off</i></span></span></summary></details>`;continue}
