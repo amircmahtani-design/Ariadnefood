@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Amir &amp; Lia</title>
+<title>Lia &amp; Amir</title>
 <meta name="theme-color" content="#FFF8EE">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Amir &amp; Lia">
+<meta name="apple-mobile-web-app-title" content="Lia &amp; Amir">
 <link rel="icon" href="/img/favicon-64.png" type="image/png">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <link rel="manifest" href="/us/manifest.webmanifest">
@@ -399,12 +399,38 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .pit .toggle{margin:0;flex:none;width:44px;justify-content:center}
 .pit input[name^=t]{flex:1}
 .ver{margin-top:var(--s6)}
+.brand .bt{display:flex;flex-direction:column;line-height:1.05}
+.brand .bt small{font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:.02em;color:var(--sage-ink);margin-top:3px}
+.meal-h>div{flex:1;min-width:0}
+.eat{flex:none;width:44px;height:44px;border-radius:50%;border:2px solid var(--sage-2);background:var(--surface);display:grid;place-items:center;color:transparent;transition:background var(--fast),border-color var(--fast)}
+.eat svg{width:22px;height:22px}
+.eat.on{background:var(--sage);border-color:var(--sage);color:#fff}
+.meal.eaten .px b{color:var(--ink-2)}
+.pair{margin-left:-34px;margin-top:14px;flex:none;border-radius:28%;box-shadow:0 0 0 2px var(--surface)}
+.pchip.baby{display:inline-flex;align-items:center;gap:5px;background:#EEE6F6;color:#5B4A78}
+.pchip.baby svg{width:14px;height:14px}
+.recrow{display:flex;flex-wrap:wrap;gap:0 18px;border-top:1px solid var(--line);padding-top:2px}
+.wday .body .link{margin:-4px 0 0}
+.shared{display:flex;gap:12px;align-items:flex-start;padding:16px 18px;border-radius:var(--r-xl);background:var(--butter);color:#3A3115;margin:0 0 16px;box-shadow:var(--sh-1)}
+.shared .sic{flex:none;color:var(--butter-ink)}.shared .sic svg{width:22px;height:22px}
+.shared b{display:block;font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:19px;color:var(--ink)}
+.shared span{display:block;font-size:15.5px;line-height:1.45;margin-top:2px}
+.aiplan{background:var(--sage-soft);border-radius:var(--r-xl);padding:18px 20px;margin:0 0 16px;display:grid;gap:14px}
+.aiplan b{display:block;font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:21px;color:var(--ink)}
+.aiplan span{display:block;font-size:15.5px;color:#2F4A2A;line-height:1.45;margin-top:3px}
+.aiplan .ainote{font-size:15px;color:var(--ink-2);margin:0;padding-top:10px;border-top:1px solid rgb(82 100 71 / .2)}
+.streaming{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--sage);margin:0;min-height:50px}
+.streaming .dot{width:10px;height:10px;border-radius:50%;background:var(--sage);animation:bl 1s infinite}
+.rh{font:700 13px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin:18px 0 8px}
+.ring,.rmeth{margin:0;padding-left:22px;font-size:16.5px;line-height:1.5}
+.ring li,.rmeth li{padding:3px 0}
+.checks input[type=radio]{position:absolute;opacity:0}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap topin">
-    <div class="brand"><img src="/img/app-icon-128.png" alt="" width="34" height="34" style="border-radius:9px">Amir &amp; Lia</div>
+    <div class="brand"><img src="/img/app-icon-128.png" alt="" width="34" height="34" style="border-radius:9px"><span class="bt">Lia &amp; Amir<small>Healthy · Fit · Family meals</small></span></div>
     <button class="who-btn" id="whoBtn" aria-label="Who's using this phone"><span class="av"></span><span id="whoName">Who?</span></button>
   </div>
 </header>
@@ -430,7 +456,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.0";
+const APP_VERSION="1.1";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -457,10 +483,14 @@ const I={
   alert:sv('<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17h.01"/>',1.9),
   home:sv('<path d="M4 11 12 4l8 7v8.5H4z"/><path d="M10 19.5v-5h4v5"/>'),
   bag:sv('<path d="M5 8h14l-1.3 10.2a2 2 0 0 1-2 1.8H8.3a2 2 0 0 1-2-1.8z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/>'),
+  sunrise:sv('<path d="M4 17.5h16M7.5 17.5a4.5 4.5 0 0 1 9 0M12 6.5v3M5.6 11.1l1.5 1.5M18.4 11.1l-1.5 1.5M8.5 21h7"/>'),
+  spark:sv('<path d="M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2L5 10.5l5.2-1.8z"/><path d="M18.5 16v4M16.5 18h4"/>'),
+  book:sv('<path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/>'),
+  baby:sv('<circle cx="12" cy="12" r="8.5"/><path d="M9 10.5h.01M15 10.5h.01M9.5 14.5a3.5 3.5 0 0 0 5 0M12 3.5c1.5 0 2 1 2 2"/>'),
   pen:sv('<path d="M15.5 5.5l3 3L8 19H5v-3z"/>'),
 };
 const PEOPLE=[["lia","Lia"],["amir","Amir"]];
-const SLOTS=[["lunch","Lunch",I.midday],["dinner","Dinner",I.moon]];
+const SLOTS=[["breakfast","Breakfast",I.sunrise],["lunch","Lunch",I.midday],["dinner","Dinner",I.moon]];
 const AL_NAME={fish:"fish",seafood:"seafood",chickpeas:"chickpeas",nuts:"nuts"};
 
 /* ---------- state: everything comes from Ariadne's Table (hidden frame) ---------- */
@@ -495,14 +525,26 @@ const cap=s=>String(s||"").charAt(0).toUpperCase()+String(s||"").slice(1);
 const alList=al=>al.map(a=>AL_NAME[a]||a).join(" and ");
 
 function personRow(k,slot,who,name,p){
-  const chip=p.mode==="swap"?`<i class="pchip warn">No ${esc(alList(p.al))} for Amir</i>`:p.mode==="own"?`<i class="pchip own">Own meal</i>`:p.mode==="out"?`<i class="pchip out">Eating out</i>`:p.mode==="same"?`<i class="pchip">Same as Ariadne</i>`:"";
+  const chip=p.mode==="swap"?`<i class="pchip warn">No ${esc(alList(p.al))} for Amir</i>`:p.mode==="alt"?`<i class="pchip warn">Amir's alternative</i>`:p.mode==="own"?`<i class="pchip own">Own meal</i>`:p.mode==="out"?`<i class="pchip out">Eating out</i>`:p.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:"";
   const side=(p.mode==="same"||p.mode==="swap")&&p.side?`<small>With ${esc(p.side)}</small>`:"";
   return `<button class="prow" data-edit="${k}|${slot}|${who}">${avatar(name,40)}<span class="px"><em>${name}</em><b>${esc(p.text)}</b>${side}${chip}</span><span class="pen">${I.pen}</span></button>`;
 }
+// The two of them usually eat the same thing: show it once, and split only when they differ
 function mealCard(k,slot,label,icon){
-  const a=A.adultMeal(k,slot);
-  return `<section class="meal"><div class="meal-h"><span class="sic">${icon}</span><div><b>${label}</b>${a.r?`<span>Ariadne: ${esc(a.r.title)}</span>`:`<span>Nothing planned for Ariadne</span>`}</div></div>
-    ${PEOPLE.map(([w,n])=>personRow(k,slot,w,n,a[w])).join("")}</section>`;
+  const a=A.adultMeal(k,slot),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text&&a.lia.mode!=="none";
+  const sub=slot==="breakfast"?"":a.r?`<span>Ariadne: ${esc(a.r.title)}</span>`:`<span>Nothing planned for Ariadne</span>`;
+  const rec=[...new Set([a.lia,a.amir].filter(p=>p.dish).map(p=>typeof p.dish==="string"?"ari":p.text))];
+  const eaten=a.eaten;
+  const both=same?`<button class="prow" data-edit="${k}|${slot}|both">${avatar("Lia",34)}<span class="pair">${avatar("Amir",34)}</span><span class="px"><em>Both</em><b>${esc(a.lia.text)}</b>${(a.lia.mode==="same"&&a.lia.side)?`<small>With ${esc(a.lia.side)}</small>`:""}${a.lia.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:a.lia.mode==="out"?`<i class="pchip out">Eating out</i>`:a.lia.mode==="own"?`<i class="pchip own">Own meal</i>`:""}</span><span class="pen">${I.pen}</span></button>`
+    :PEOPLE.map(([w,n])=>personRow(k,slot,w,n,a[w])).join("");
+  return `<section class="meal${eaten?" eaten":""}"><div class="meal-h"><span class="sic">${icon}</span><div><b>${label}</b>${sub}</div>
+    <button class="eat${eaten?" on":""}" data-eat="${k}|${slot}" aria-pressed="${!!eaten}" aria-label="${eaten?"Eaten, tap to undo":"Mark as eaten"}">${I.check}</button></div>
+    ${both}${rec.length?`<div class="recrow">${rec.map(t=>`<button class="link" data-rec="${k}|${slot}|${t==="ari"?"ari":a.lia.text===t?"lia":"amir"}">${I.book}${t==="ari"?"Recipe (Ariadne's batch)":rec.length>1?(a.lia.text===t?"Lia's recipe":"Amir's recipe"):"See the recipe"}</button>`).join("")}</div>`:""}</section>`;
+}
+function sharedNote(k){
+  const hit=["lunch","dinner"].map(s=>({s,a:A.adultMeal(k,s)})).find(({a})=>(a.amir.mode==="swap"||a.amir.mode==="alt")&&a.lia.mode!=="out");
+  if(!hit)return "";const {s,a}=hit,dish=a.own?a.own.title:a.r?.title;
+  return `<div class="shared"><span class="sic">${I.info||I.alert}</span><div><b>${a.own?"Lia & Amir eat differently":"Shared family meal"}</b><span>${a.own?`${esc(dish)} at ${s} for Lia. Amir has ${esc(a.amir.text.charAt(0).toLowerCase()+a.amir.text.slice(1))}.`:`${esc(dish)} is on the menu for Ariadne at ${s}, so Lia has it too. Amir has ${esc(a.amir.text.charAt(0).toLowerCase()+a.amir.text.slice(1))}.`}</span></div></div>`;
 }
 function houseCard(){
   const w=groceryWeek(),list=S().groceries?.[w]||[];
@@ -523,7 +565,8 @@ function viewDay(){
     <button class="iconbtn" data-go="1" aria-label="Next day">${I.right}</button></div>
     ${k!==todayKey()?`<button class="link backtoday" data-today>Back to today</button>`:""}</div>
   ${SLOTS.map(([s,l,ic])=>mealCard(k,s,l,ic)).join("")}
-  <p class="note">Tap a name to change that meal: own meal, eating out, or back to Ariadne's dish.</p>
+  ${sharedNote(k)}
+  <p class="note">Tap a meal to change it: own meal or eating out.</p>
   ${houseCard()}
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
@@ -534,16 +577,19 @@ function viewWeek(){
     const chips=[swaps?`<i class="c">Amir swap ×${swaps}</i>`:"",outs?`<i>Eating out ×${outs}</i>`:"",own?`<i class="h">Own meal ×${own}</i>`:""].join("");
     const open=k===t||ui.openDay===k;
     return `<details class="sec wday${k===t?" today":""}" data-day="${k}"${open?" open":""}><summary><span class="st"><b>${DOW[parse(k).getDay()]} <em>${shortDate(k)}</em>${k===t?'<i class="todaychip">Today</i>':""}</b>
-      <span>${ms.map((a,i)=>`${SLOTS[i][1]}: ${esc(a.r?a.r.title:"not planned")}`).join("\n")}</span>${chips?`<span class="dchips">${chips}</span>`:""}</span><span class="chev">${I.down}</span></summary>
-      <div class="body">${SLOTS.map(([s,l])=>`<h3 class="wk-sl">${l}</h3>${PEOPLE.map(([w,n])=>personRow(k,s,w,n,ms[SLOTS.findIndex(x=>x[0]===s)][w])).join("")}`).join("")}</div></details>`}).join("");
+      <span>${ms.map((a,i)=>`${SLOTS[i][1]}: ${esc(a.lia.mode!=="none"?a.lia.text:a.amir.text)}`).join("\n")}</span>${chips?`<span class="dchips">${chips}</span>`:""}</span><span class="chev">${I.down}</span></summary>
+      <div class="body">${SLOTS.map(([s,l])=>`<h3 class="wk-sl">${l}</h3>${PEOPLE.map(([w,n])=>personRow(k,s,w,n,ms[SLOTS.findIndex(x=>x[0]===s)][w])).join("")}<button class="link" data-rec="${k}|${s}|lia">${I.book}Recipe</button>`).join("")}</div></details>`}).join("");
+  const planned=[...Array(7)].some((_,i)=>SLOTS.some(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan));
+  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${planned?"Your menu for this week":"Plan your week with AI"}</b><span>${planned?"Breakfast, lunch and dinner for you two. Shared with Ariadne only where it makes sense.":"Breakfast, lunch and dinner for you two, healthy and high protein, sharing Ariadne's food only where it makes sense. Amir's allergies are always covered."}</span></div>
+    <button class="btn${planned?" ghost":""} wide" data-act="aiPlan">${I.spark}${planned?"Plan it again":"Plan this week"}</button>`}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}</section>`;
   return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
-  ${days}${houseCard()}<p class="ver">Version ${APP_VERSION}</p>`;
+  ${aiCard}${days}${houseCard()}<p class="ver">Version ${APP_VERSION}</p>`;
 }
 function viewShop(){
   const w=ui.shopW||A.planWeek(),mode=ui.shopFor,secs=A.shop(w,mode)||[],P=A.pantryOf(w),have=new Set(P.at?P.have||[]:[]),got=new Set(S().shop?.[w]||[]);
   const t=todayKey();
   const head=`<div class="wkhead"><button class="iconbtn" data-sw="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">Shopping${w===mondayOf(t)?" · this week":w===addDays(mondayOf(t),7)?" · next week":""}</p><h1 class="display">${esc(A.shortRange(w))}</h1></div><button class="iconbtn" data-sw="7" aria-label="Next week">${I.right}</button></div>
-  <div class="shopfor" role="group" aria-label="Who the list is for">${[["us","Amir & Lia"],["all","Everyone"]].map(([v,l])=>`<button data-for="${v}" aria-pressed="${mode===v}">${l}</button>`).join("")}</div>`;
+  <div class="shopfor" role="group" aria-label="Who the list is for">${[["us","Lia & Amir"],["all","Everyone"]].map(([v,l])=>`<button data-for="${v}" aria-pressed="${mode===v}">${l}</button>`).join("")}</div>`;
   const all=secs.flatMap(sc=>sc.items);
   const acts=`<div class="house-acts top"><button class="btn ghost sm" data-act="addText">${I.plus}Add items</button><button class="btn ghost sm" data-act="addPhoto">${I.camera}Photo of a list</button></div>`;
   if(!all.length)return head+acts+`<p class="empty">${mode==="us"?"Nothing on the list yet. Plan Ariadne's week in Ariadne's Table and your meals fill in here, or add things for the house.":"This week isn't planned yet."}</p>`;
@@ -567,27 +613,44 @@ function askWho(){
   <div class="who">${["Amir","Lia"].map(p=>`<button class="btn ghost wide who-row" data-who="${p}">${avatar(p,34)}<span>${p}</span></button>`).join("")}</div></div>`);
 }
 function editMeal(k,slot,who){
-  const a=A.adultMeal(k,slot),p=a[who],name=who==="amir"?"Amir":"Lia",sl=slot==="lunch"?"Lunch":"Dinner";
-  const base=!a.r?null:who==="amir"&&a.al.length?{t:"Swap for Amir",d:`${A.adultMeal(k,slot).amir.mode==="swap"?a.amir.text:"Grilled chicken instead"} (Ariadne's ${a.r.title} has ${alList(a.al)})`}:{t:"Same as Ariadne",d:a.r.title};
+  const a=A.adultMeal(k,slot),both=who==="both",p=both?a.lia:a[who],name=both?"Lia & Amir":who==="amir"?"Amir":"Lia",sl=SLOTS.find(x=>x[0]===slot)[1];
+  let base=null;
+  if(slot==="breakfast")base={t:"As planned",d:a.bf.t};
+  else if(a.own)base=who==="amir"&&a.own.amir?{t:"Amir's alternative",d:a.own.amir.title}:who==="amir"&&a.amir.mode==="swap"?{t:"Swap for Amir",d:a.amir.text}:{t:"As planned",d:a.own.title};
+  else if(a.r)base=who==="amir"&&a.al.length?{t:"Swap for Amir",d:`${swapOf(a)} (Ariadne's ${a.r.title} has ${alList(a.al)})`}:{t:"Same as Ariadne",d:a.r.title};
   const cur=p.mode==="own"?"own":p.mode==="out"?"out":"base";
   const opt=(v,t,d)=>`<label class="opt"><input type="radio" name="m" value="${v}"${cur===v?" checked":""}><span class="ob"></span><span><b>${esc(t)}</b>${d?`<small>${esc(d)}</small>`:""}</span></label>`;
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">${name}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <form id="mealForm" data-k="${k}" data-slot="${slot}" data-who="${who}" class="stack">
-    <div class="opts">${base?opt("base",base.t,base.d):""}${opt("own","Own meal","Write what you're having")}${opt("out","Eating out","No cooking needed")}</div>
+    <div class="opts">${base?opt("base",base.t,base.d):""}${opt("own",slot==="breakfast"?"Own breakfast":"Own meal","Write what you're having")}${opt("out","Eating out","No cooking needed")}</div>
     <label id="ownBox"${cur==="own"?"":" hidden"}><span class="lbl">What you're having</span><input name="text" maxlength="140" value="${p.mode==="own"?esc(p.text):""}" placeholder="e.g. Steak and salad"></label>
+    ${both?`<p class="small muted">Changes it for both of you. To change it for one, tap that day in Week.</p>`:""}
     <button class="btn wide">Save</button></form>`);
+}
+const swapOf=a=>a.amir.mode==="swap"?a.amir.text:"Grilled chicken instead";
+function recipeSheet(k,slot,who){
+  const a=A.adultMeal(k,slot);let d=null,note="",title="";
+  const p=who==="ari"?null:a[who];
+  if(who==="ari"||(p&&typeof p.dish==="string")){const r=a.r;if(!r)return;title=r.title;d={ing:r.ingredients||[],method:r.method||[],time:r.time};
+    const ex=A.adultExtra(k).dishes.find(x=>x.r.id===r.id);note=`Ariadne's recipe, made in a bigger batch for you two${ex?` (${ex.f===.5?"half a recipe":ex.f===1?"1 more recipe":ex.f+" more recipes"} on top of hers)`:""}. Season your portions at the table.`;}
+  else if(p&&p.dish){d=p.dish;title=d.title;if(slot!=="breakfast")note=p.mode==="alt"?"For Amir only (1 portion).":"For two.";}
+  else{const q=[a.lia,a.amir].find(x=>x.dish);if(!q)return;return recipeSheet(k,slot,q===a.lia?"lia":"amir")}
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${SLOTS.find(x=>x[0]===slot)[1]}${d.time?` · ${esc(d.time)}`:""}</p><h2 class="display">${esc(title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  ${note?`<p class="small muted" style="margin:-6px 0 14px">${esc(note)}</p>`:""}
+  <h3 class="rh">Ingredients</h3><ul class="ring">${(d.ing||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+  ${(d.method||[]).length?`<h3 class="rh">Method</h3><ol class="rmeth">${d.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}`);
 }
 function addText(){
   const w=groceryWeek();
   openSheet(`<div class="sh-h"><div><p class="eyebrow">For the house</p><h2 class="display">Add to the list</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <form id="txtForm" class="stack"><label><span class="lbl">One thing per line</span><textarea name="t" rows="5" placeholder="Washing-up liquid&#10;Kitchen roll&#10;Greek yoghurt" required></textarea></label>
-  <p class="small muted">Goes on the Amir &amp; Lia list for ${esc(A.shortRange(w))}.</p><button class="btn wide">Add to the list</button>
+  <p class="small muted">Goes on the Lia &amp; Amir list for ${esc(A.shortRange(w))}.</p><button class="btn wide">Add to the list</button>
   <button type="button" class="btn ghost wide" data-act="addPhoto">${I.camera}Use a photo of a list instead</button></form>`);
 }
 function confirmItems(items){
   const w=groceryWeek();
   openSheet(`<div class="sh-h"><div><p class="eyebrow">From the photo</p><h2 class="display">${items.length} ${items.length===1?"item":"items"} found</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <form id="photoForm" class="stack"><p class="small muted">Untick anything that's wrong, fix spellings, then add. Goes on the Amir &amp; Lia list for ${esc(A.shortRange(w))}.</p>
+  <form id="photoForm" class="stack"><p class="small muted">Untick anything that's wrong, fix spellings, then add. Goes on the Lia &amp; Amir list for ${esc(A.shortRange(w))}.</p>
   <div class="pitems">${items.map((t,i)=>`<div class="pit"><label class="toggle"><input type="checkbox" name="on${i}" checked><span class="box">${I.check}</span></label><input name="t${i}" value="${esc(t)}" maxlength="80" aria-label="Item ${i+1}"></div>`).join("")}</div>
   <button class="btn wide">Add to the list</button></form>`);
 }
@@ -610,8 +673,63 @@ async function addItems(items){
 }
 async function shareList(){
   const w=ui.shopW,url=`${location.origin}/?shop=${w}${ui.shopFor==="us"?"&for=us":""}`;
-  try{if(navigator.share){await navigator.share({title:"Shopping list",text:`Shopping list for ${A.shortRange(w)}${ui.shopFor==="us"?" (Amir & Lia)":""}. Tap an item once it's in the bag:`,url});return}}catch(e){if(e?.name==="AbortError")return}
+  try{if(navigator.share){await navigator.share({title:"Shopping list",text:`Shopping list for ${A.shortRange(w)}${ui.shopFor==="us"?" (Lia & Amir)":""}. Tap an item once it's in the bag:`,url});return}}catch(e){if(e?.name==="AbortError")return}
   try{await navigator.clipboard.writeText(url);status("Link copied",true)}catch(e){status("Couldn't copy",true,true)}
+}
+
+/* ---------- AI week plan ---------- */
+let aiBusy="",aiNote="";
+async function streamAI(body,onTick){
+  const r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok||!r.body){const j=await r.json().catch(()=>({}));throw new Error(j.error||"The AI didn't answer. Try again in a minute.")}
+  const reader=r.body.getReader(),dec=new TextDecoder();let buf="",text="";
+  for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
+    while((i=buf.indexOf("\n"))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line.startsWith("data:"))continue;let ev;try{ev=JSON.parse(line.slice(5))}catch{continue}
+      if(ev.type==="content_block_delta"&&ev.delta?.text){text+=ev.delta.text;onTick&&onTick(text)}
+      if(ev.type==="error")throw new Error("The AI is busy. Try again in a minute.")}}
+  const a=text.indexOf("{"),b=text.lastIndexOf("}");if(a<0)throw new Error("Couldn't read the answer. Try again.");
+  return JSON.parse(text.slice(a,b+1));
+}
+function planContext(mon){
+  const P=A.prefs(),lines=[`Week: Saturday ${mon} to Friday ${addDays(mon,6)}.`,`Ariadne's lunches and dinners this week (id: title; contains):`];
+  for(let i=0;i<7;i++){const k=addDays(mon,i);lines.push(`${DOW[parse(k).getDay()]} ${k}:`);
+    ["lunch","dinner"].forEach(s=>{const a=A.adultMeal(k,s);lines.push(a.r?`  ${s}: ${a.r.id}: ${a.r.title}; ${(a.r.ingredients||[]).slice(0,7).join(", ")}${a.al.length?` [has ${a.al.join(", ")}]`:""}`:`  ${s}: nothing planned`)})}
+  const prev=[];for(let i=1;i<=7;i++){const k=addDays(mon,-i);SLOTS.forEach(([s])=>{const t=S().adults?.[k]?.[s]?.plan?.title;if(t)prev.push(t)})}
+  if(prev.length)lines.push(`Last week they had (avoid repeating): ${[...new Set(prev)].join("; ")}`);
+  lines.push(`Amir avoids: ${[...P.allergies,P.other].filter(Boolean).join(", ")}.`);
+  return lines.join("\n");
+}
+function askPlan(){
+  const mon=ui.week,has=[...Array(7)].some((_,i)=>SLOTS.some(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan));
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${esc(A.shortRange(mon))}</p><h2 class="display">Plan your week</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <form id="planForm" class="stack"><p class="muted">Breakfast, lunch and dinner for Lia and Amir. Healthy and high protein, with Amir's allergies covered. It shares Ariadne's dish only where that makes sense (3 to 5 meals a week).</p>
+  <label><span class="lbl">Anything to keep in mind? (optional)</span><textarea name="focus" rows="3" placeholder="e.g. Lighter dinners, steak once, Lia away Tuesday"></textarea></label>
+  ${has?`<p class="small muted">This replaces the plan you have for this week, and resets any meal you changed by hand.</p>`:""}
+  <button class="btn wide">${I.spark}Plan the week</button></form>`);
+}
+async function aiPlan(focus){
+  const mon=ui.week;closeSheet();aiBusy="Planning your week around Ariadne's…";aiNote="";render();
+  try{
+    const res=await streamAI({task:"adultplan",weekStart:mon,today:todayKey(),focus,allergies:[...A.prefs().allergies,A.prefs().other].filter(Boolean).join(", "),context:planContext(mon)},t=>{const n=(t.match(/"date"/g)||[]).length;const el=$(".aiplan .streaming");if(el)el.innerHTML=`<span class="dot"></span>Writing the menu… day ${Math.min(7,Math.max(1,n))} of 7`});
+    const plans={};
+    (res.days||[]).slice(0,7).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);plans[k]={};
+      SLOTS.forEach(([s])=>{const x=d[s];if(!x)return;
+        if(x.share){const r=A.adultMeal(k,s).r;if(s!=="breakfast"&&r&&r.id===x.share){plans[k][s]={share:r.id};return}if(!x.title){plans[k][s]=null;return}}
+        if(x.title)plans[k][s]={title:x.title,time:x.time||"",ing:x.ing||[],method:x.method||[],amir:x.amir&&x.amir.title?x.amir:null}})});
+    if(!Object.keys(plans).length)throw new Error("The plan came back empty. Try again.");
+    const d=await post("adult-plan-save",{plans,reset:true});S().adults=d.adults;aiBusy="";aiNote=res.note||"";render();status("Week planned",true);
+  }catch(e){aiBusy="";render();status(e.message||"Couldn't plan the week",true,true)}
+}
+function openSettings(){
+  const P=A.prefs();
+  openSheet(`<div class="sh-h"><h2 class="display">Settings</h2><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <form id="prefForm"><div class="setgrp"><h3 class="grph">Who's using this phone</h3><div class="checks">${["Lia","Amir"].map(n=>`<label><input type="radio" name="me" value="${n}"${me===n?" checked":""}><span>${n}</span></label>`).join("")}</div></div>
+  <div class="setgrp"><h3 class="grph">Amir's allergies</h3><p class="small muted" style="margin:0 0 10px">Any dish with these gets an alternative for Amir. Lia still has the dish.</p>
+    <div class="checks">${["fish","seafood","chickpeas","nuts"].map(a=>`<label><input type="checkbox" name="al" value="${a}"${P.allergies.includes(a)?" checked":""}><span>${cap(a)}</span></label>`).join("")}</div>
+    <label style="display:block;margin-top:12px"><span class="lbl">Anything else he avoids (comma separated)</span><input name="other" maxlength="160" value="${esc(P.other||"")}" placeholder="e.g. sesame"></label></div>
+  <div class="setgrp"><h3 class="grph">Portion size</h3><label><span class="lbl">One grown-up portion is about</span><select name="portion">${[2,2.5,3,3.5,4].map(v=>`<option value="${v}"${+P.portion===v?" selected":""}>${String(v).replace(".5","½")} of Ariadne's portions</option>`).join("")}</select></label>
+    <p class="small muted" style="margin-top:8px">Used when you share her dish: Catherine makes that much more.</p></div>
+  <button class="btn wide">Save</button></form><p class="ver">Version ${APP_VERSION}</p>`);
 }
 
 /* ---------- events ---------- */
@@ -619,7 +737,7 @@ document.addEventListener("click",async e=>{
   const t=e.target.closest("button,[data-close]");if(!t)return;
   if(t.matches("[data-close]")){closeSheet();return}
   if(t.dataset.view){ui.view=t.dataset.view;ls.set("us-view",ui.view);render();scrollTo(0,0);return}
-  if(t.id==="whoBtn"){askWho();return}
+  if(t.id==="whoBtn"){A?openSettings():askWho();return}
   if(t.dataset.who){me=t.dataset.who;ls.set("ari-me",me);setWho();closeSheet();return}
   if(!A)return;
   if(t.dataset.go){ui.date=addDays(ui.date,+t.dataset.go);render();return}
@@ -627,6 +745,10 @@ document.addEventListener("click",async e=>{
   if(t.dataset.wk){ui.week=addDays(ui.week,+t.dataset.wk);render();return}
   if(t.dataset.sw){ui.shopW=addDays(ui.shopW,+t.dataset.sw);render();return}
   if(t.dataset.for){ui.shopFor=t.dataset.for;ls.set("us-shopfor",ui.shopFor);render();return}
+  if(t.dataset.rec){const [k,s,w]=t.dataset.rec.split("|");recipeSheet(k,s,w);return}
+  if(t.dataset.eat){const [k,s]=t.dataset.eat.split("|"),on=!t.classList.contains("on");t.classList.toggle("on",on);
+    try{const d=await post("adult-set",{k,slot:s,who:"eaten",value:on?{mode:"done"}:null,by:me||""});S().adults=d.adults;render()}catch(err){t.classList.toggle("on",!on);status("Not saved. Check the connection.",true,true)}return}
+  if(t.dataset.act==="aiPlan"){if(!aiBusy)askPlan();return}
   if(t.dataset.edit){const [k,s,w]=t.dataset.edit.split("|");editMeal(k,s,w);return}
   const act=t.dataset.act;
   if(act==="addText"){addText();return}
@@ -651,8 +773,12 @@ document.addEventListener("submit",async e=>{
   if(f.id==="mealForm"){const m=f.m.value,text=f.text?.value.trim()||"";
     const value=m==="out"?{mode:"out"}:m==="own"?(text?{mode:"own",text}:null):null;
     if(m==="own"&&!text){f.text.focus();return}
-    try{const d=await post("adult-set",{k:f.dataset.k,slot:f.dataset.slot,who:f.dataset.who,value,by:me||""});S().adults=d.adults;closeSheet();render();status("Saved",true)}
+    try{let d;for(const who of f.dataset.who==="both"?["lia","amir"]:[f.dataset.who])d=await post("adult-set",{k:f.dataset.k,slot:f.dataset.slot,who,value,by:me||""});S().adults=d.adults;closeSheet();render();status("Saved",true)}
     catch(err){status("Not saved. Check the connection.",true,true)}return}
+  if(f.id==="planForm"){aiPlan(f.focus.value.trim());return}
+  if(f.id==="prefForm"){const me2=f.querySelector("[name=me]:checked")?.value;if(me2){me=me2;ls.set("ari-me",me);setWho()}
+    const prefs={allergies:[...f.querySelectorAll("[name=al]:checked")].map(x=>x.value),other:f.other.value.trim(),portion:+f.portion.value};
+    try{const d=await post("adult-prefs",{prefs});S().adults=d.adults;closeSheet();render();status("Saved",true)}catch(err){status("Not saved. Check the connection.",true,true)}return}
   if(f.id==="txtForm"){addItems(f.t.value.split(/\n|,/));return}
   if(f.id==="photoForm"){const items=[];f.querySelectorAll(".pit").forEach((p,i)=>{if(f["on"+i].checked)items.push(f["t"+i].value)});addItems(items);return}
 });

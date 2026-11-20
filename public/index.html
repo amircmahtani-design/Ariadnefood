@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="11.3";
+const APP_VERSION="11.4";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1069,6 +1069,7 @@ function kitchenNote(k){
     return link(r,esc(base),[m?.[1]==="breakfast"?"breakfast":"",dow===6&&sunIds.has(r.id)?"also for Sunday":""].filter(Boolean))});
   const bakes=[mondayOf(k),addDays(mondayOf(k),7)].flatMap(w=>weekBakes(w)).filter((x,i,a)=>x.mk===k&&a.findIndex(y=>y.r.id===x.r.id)===i).map(x=>link(x.r,`${BROTH.has(x.r.id)?"Make":"Bake"}: ${esc(x.r.title)}`,[x.part==="morning"?"morning":x.part==="afternoon"?"afternoon":"as soon as you can"]));
   const sideItems=(c.sides||[]).map(r=>link(r,`Side: ${esc(r.title)}`,[]));items.push(...sideItems);
+  (AX.own||[]).forEach(d=>items.push(`<span class="kname">${d.who?`For ${d.who}`:"For Lia & Amir"}: ${esc(d.title)}</span><span class="kmeta"><em>their ${d.slot}, recipe in the Lia &amp; Amir app</em></span>`));
   if(AX.swaps)items.push(`<span class="kname">For Amir: ${AX.swaps} chicken ${AX.swaps>1?"breasts":"breast"}, grilled with lemon and oregano</span><span class="kmeta"><em>no fish for him</em></span>`);
   if(!items.length&&!bakes.length)return `<div class="kitchen"><b>Nothing to cook today.</b>${c.left?"<span>Lunch and dinner are leftovers.</span>":""}</div>`;
   const open=(()=>{try{const v=localStorage.getItem("ari-cook-open");if(v!=null)return v==="1"}catch(e){}return me==="Catherine"})();
@@ -1659,25 +1660,46 @@ async function shrink(file){
    They eat what Ariadne eats, in grown-up portions. Amir is allergic to fish, seafood, chickpeas and nuts:
    when her dish has any of those, Lia still has it and Amir gets a swap. */
 const adultTxt=f=>f===.5?"half a recipe":f===1?"1 more recipe":`${String(f).replace(".5","½")} more recipes`;
-const ADULT_P=3; // one grown-up portion is about 3 of hers
+const PREFS=()=>({allergies:["fish","seafood","chickpeas","nuts"],other:"",portion:3,...(S.adults?._prefs||{})});
+const ADULT_P_=()=>+PREFS().portion||3; // one grown-up portion, in Ariadne's portions
+// Their own breakfast (Ariadne's is too small and too soft): a weekly rotation, high in protein, no nuts
+const ADULT_BF=[
+  {t:"Greek yoghurt bowl with berries & chia",i:["400 g Greek yoghurt","125 g blueberries","150 g strawberries","20 g chia seeds"]},
+  {t:"Spinach & feta omelette with tomatoes",i:["5 eggs","80 g spinach","60 g feta","150 g tomatoes"]},
+  {t:"Eggs & avocado on homemade toast",i:["4 eggs","1 avocado","150 g cucumber"]},
+  {t:"Overnight oats with yoghurt, kiwi & chia",i:["100 g oats","250 g Greek yoghurt","2 kiwis","15 g chia seeds"]},
+  {t:"Scrambled eggs with tomato & cucumber",i:["5 eggs","200 g tomatoes","150 g cucumber"]},
+  {t:"Greek yoghurt with apple, oats & cinnamon",i:["400 g Greek yoghurt","1 apple","40 g oats"]},
+  {t:"Feta & spinach scramble on homemade toast",i:["5 eggs","60 g feta","80 g spinach"]}];
+const adultBf=k=>ADULT_BF[Math.round(parse(k).getTime()/864e5)%7];
 const ALLERGY=[["fish",/\b(salmon|cod|hake|sardines?|tuna|fish|sea ?bass|mackerel|anchov\w*|haddock|trout)\b/i],["seafood",/\b(prawns?|shrimps?|squid|calamari|mussels?|crab|lobster|octopus|clams?|scallops?)\b/i],["chickpeas",/\b(chickpeas?|hummus|houmous|garbanzo|falafel)\b/i],["nuts",/\b(almonds?|peanuts?|walnuts?|cashews?|pistachios?|hazelnuts?|pecans?|pine nuts?|nut butter|nuts)\b/i]];
-function allergensOf(r,side){const t=[r?.title||"",...(r?.ingredients||[]),side||""].join(" | ");return ALLERGY.filter(([,re])=>re.test(t)).map(([n])=>n)}
-function sideNoAllergen(side){return String(side||"").split(/\s*\+\s*/).filter(t=>t&&!ALLERGY.some(([,re])=>re.test(t))).join(" + ")}
-function swapText(al){return al.includes("fish")||al.includes("seafood")?"Grilled chicken breast with lemon and oregano":al.includes("chickpeas")?"Lean beef or chicken patties":"The same dish, made without nuts"}
-function adultMeal(k,slot){const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=m?.side||"",al=r?allergensOf(r,side):[],ov=S.adults?.[k]?.[slot]||{};
+function allergyRules(){const P=PREFS(),on=ALLERGY.filter(([n])=>P.allergies.includes(n));
+  const words=String(P.other||"").split(/[,;\n]/).map(w=>w.trim()).filter(w=>w.length>2);
+  return words.length?[...on,...words.map(w=>[w.toLowerCase(),new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i")])]:on}
+function allergensOf(r,side){const t=[r?.title||"",...(r?.ingredients||[]),side||""].join(" | ");return allergyRules().filter(([,re])=>re.test(t)).map(([n])=>n)}
+function sideNoAllergen(side){const R=allergyRules();return String(side||"").split(/\s*\+\s*/).filter(t=>t&&!R.some(([,re])=>re.test(t))).join(" + ")}
+function swapText(al){return al.includes("fish")||al.includes("seafood")?"Grilled chicken breast with lemon and oregano":al.includes("chickpeas")?"Lean beef or chicken patties":al.includes("nuts")?"The same dish, made without nuts":`Something without ${al.join(" or ")}`}
+function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
+  if(slot==="breakfast"){const b=pl&&pl.title?{t:pl.title,i:pl.ing||[],method:pl.method||[]}:adultBf(k);const one=who=>{const o=ov[who];return o?.mode==="out"?{mode:"out",text:"Eating out"}:o?.mode==="own"?{mode:"own",text:o.text||"Own breakfast"}:{mode:"same",text:b.t,dish:{title:b.t,ing:b.i,method:b.method||[]}}};return {r:null,bf:b,side:"",al:[],lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
+  const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=m?.side||"",al=r?allergensOf(r,side):[];
+  const own=pl&&pl.title&&!pl.share?pl:null,oal=own?allergensOf({title:own.title,ingredients:own.ing||[]},""):[];
   const one=who=>{const o=ov[who];if(o?.mode==="out")return {mode:"out",text:"Eating out"};if(o?.mode==="own")return {mode:"own",text:o.text||"Own meal"};
+    if(own){if(who==="amir"&&own.amir?.title)return {mode:"alt",text:own.amir.title,dish:own.amir,al:oal};
+      if(who==="amir"&&oal.length)return {mode:"swap",text:swapText(oal),side:"",al:oal,dish:null};
+      return {mode:"plan",text:own.title,dish:own}}
     if(!r)return {mode:"none",text:"Nothing planned"};
     if(who==="amir"&&al.length)return {mode:"swap",text:swapText(al),side:sideNoAllergen(side),al,dish:r.title};
     return {mode:"same",text:r.title,side,dish:r.title}};
-  return {r,side,al,lia:one("lia"),amir:one("amir")}}
+  return {r,side,al,own,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
 // What Catherine cooks on day k on top of Ariadne's batch: extra recipe for the dishes they share, and chicken for Amir's swaps
 function adultExtra(k){const dow=parse(k).getDay();if(dow===0)return {dishes:[],swaps:0};const dishes=[],seen=new Set();
   ["lunch","dinner"].forEach(sl=>{const id=S.days[k]?.meals?.[sl]?.recipeId;if(!id||seen.has(id)||!madeToday(id,k))return;seen.add(id);const r=recipeById(id);let n=0;
     for(let i=0;i<3;i++){const d=addDays(k,i),ms=S.days[d]?.meals||{};if(i>0&&!["lunch","dinner"].some(s=>ms[s]?.recipeId===id))break;
       ["lunch","dinner"].forEach(s=>{if(ms[s]?.recipeId!==id)return;const a=adultMeal(d,s);if(a.lia.mode==="same")n++;if(a.amir.mode==="same")n++})}
-    if(n)dishes.push({r,n,f:Math.max(.5,Math.ceil(n*ADULT_P/(+r.serves||1)*2)/2)})});
+    if(n)dishes.push({r,n,f:Math.max(.5,Math.ceil(n*ADULT_P_()/(+r.serves||1)*2)/2)})});
   const sw=d=>["lunch","dinner"].filter(s=>adultMeal(d,s).amir.mode==="swap").length;
-  return {dishes,swaps:sw(k)+(dow===6?sw(addDays(k,1)):0)}}
+  const own=[];["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);if(!a.own)return;if(a.lia.mode==="plan"||a.amir.mode==="plan")own.push({slot:sl,title:a.own.title,who:a.lia.mode==="plan"&&a.amir.mode==="plan"?"":a.lia.mode==="plan"?"Lia":"Amir"});if(a.amir.mode==="alt")own.push({slot:sl,title:a.amir.text,who:"Amir"})});
+  return {dishes,swaps:sw(k)+(dow===6?sw(addDays(k,1)):0),own}}
 
 /* ---------- printing (opens its own page: ?print=week|shop|recipes) ---------- */
 const PM=new URLSearchParams(location.search);const PMODE=PM.get("print");
@@ -1692,6 +1714,7 @@ window.ariDay=k=>{
     return {id:r?.id||base,title:base,mins:recipeMins(r),note:m?.[1]==="breakfast"?"breakfast":(m?.[1]==="for Sunday"||(dow===6&&r&&sunIds.has(r.id)))?"also for Sunday":""}});
   (c.sides||[]).forEach(r=>cook.push({id:r.id,title:"Side: "+r.title,mins:Math.min(recipeMins(r)||20,40),note:""}));
   const AX=adultExtra(k);cook.forEach(x=>{const d=AX.dishes.find(d=>d.r.id===x.id);if(d)x.note=[x.note,`plus ${adultTxt(d.f)} for Amir & Lia`].filter(Boolean).join(" · ")});
+  (AX.own||[]).forEach((d,i)=>cook.push({id:"adult"+d.slot+i,title:`${d.who?`For ${d.who}`:"For Lia & Amir"}: ${d.title}`,mins:30,note:`their ${d.slot}`}));
   if(AX.swaps)cook.push({id:"amirchicken",title:`For Amir: ${AX.swaps} chicken ${AX.swaps>1?"breasts":"breast"}, grilled`,mins:20,note:"no fish for him"});
   const bakes=[mondayOf(k),addDays(mondayOf(k),7)].flatMap(w=>weekBakes(w)).filter((x,i,a)=>x.mk===k&&a.findIndex(y=>y.r.id===x.r.id)===i)
     .map(x=>({id:x.r.id,title:x.r.title,mins:recipeMins(x.r),part:x.part,make:x.make}));
@@ -1792,9 +1815,16 @@ function buildShopping(mon,mode){
   ["pitta","bread","breadcrumbs"].forEach(k=>delete map[k]);
   // Amir & Lia: the extra Catherine cooks for them, Amir's chicken swaps, and their sides
   if(grown)for(let i=0;i<7;i++){const k=addDays(mon,i),ex=adultExtra(k);
-    ex.dishes.forEach(({r,f})=>(r.ingredients||[]).forEach(line=>{if(/homemade|water$/i.test(line))return;lineQty(line).forEach(x=>add(x.k,`${r.title} (Amir & Lia)`,x.g*f,x.c*f,x.tin))}));
+    ex.dishes.forEach(({r,f})=>(r.ingredients||[]).forEach(line=>{if(/homemade|water$/i.test(line))return;lineQty(line).forEach(x=>add(x.k,`${r.title} (Lia & Amir)`,x.g*f,x.c*f,x.tin))}));
     if(ex.swaps)add("chicken_breast","Chicken for Amir",180*ex.swaps,0);
-    ["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);[a.lia,a.amir].forEach(p=>{if(!["same","swap"].includes(p.mode)||!p.side)return;sideParts(p.side).forEach(q=>q.items.forEach(([fk,g])=>add(fk,"Sides (Amir & Lia)",g*ADULT_P)))})})}
+    ["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);[a.lia,a.amir].forEach(p=>{if(!["same","swap"].includes(p.mode)||!p.side)return;sideParts(p.side).forEach(q=>q.items.forEach(([fk,g])=>add(fk,"Sides (Lia & Amir)",g*ADULT_P_())))})});
+    const ing=(lines,from,f)=>(lines||[]).forEach(line=>{if(/homemade|^water|salt|pepper/i.test(line))return;const q=lineQty(line);if(q.length){q.forEach(x=>add(x.k,from,x.g*f,x.c*f,x.tin));return}
+      if(/^(olive )?oil|spice|cumin|paprika|oregano|cinnamon|turmeric|^dried|^optional|^a (pinch|squeeze)/i.test(line))return;
+      const key=cap(line.replace(/\(.*?\)/g,"").replace(/^[\d½¼¾⅓.,\/\s-]*(g|kg|ml|l|tsp|tbsp|cups?|pieces?|slices?|handful|bunch|cloves?|tins?|cans?)?\b\s*(of\s+)?/i,"").trim());if(key)other[key]??={n:key,c:0}});
+    const bf=adultMeal(k,"breakfast"),nb=(bf.lia.mode==="same")+(bf.amir.mode==="same");
+    if(nb)ing(bf.bf.i,"Breakfast (Lia & Amir)",nb/2);
+    ["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);if(!a.own)return;const nm=(a.lia.mode==="plan")+(a.amir.mode==="plan");
+      if(nm)ing(a.own.ing,`${a.own.title} (Lia & Amir)`,nm/2);if(a.amir.mode==="alt")ing(a.own.amir.ing,`${a.own.amir.title} (Amir)`,1)})}
   ["pitta","bread","breadcrumbs"].forEach(k=>delete map[k]);
   (baby?weekBakes(mon):[]).filter(x=>HOME_BAKES.has(x.r.id)).forEach(x=>{const r=x.r,b=x.makes/(+r.serves||1);
     (r.ingredients||[]).forEach(line=>{if(/water$/i.test(line))return;
@@ -2091,7 +2121,7 @@ $("#sheet").addEventListener("submit",async e=>{
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet()});
 
 load();
-window.ariUs={ready:()=>!!loaded,S:()=>S,adultMeal,adultExtra,recipeById,mondayOf,addDays,weekRange,shortRange,todayKey,planWeek,shop:(w,mode)=>{buildShopping(w,mode);return window.__shop},shopReady,pantryOf,checkedWhen,reload:()=>load()};
+window.ariUs={prefs:PREFS,allergensOf,recipeIndex:()=>S.recipes.map(r=>({id:r.id,title:r.title,meals:r.meals,ing:r.ingredients})),ready:()=>!!loaded,S:()=>S,adultMeal,adultExtra,recipeById,mondayOf,addDays,weekRange,shortRange,todayKey,planWeek,shop:(w,mode)=>{buildShopping(w,mode);return window.__shop},shopReady,pantryOf,checkedWhen,reload:()=>load()};
 </script>
 </body>
 </html>

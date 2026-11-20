@@ -319,12 +319,38 @@ export default async (req) => {
   // Amir & Lia's meals: overrides per day and meal ("same" as Ariadne, "swap", "out", or their own text).
   if (route === "adult-set") {
     const k = String(body.k || ""), slot = String(body.slot || ""), who = String(body.who || "");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !["lunch", "dinner"].includes(slot) || !["lia", "amir"].includes(who)) return json({ error: "Bad request" }, 400);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !["breakfast", "lunch", "dinner"].includes(slot) || !["lia", "amir", "eaten"].includes(who)) return json({ error: "Bad request" }, 400);
     const adults = (await store.get("adults", { type: "json" })) || {};
     const v = isObj(body.value) ? { mode: clip(body.value.mode, 12), text: clip(body.value.text, 160), by: clip(body.by, 40) } : null;
     ((adults[k] ??= {})[slot] ??= {});
     if (v && v.mode) adults[k][slot][who] = v; else delete adults[k][slot][who];
-    for (const d of Object.keys(adults).sort().slice(0, -120)) delete adults[d];
+    for (const d of Object.keys(adults).filter((x) => x !== "_prefs").sort().slice(0, -120)) delete adults[d];
+    await store.setJSON("adults", adults);
+    return json({ ok: true, adults });
+  }
+  // Lia & Amir: save an AI-planned week ({k:{slot:plan}}); a plan of null clears that meal back to the default
+  if (route === "adult-plan-save") {
+    const adults = (await store.get("adults", { type: "json" })) || {};
+    const dish = (d) => isObj(d) && d.title ? { title: clip(d.title, 120), ing: (Array.isArray(d.ing) ? d.ing : []).map((x) => clip(x, 100)).filter(Boolean).slice(0, 25), method: (Array.isArray(d.method) ? d.method : []).map((x) => clip(x, 400)).filter(Boolean).slice(0, 12), time: clip(d.time, 30) } : null;
+    for (const [k, slots] of Object.entries(isObj(body.plans) ? body.plans : {})) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !isObj(slots)) continue;
+      for (const [sl, pl] of Object.entries(slots)) {
+        if (!["breakfast", "lunch", "dinner"].includes(sl)) continue;
+        const cur = ((adults[k] ??= {})[sl] ??= {});
+        if (!isObj(pl)) { delete cur.plan; continue; }
+        cur.plan = pl.share ? { share: clip(pl.share, 80) } : { ...dish(pl), amir: dish(pl.amir) };
+        if (body.reset) { delete cur.lia; delete cur.amir; }
+      }
+    }
+    await store.setJSON("adults", adults);
+    return json({ ok: true, adults });
+  }
+  // Lia & Amir settings: Amir's allergies and how big a grown-up portion is (in Ariadne's portions)
+  if (route === "adult-prefs") {
+    const adults = (await store.get("adults", { type: "json" })) || {};
+    const known = ["fish", "seafood", "chickpeas", "nuts"];
+    const pr = isObj(body.prefs) ? body.prefs : {};
+    adults._prefs = { allergies: (Array.isArray(pr.allergies) ? pr.allergies : known).filter((a) => known.includes(a)), other: clip(pr.other, 160), portion: Math.min(5, Math.max(1, +pr.portion || 3)) };
     await store.setJSON("adults", adults);
     return json({ ok: true, adults });
   }
@@ -573,6 +599,22 @@ Reply with ONLY JSON, no markdown:
 Each new recipe has these fields: ${RECIPE_SHAPE}`;
       const content = `${analysis}\n\nRecipe library (id: title [meals]):\n${library}${focus ? `\n\nParent's request: ${focus}` : ""}`;
       return callAI(system, content, 6000);
+    }
+
+    if (body.task === "adultplan") {
+      const week = DATE_RE.test(body.weekStart || "") ? body.weekStart : today;
+      const system = `You plan a week of meals for Lia and Amir, a healthy, fit couple in Dubai, parents of a toddler (Ariadne) whose meals are planned separately.
+Plan breakfast, lunch and dinner for 7 days starting ${week} (Saturday to Friday).
+Their food: high protein, lots of vegetables, whole grains, good fats, little sugar, nothing deep-fried, real home cooking that tastes good. Varied through the week; no dish more than twice. Use ingredients easy to buy in Dubai supermarkets (Spinneys, Carrefour, Waitrose). Bread and pitta are homemade at home: say "homemade bread" or "homemade pitta" when used, never buy them.
+ALLERGIES: Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts"}. Lia eats everything.
+When a meal for both would contain one of Amir's allergens (for example salmon for Lia), give Amir his own alternative in "amir". Otherwise leave "amir" out, and prefer meals they can both eat.
+SHARING WITH ARIADNE: you get Ariadne's lunches and dinners for the week. Where it is genuinely logical, Lia and Amir eat the same dish as her, cooked in a bigger batch (e.g. bolognese, roast chicken drumsticks, keftedakia, a good stew). Do this only 3 to 5 times in the week, never for toddler-style food (patties, bites, fingers, purees, mash, cookies, snacks), and never for the same dish two meals in a row. To share, set the meal to {"share":"<Ariadne's recipe id for that day and meal>"}. If the shared dish contains Amir's allergens, add "amir" with his alternative.
+Sunday is the nanny's day off: Sunday lunch and dinner are quick (15 to 25 minutes) or shared. Breakfasts take 10 minutes or less; they make breakfast themselves.
+Quantities are for TWO people (Amir's alternative: for ONE). Ingredient lines start with the amount in grams or a count, in simple shop English: "300 g chicken breast", "2 eggs", "1 avocado", "200 g Greek yoghurt", "150 g broccoli". Method: 3 to 6 short steps.
+Reply with ONLY JSON, no markdown:
+{"note":"one sentence on the week","days":[{"date":"YYYY-MM-DD","breakfast":{"title":"","time":"10 min","ing":[""],"method":[""]},"lunch":{"title":"","time":"","ing":[],"method":[],"amir":{"title":"","ing":[],"method":[]}},"dinner":{"share":"recipe-id"}}]}`;
+      const content = clip(body.context, 14000) || "No details.";
+      return callAI(system, content + (focus ? `\n\nRequest from Lia and Amir: ${focus}` : ""), 12000);
     }
 
     if (body.task === "photo") {
