@@ -1163,6 +1163,12 @@ function weekBakes(mon){
   const need={},from=mon===mondayOf(todayKey())?todayKey():mon;
   const add=(id,k,amt,where)=>{(need[id]??={n:0,uses:[],first:null,days:[]});need[id].n+=amt;need[id].days.push(k);need[id].uses.push(`${amt===.5?"½":"1"} ${where} ${DOW[parse(k).getDay()].slice(0,3)}`);if(!need[id].first)need[id].first={k,bf:where==="at breakfast"}};
   for(let i=0;i<7;i++){const k=addDays(mon,i);if(k<from)continue;const ms=S.days[k]?.meals||{};
+    // Homemade bread and pitta (Lia prefers nothing shop-made): count what the week uses so they get baked in time
+    for(const sl of ["breakfast","lunch","dinner","snack"]){const m=ms[sl];if(!m)continue;const r=m.recipeId&&recipeById(m.recipeId);
+      if(/pitt?a/i.test(m.side||""))add("homepitta",k,.5,`with ${sl}`);
+      const lines=(r?.ingredients||[]).join(" | ");
+      if(/homemade wholemeal pitta/i.test(lines))add("homepitta",k,.5,`in ${sl}`);
+      if(/homemade wholemeal bread/i.test(lines))add("homebread",k,1,sl==="breakfast"?"at breakfast":`with ${sl}`)}
     for(const sl of ["breakfast","snack"]){const id=ms[sl]?.recipeId;if(!id)continue;
       if(COOKIE_OF[id]){add(COOKIE_OF[id],k,.5,sl==="snack"?"for snack":"at breakfast");continue}
       const r=recipeById(id),fruitOnly=r&&(r.parts||[]).flatMap(p=>p.items||[]).every(([k])=>FOODS[k]?.group==="fruit");if(r&&!fruitOnly&&(+r.serves||6)>1&&(r.freezes||/cookie|muffin|bar|finger|bites|fritter|pancake/i.test(r.title)))add(id,k,1,sl==="snack"?"for snack":"at breakfast")}}
@@ -1728,6 +1734,10 @@ function buildShopping(mon){
       if(q.length)q.forEach(x=>add(x.k,r.title,x.g*b,x.c*b,x.tin));
       else if(!/salt|pepper|cinnamon|cumin|paprika|oregano|water|spice|turmeric|zest|^mint|^dill|^fresh|^lemon|^squeeze|^juice|^optional|^fruit/i.test(line)){
         const u=line.match(/^[\d½¼¾⅛\/.\s]*(tsp|tbsp|teaspoons?|tablespoons?|pinch|ml|g)\b\s*(.*)$/i);if(u){const key=cap(u[2].replace(/\(.*?\)/g,"").trim());if(key)other[key]??={n:key,c:0};return}const m=line.match(/^(\d+)\s+(.*)$/);let key=(m?m[2]:line).replace(/\(about ([^)]*)\)/,"· $1").replace(/,.*$/,"").trim();if(/garlic/i.test(key)){other.Garlic??={n:"Garlic",c:0};return}const o=(other[key]??={n:cap(key),c:0,q:!!m});if(m)o.c+=(+m[1])*b}})}
+  // Bread and pitta are made at home: drop the shop-bought ones and add the flour, yeast and oil for the batches the week bakes.
+  ["pitta","bread","breadcrumbs"].forEach(k=>delete map[k]);
+  weekBakes(mon).filter(x=>/^home(pitta|bread)$/.test(x.r.id)).forEach(x=>{const r=x.r,b=x.makes/(+r.serves||1);
+    (r.ingredients||[]).forEach(line=>{const q=lineQty(line);if(q.length)q.forEach(y=>add(y.k,r.title,y.g*b,y.c*b,y.tin));else if(/yeast/i.test(line)){const o=(other.Yeast??={n:"Dried yeast sachets",c:0});o.c+=Math.ceil(b)}})});
   const qty=x=>{if(PANTRY.has(x.k))return "";if(x.tins)return `${x.tins} ${x.tins==1?"tin":"tins"}`;
     if(COUNT_ONLY.has(x.k)){const n=Math.max(1,Math.ceil(x.c||x.g/(EACH[x.k]||1)));return `${n} ${CNAME[x.k][n==1?0:1]}`}
     if(!x.g)return BUY[x.k]?`1 ${BUY[x.k][1]}`:"";
