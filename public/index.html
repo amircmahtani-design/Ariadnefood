@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="10.8";
+const APP_VERSION="10.9";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1194,6 +1194,7 @@ function bakeList(mon,need){
     const sat=ck?cands.find(satFree):null;
     if(sat){md=sat;part="morning"}
     else if(cands.length){const best=cands.reduce((a,d)=>freshDishes(d)<freshDishes(a)?d:a,cands[0]);if(best!==md){md=best;part="afternoon"}}
+    else if(hb&&[0,6].includes(parse(md).getDay())&&md>=mon){md=mon;part="afternoon"} // bread needed early in the week: Saturday afternoon, after Friday's shopping
     else if([0,6].includes(parse(md).getDay())){md=addDays(md,parse(md).getDay()===0?-2:-1);part="afternoon"}
     if(md<t){md=t;part="as soon as you can"}
     const dayName=d=>d===t?(part==="morning"?"This morning":part==="afternoon"?"This afternoon":"Today, as soon as you can"):`${DOW[parse(d).getDay()]} ${dmy(d).slice(0,5)} ${part}`;
