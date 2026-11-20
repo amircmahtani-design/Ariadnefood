@@ -342,7 +342,7 @@ export default async (req) => {
         if (!["breakfast", "lunch", "dinner"].includes(sl)) continue;
         const cur = ((adults[k] ??= {})[sl] ??= {});
         if (!isObj(pl)) { delete cur.plan; continue; }
-        cur.plan = pl.share ? { share: clip(pl.share, 80), locked: !!pl.locked } : { ...dish(pl), amir: dish(pl.amir), locked: !!pl.locked };
+        cur.plan = pl.share ? { share: clip(pl.share, 80), locked: !!pl.locked } : { ...dish(pl), amir: dish(pl.amir), locked: !!pl.locked, ...(pl.lib ? { lib: clip(pl.lib, 60) } : {}) };
         if (body.reset) { delete cur.lia; delete cur.amir; }
       }
     }
@@ -359,7 +359,7 @@ export default async (req) => {
         if (!isObj(r) || !r.title) continue;
         const id = clip(r.id, 60) || clip(r.title, 60).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
         const meals = (Array.isArray(r.meals) ? r.meals : ["lunch", "dinner"]).filter((m) => ["breakfast", "lunch", "dinner", "side", "basic", "dessert"].includes(m));
-        const rec = { id, ...dish(r), meals: meals.length ? meals : ["lunch", "dinner"], time: clip(r.time, 30), serves: clip(r.serves, 40), cat: clip(r.cat, 30), fav: !!r.fav, tip: clip(r.tip, 300), amir: dish(r.amir), at: new Date().toISOString() };
+        const rec = { id, ...dish(r), meals: meals.length ? meals : ["lunch", "dinner"], time: clip(r.time, 30), serves: clip(r.serves, 40), cat: clip(r.cat, 30), fav: !!r.fav, tip: clip(r.tip, 300), amir: dish(r.amir), ...(r.ari ? { ari: clip(r.ari, 80) } : {}), at: new Date().toISOString() };
         const i = lib.findIndex((x) => x.id === id); if (i >= 0) lib[i] = rec; else lib.push(rec);
       }
     } else { const i = lib.findIndex((x) => x.id === body.id); if (i >= 0) lib.splice(i, 1); }
@@ -651,6 +651,16 @@ Reply with ONLY JSON, no markdown:
       if (imgs.length) return callAI(system + `
 FROM PHOTOS: the photos show a recipe (a cookbook page, handwritten card, a screenshot) or a finished dish. Copy a written recipe faithfully, scaled to two people, in grams where you can; keep their wording for the title. If it is only a photo of food, work out a sensible home recipe for it. Allergy rules above still apply.`, [...imgs, { type: "text", text: `Turn this into a recipe for Lia and Amir.${name ? ` It's called: ${name}.` : ""}${focus ? ` Notes: ${focus}` : ""}` }], 3000);
       return callAI(system, `Dish: ${name}${focus ? `\nNotes: ${focus}` : ""}`, 2500);
+    }
+
+    // Lia & Amir send one of their own dishes across to Ariadne's recipe book
+    if (body.task === "toddlerize") {
+      const src = clip(body.recipe, 6000);
+      if (!src) return json({ error: "No recipe received." }, 400);
+      const system = `You turn one of Lia and Amir's own grown-up recipes into a recipe for their daughter Ariadne. ${ABOUT}
+Keep the dish recognisable, with the same main ingredients and flavours, but make it right for her: no added salt or sugar, gentle spice, her textures (firm pieces she can hold, nothing mushy or saucy; a sauce can coat or be baked in), and the safe cut written into the method. Scale it to a toddler batch (about 4 portions). Keep the title close to theirs. If part of the dish doesn't suit her, change or leave out that part and say so in the tip.
+Reply with ONLY JSON, no markdown: {"recipe":${RECIPE_SHAPE}}`;
+      return callAI(system, `Lia and Amir's recipe:\n${src}`, 2500);
     }
 
     if (body.task === "photo") {

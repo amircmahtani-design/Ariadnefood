@@ -460,6 +460,48 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .ring,.rmeth{margin:0;padding-left:22px;font-size:16.5px;line-height:1.5}
 .ring li,.rmeth li{padding:3px 0}
 .checks input[type=radio]{position:absolute;opacity:0}
+/* v2.6: simple Today, week at a glance, search-first picker */
+.meal{padding:8px 20px 14px}
+.mtop{display:flex;align-items:center;gap:10px;padding:8px 0 2px}
+.mtop .sic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--sage-mist);color:var(--sage)}
+.mtop .sic svg{width:18px;height:18px}
+.mlab{flex:1;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.mtop .pen{margin:0;width:44px;height:44px;border:0;margin-right:-6px}
+.mbody{display:block;width:100%;border:0;background:none;text-align:left;padding:4px 0 2px;color:var(--ink);min-height:44px}
+.mbody+.mbody{border-top:1px solid var(--line);margin-top:10px;padding-top:12px}
+.mbody em{display:block;font-style:normal;font-size:13px;font-weight:700;color:var(--sage-ink);margin-bottom:1px}
+.mbody b{display:block;font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:520;font-size:22px;line-height:1.22;letter-spacing:-.01em}
+.mbody small{display:block;font-size:15px;color:var(--ink-2);margin-top:4px;line-height:1.4}
+b.mute{color:var(--ink-3)!important;font-style:italic}
+.wlist{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-2);padding:4px 18px;margin:0 0 16px}
+.wrow{display:flex;align-items:center;gap:14px;width:100%;border:0;border-top:1px solid var(--line);background:none;text-align:left;padding:12px 0;min-height:68px;color:var(--ink)}
+.wrow:first-child{border-top:0}
+.wd{flex:none;width:46px;height:50px;border-radius:14px;background:var(--bg);display:grid;place-content:center;text-align:center;line-height:1.1}
+.wd small{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.wd b{font-family:var(--serif);font-size:20px;font-weight:560}
+.wrow.today .wd{background:var(--sage);color:#fff}.wrow.today .wd small{color:#E9EFE2}
+.wm{flex:1;min-width:0}.wm b{display:block;font-size:17px;font-weight:600;line-height:1.3}.wm small{display:block;font-size:14.5px;color:var(--terra-ink);margin-top:2px}
+.wrow .chev{flex:none;color:var(--ink-3)}.wrow .chev svg{width:18px;height:18px}
+.wfill{justify-content:center;padding:14px;background:var(--sage-soft);border-radius:999px;margin:0}
+.ainote{font-size:15px;color:var(--ink-2);margin:12px 4px 0;line-height:1.45}
+.nowcard{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--r-lg);background:var(--sage-mist);margin:-4px 0 16px}
+.nowcard em{display:block;font-style:normal;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.nowcard b{display:block;font-size:17px;font-weight:600;line-height:1.3}
+.qchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.qchip{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 16px;border-radius:999px;border:0;background:var(--surface);box-shadow:var(--sh-1);font-size:15px;font-weight:600;color:var(--ink)}
+.qchip svg{width:17px;height:17px;color:var(--sage)}
+#dishRes .grph{margin:4px 0 2px}
+.dres{display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;text-align:left;padding:12px 2px;min-height:56px;color:var(--ink)}
+#dishRes .grph+.dres,#dishRes>.dres:first-child{border-top:0}
+.dres b{font-size:17px;font-weight:600}
+.hrt{flex:none;color:#C0533A}.hrt svg{width:18px;height:18px;fill:#C0533A}
+.dres.add .addi{flex:none;width:36px;height:36px;border-radius:50%;background:var(--sage);color:#fff;display:grid;place-items:center}.dres.add .addi svg{width:18px;height:18px}
+.onlyone{margin-top:18px;border-top:1px solid var(--line);padding-top:6px}
+.onlyone summary{min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--sage);cursor:pointer;list-style:none}
+.onlyone summary::-webkit-details-marker{display:none}
+.onlyone[open] summary{margin-bottom:8px}
+.btn.ari svg{color:#5B4A78}
+.sentari{display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#5B4A78;padding:10px 0}.sentari svg{width:18px;height:18px}
 </style>
 </head>
 <body>
@@ -493,7 +535,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="2.5";
+const APP_VERSION="2.6";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -575,16 +617,21 @@ function mealRows(k,slot,a){
   const chip=p.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Ariadne's dish</i>`:p.mode==="out"?`<i class="pchip out">Eating out</i>`:p.mode==="own"?`<i class="pchip own">Own meal</i>`:"";
   return `<button class="prow one" data-edit="${k}|${slot}"><span class="px"><b>${esc(p.text)}</b>${sub}${chip}</span><span class="pen">${I.pen}</span></button>`;
 }
+// What one meal says under its name, kept short
+function mealSub(p){
+  if((p.mode==="same"||p.mode==="swap")&&p.side)return `With ${p.side}`;
+  if(p.mode==="left")return p.fridge?.length?p.fridge.join(" · "):"Whatever's in the fridge";
+  if(p.mode==="same"&&typeof p.dish==="string")return "Same as Ariadne's";
+  return "";
+}
+const pText=p=>p.mode==="out"?"Eating out":p.mode==="none"?"Nothing chosen yet":p.text;
+// Today: one clean line per meal. Tap the dish for its recipe, the pen to change it.
 function mealCard(k,slot,label,icon){
-  const a=A.adultMeal(k,slot),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text&&a.lia.mode!=="none";
-  const sub=(a.locked?`<span class="pick">Your pick</span>`:"")+(slot==="breakfast"?"":a.r?`<span>Ariadne: ${esc(a.r.title)}</span>`:`<span>Nothing planned for Ariadne</span>`);
-  const rec=[...new Set([a.lia,a.amir].filter(p=>p.dish).map(p=>typeof p.dish==="string"?"ari":p.text))];
-  const eaten=a.eaten;
-  const both=mealRows(k,slot,a);const _old=same?`<button class="prow" data-edit="${k}|${slot}|both"><span class="duo">${avatar("Lia",34)}${avatar("Amir",34)}</span><span class="px"><em>Both</em><b>${esc(a.lia.text)}</b>${(a.lia.mode==="same"&&a.lia.side)?`<small>With ${esc(a.lia.side)}</small>`:""}${a.lia.mode==="same"&&slot!=="breakfast"?`<i class="pchip baby">${I.baby}Also Ariadne's</i>`:a.lia.mode==="out"?`<i class="pchip out">Eating out</i>`:a.lia.mode==="own"?`<i class="pchip own">Own meal</i>`:""}</span><span class="pen">${I.pen}</span></button>`
-    :PEOPLE.map(([w,n])=>personRow(k,slot,w,n,a[w])).join("");
-  return `<section class="meal${eaten?" eaten":""}"><div class="meal-h"><span class="sic">${icon}</span><div><b>${label}</b>${sub}</div>
-    <button class="eat${eaten?" on":""}" data-eat="${k}|${slot}" aria-pressed="${!!eaten}" aria-label="${eaten?"Eaten, tap to undo":"Mark as eaten"}">${I.check}</button></div>
-    ${both}${rec.length?`<div class="recrow">${rec.map(t=>`<button class="link" data-rec="${k}|${slot}|${t==="ari"?"ari":a.lia.text===t?"lia":"amir"}">${I.book}${t==="ari"?"Recipe (Ariadne's batch)":rec.length>1?(a.lia.text===t?"Lia's recipe":"Amir's recipe"):"See the recipe"}</button>`).join("")}</div>`:""}</section>`;
+  const a=A.adultMeal(k,slot),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text;
+  const open=(who,p)=>p.dish?`data-rec="${k}|${slot}|${who}"`:`data-edit="${k}|${slot}"`;
+  const line=(who,p,name)=>{const sub=mealSub(p);return `<button class="mbody" ${open(who,p)}>${name?`<em>${name}</em>`:""}<b${p.mode==="none"?' class="mute"':""}>${esc(pText(p))}</b>${sub?`<small>${esc(sub)}</small>`:""}</button>`};
+  return `<section class="meal"><div class="mtop"><span class="sic">${icon}</span><span class="mlab">${label}</span><button class="pen" data-edit="${k}|${slot}" aria-label="Change ${label.toLowerCase()}">${I.pen}</button></div>
+    ${same?line("lia",a.lia):line("lia",a.lia,"Lia")+line("amir",a.amir,"Amir")}</section>`;
 }
 function sharedNote(k){
   const hit=["lunch","dinner"].map(s=>({s,a:A.adultMeal(k,s)})).find(({a})=>(a.amir.mode==="swap"||a.amir.mode==="alt")&&a.lia.mode!=="out");
@@ -610,25 +657,23 @@ function viewDay(){
     <button class="iconbtn" data-go="1" aria-label="Next day">${I.right}</button></div>
     ${k!==todayKey()?`<button class="link backtoday" data-today>Back to today</button>`:""}</div>
   ${SLOTS.map(([s,l,ic])=>mealCard(k,s,l,ic)).join("")}
-  <p class="note">Tap a meal to change it.</p>
+  <p class="note">Tap a dish for the recipe, or the pen to change it.</p>
   ${houseCard()}
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
+// Week: the lunches at a glance (breakfast is simple, dinner is leftovers). Tap a day to change it.
 function viewWeek(){
-  const mon=ui.week,t=todayKey();
-  const days=[...Array(7)].map((_,i)=>addDays(mon,i)).map(k=>{
-    const ms=SLOTS.map(([s])=>A.adultMeal(k,s)),swaps=ms.filter(a=>a.amir.mode==="swap").length,outs=ms.reduce((n,a)=>n+(a.lia.mode==="out")+(a.amir.mode==="out"),0),own=ms.reduce((n,a)=>n+(a.lia.mode==="own")+(a.amir.mode==="own"),0);
-    const chips=[swaps?`<i class="c">Amir swap ×${swaps}</i>`:"",outs?`<i>Eating out ×${outs}</i>`:"",own?`<i class="h">Own meal ×${own}</i>`:""].join("");
-    const open=k===t||ui.openDay===k;
-    return `<details class="sec wday${k===t?" today":""}" data-day="${k}"${open?" open":""}><summary><span class="st"><b>${DOW[parse(k).getDay()]} <em>${shortDate(k)}</em>${k===t?'<i class="todaychip">Today</i>':""}</b>
-      <span>${ms.map((a,i)=>`${SLOTS[i][1]}: ${esc(a.lia.mode==="left"?"Leftovers":a.lia.mode!=="none"?a.lia.text:a.amir.text)}`).join("\n")}</span>${chips?`<span class="dchips">${chips}</span>`:""}</span><span class="chev">${I.down}</span></summary>
-      <div class="body">${SLOTS.map(([s,l],si)=>`<h3 class="wk-sl">${l}</h3>${mealRows(k,s,ms[si])}${[ms[si].lia,ms[si].amir].some(p=>p.dish)?`<button class="link" data-rec="${k}|${s}|lia">${I.book}Recipe</button>`:""}`).join("")}</div></details>`}).join("");
-  const cells=[...Array(7)].flatMap((_,i)=>SLOTS.map(([s])=>S().adults?.[addDays(mon,i)]?.[s]?.plan));
-  const planned=cells.some(x=>x&&!x.locked),picks=cells.filter(x=>x?.locked).length,gaps=gapCount(mon);
-  const aiCard=`<section class="aiplan">${aiBusy?`<p class="streaming"><span class="dot"></span>${esc(aiBusy)}</p>`:`<div><b>${!gaps?"Every meal is set":picks||planned?`${gaps} ${gaps>1?"lunches":"lunch"} still empty`:"Plan your week"}</b><span>${!gaps?"Tap any meal to change it. Set it to “Let AI choose” and AI fills it next time.":"Breakfasts are simple and dinner is leftovers. Tap a lunch to pick a dish, and AI fills the empty lunches from your recipes: protein, veg and a carb each."}</span></div>
-    ${gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Fill ${gaps===7?"the week's lunches":`the ${gaps} empty ${gaps>1?"lunches":"lunch"}`} with AI</button>`:""}`}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}</section>`;
-  return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Week"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
-  ${aiCard}${days}${houseCard()}<p class="ver">Version ${APP_VERSION}</p>`;
+  const mon=ui.week,t=todayKey(),gaps=gapCount(mon);
+  const rows=[...Array(7)].map((_,i)=>addDays(mon,i)).map(k=>{const a=A.adultMeal(k,"lunch"),d=parse(k),same=a.lia.mode===a.amir.mode&&a.lia.text===a.amir.text,empty=isGap(k,"lunch");
+    const none=a.lia.mode==="none",main=pText(a.lia),amir=!same&&!none?`Amir: ${pText(a.amir)}`:"";
+    return `<button class="wrow${k===t?" today":""}" data-edit="${k}|lunch"><span class="wd"><small>${DOW[d.getDay()].slice(0,3)}</small><b>${d.getDate()}</b></span><span class="wm"><b${none?' class="mute"':""}>${esc(main)}</b>${amir?`<small>${esc(amir)}</small>`:""}</span><span class="chev">${I.right}</span></button>`}).join("");
+  const fill=aiBusy?`<p class="streaming wfill"><span class="dot"></span>${esc(aiBusy)}</p>`
+    :gaps?`<button class="btn wide" data-act="aiPlan">${I.spark}Plan ${gaps>1?`${gaps} lunches`:"1 lunch"} with AI</button>`:"";
+  return `<div class="wkhead"><button class="iconbtn" data-wk="-7" aria-label="Previous week">${I.left}</button><div class="ph-t"><p class="eyebrow">${mon===mondayOf(t)?"This week":mon===addDays(mondayOf(t),7)?"Next week":"Lunches"}</p><h1 class="display">${esc(A.shortRange(mon))}</h1></div><button class="iconbtn" data-wk="7" aria-label="Next week">${I.right}</button></div>
+  <div class="wlist">${rows}</div>
+  ${fill}${aiNote?`<p class="ainote">${esc(aiNote)}</p>`:""}
+  <p class="note">Breakfast is simple and dinner is leftovers.</p>
+  <p class="ver">Version ${APP_VERSION}</p>`;
 }
 function viewShop(){
   const w=ui.shopW||A.planWeek(),mode=ui.shopFor,secs=A.shop(w,mode)||[],P=A.pantryOf(w),have=new Set(P.at?P.have||[]:[]),got=new Set(S().shop?.[w]||[]);
@@ -705,7 +750,21 @@ async function recFromPhotos(files){
     draftRec={title:r.title||name||"New dish",meals:r.meals,time:r.time,ing:r.ing||[],method:r.method||[],tip:r.tip||"",amir:r.amir&&r.amir.title?r.amir:null};libSheet(draftRec,true)}
   catch(err){closeSheet();status(err.message||"Couldn't read the photos. Try again.",true,true)}finally{busy=false;$("#recPhotoIn").value=""}
 }
-let draftRec=null;
+let draftRec=null,ariDraft=null;
+// "Ariadne could eat this": AI makes her version of their dish, they check it, then it goes into her recipe book
+async function toAri(r){
+  busy=true;openSheet(`<div class="loading"><p class="streaming" style="justify-content:center"><span class="dot"></span>Making Ariadne's version…</p></div>`);
+  try{const src=`${r.title}${r.time?` (${r.time})`:""}\nIngredients:\n${(r.ing||[]).join("\n")}\nMethod:\n${(r.method||[]).join("\n")}`;
+    const res=await streamAI({task:"toddlerize",recipe:src});if(!res.recipe)throw new Error("Couldn't make her version. Try again.");
+    const W=$("#ariFrame").contentWindow.ariUs,x=W.cleanRecipe(res.recipe,W.newId(res.recipe.title||r.title));ariDraft={x,from:r.id};
+    const lst=a=>(a||[]).map(v=>`<li>${esc(v)}</li>`).join("");
+    openSheet(`<div class="sh-h"><div><p class="eyebrow">For Ariadne · check it, then add</p><h2 class="display">${esc(x.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+    ${x.tip?`<p class="small muted" style="margin:-6px 0 12px">${esc(x.tip)}</p>`:""}
+    <h3 class="rh">Ingredients <span class="rh-s">${x.serves} toddler portions</span></h3><ul class="ring">${lst(x.ingredients)}</ul>
+    <h3 class="rh">Method</h3><ol class="rmeth">${lst(x.method)}</ol>
+    <div class="sh-acts"><button class="btn wide" data-act="saveAri">${I.baby}Add to Ariadne's recipes</button><button class="btn ghost wide" data-close>Not now</button></div>`)}
+  catch(err){closeSheet();status(err.message||"Couldn't make her version. Try again.",true,true)}finally{busy=false}
+}
 function libSheet(r,draft){
   const lst=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join("");
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${draft?"New recipe · check it, then save":esc(((r.meals||[]).map(m=>m==="basic"?"Basic":cap(m)).join(", ")))}${r.time?` · ${esc(r.time)}`:""}</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
@@ -714,7 +773,7 @@ function libSheet(r,draft){
   <h3 class="rh">Method</h3><ol class="rmeth">${lst(r.method)}</ol>
   ${r.amir?`<div class="amirv"><h3 class="rh">For Amir: ${esc(r.amir.title)}</h3><ul class="ring">${lst(r.amir.ing)}</ul>${(r.amir.method||[]).length?`<ol class="rmeth">${lst(r.amir.method)}</ol>`:""}</div>`:""}
   <div class="sh-acts">${draft?`<button class="btn wide" data-act="saveRec">Save to our recipes</button><button class="btn ghost wide" data-act="addRecipe">Try again</button>`
-    :`<button class="btn ghost wide" data-act="editRec" data-id="${esc(r.id)}">${I.pen}Edit</button><button class="btn ghost wide del" data-act="delRec" data-id="${esc(r.id)}">Remove from our recipes</button>`}</div>`);
+    :`${r.ari&&A.recipeById(r.ari)?`<p class="sentari">${I.baby}In Ariadne's recipes too</p>`:`<button class="btn ghost wide ari" data-act="toAri" data-id="${esc(r.id)}">${I.baby}Ariadne could eat this</button>`}<button class="btn ghost wide" data-act="editRec" data-id="${esc(r.id)}">${I.pen}Edit</button><button class="btn ghost wide del" data-act="delRec" data-id="${esc(r.id)}">Remove from our recipes</button>`}</div>`);
 }
 function editRec(r){
   const ta=(n,a,rows)=>`<textarea name="${n}" rows="${rows}">${esc((a||[]).join("\n"))}</textarea>`;
@@ -738,25 +797,40 @@ function askWho(){
 // Pick the dish for both of them (locked, so AI plans around it), or hand the meal back to AI
 const LIB=()=>S().adults?._lib||[];
 function library(){const m=new Map();LIB().forEach(r=>m.set(r.title.toLowerCase(),{...r,lib:r.id}));Object.entries(S().adults||{}).forEach(([k,v])=>{if(k==="_prefs")return;Object.values(v||{}).forEach(c=>{const p=c?.plan;if(!p?.title)return;const o=m.get(p.title.toLowerCase());if(!o||(!o.lib&&(p.ing||[]).length>(o.ing||[]).length))m.set(p.title.toLowerCase(),p)})});return [...m.values()].sort((a,b)=>a.title.localeCompare(b.title))}
+// Pick a dish by typing: favourites first, tap one and it's saved
+function dishResults(slot,q){
+  q=(q||"").trim().toLowerCase();const lib=library(),fits=r=>!r.lib||(r.meals||[]).includes(slot)||(slot==="dinner"&&(r.meals||[]).includes("lunch"));
+  let list;
+  if(!q){list=lib.filter(r=>r.lib&&r.fav&&fits(r));if(!list.length)list=lib.filter(r=>r.lib&&fits(r)).slice(0,12)}
+  else list=lib.filter(r=>(r.title+" "+(r.ing||[]).join(" ")).toLowerCase().includes(q)).sort((a,b)=>(!!b.fav-!!a.fav)||(b.title.toLowerCase().startsWith(q)-a.title.toLowerCase().startsWith(q))||a.title.localeCompare(b.title)).slice(0,40);
+  const row=r=>`<button class="dres" data-pick="${esc(r.title)}"><span class="px"><b>${esc(r.title)}</b>${r.amir?`<small>Amir: ${esc(r.amir.title)}</small>`:""}</span>${r.fav?`<span class="hrt">${I.heart}</span>`:""}</button>`;
+  const exact=q&&lib.some(r=>r.title.toLowerCase()===q),add=q&&!exact?`<button class="dres add" data-pnew="1"><span class="addi">${I.plus}</span><span class="px"><b>Add “${esc(q.charAt(0).toUpperCase()+q.slice(1))}”</b><small>A new dish. AI writes the recipe</small></span></button>`:"";
+  return `${q?"":`<h3 class="grph">${list.some(r=>r.fav)?"Your favourites":"Your recipes"}</h3>`}${list.length?list.map(row).join(""):q?"":`<p class="small muted">Tap ♡ in Recipes to keep favourites here.</p>`}${add}`;
+}
 function dishSheet(k,slot){
-  const a=A.adultMeal(k,slot),pl=S().adults?.[k]?.[slot]?.plan,sl=SLOTS.find(x=>x[0]===slot)[1],lib=library();
-  const cur=!pl?"ai":pl.share?"ari":"pick";
-  const opt=(v,t,d,extra="")=>`<label class="opt"><input type="radio" name="d" value="${v}"${cur===v?" checked":""}><span class="ob"></span><span><b>${t}</b>${d?`<small>${d}</small>`:""}${extra}</span></label>`;
-  const aiT=slot==="breakfast"?"Simple breakfast":slot==="dinner"?"Leftovers from the fridge":"Let AI choose",aiDesc=slot==="breakfast"?`Today: ${a.bf?.t||""}`:slot==="dinner"?"What's left from lunch, or Ariadne's food":"Leaves this lunch empty, and AI fills it next time you tap Fill";
-  const now=pl?`<p class="nowis">Now: <b>${esc(pl.share?(a.r?.title||"")+" (Ariadne's)":pl.title)}</b>${pl.locked?" · your pick":" · from AI"}</p>`:"";
-  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${sl}</p><h2 class="display">What are you having?</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>${now}
-  <form id="dishForm" data-k="${k}" data-slot="${slot}" class="stack"><div class="opts">
-    ${opt("pick","Our own dish","Pick one of your recipes or write a new one",`<span class="pickbox"${cur==="pick"?"":" hidden"}>
-      ${lib.length?`<select name="lib"><option value="">New dish…</option>${[["Our recipes",lib.filter(r=>r.lib&&(r.meals||[]).includes(slot))],["Our recipes (other meals)",lib.filter(r=>r.lib&&!(r.meals||[]).includes(slot)&&!(r.meals||[]).includes("basic"))],["Had before",lib.filter(r=>!r.lib)]].filter(([,l])=>l.length).map(([h,l])=>`<optgroup label="${h}">${l.map(r=>`<option value="${esc(r.title)}"${pl?.locked&&pl.title===r.title?" selected":""}>${esc(r.title)}</option>`).join("")}</optgroup>`).join("")}</select>`:""}
-      <span class="newbox"${pl?.locked&&lib.some(r=>r.title===pl.title)?" hidden":""}><input name="title" maxlength="120" placeholder="e.g. Chicken souvlaki with Greek salad" value="${pl?.locked&&!pl.share?esc(pl.title):""}">
-      <textarea name="ing" rows="4" placeholder="Ingredients for two, one per line (optional: AI writes them if you leave this empty)">${pl?.locked&&!pl.share?esc((pl.ing||[]).join("\n")):""}</textarea>
-      <textarea name="method" rows="3" placeholder="Method, one step per line (optional)">${pl?.locked&&!pl.share?esc((pl.method||[]).join("\n")):""}</textarea></span></span>`)}
-    ${slot==="lunch"&&a.r&&!a.kid?opt("ari","Same as Ariadne",esc(a.r.title)+(a.al.length?` (Amir gets ${esc(swapOf(a).charAt(0).toLowerCase()+swapOf(a).slice(1))})`:"")):""}
-    ${opt("ai",aiT,aiDesc)}
-  </div>
-  <div class="setgrp who2"><h3 class="grph">Just for one of you</h3>${PEOPLE.map(([w,n])=>{const o=S().adults?.[k]?.[slot]?.[w]?.mode||"";return `<div class="whorow"><span>${avatar(n,30)}${n}</span><select name="p_${w}"><option value="">Having this</option><option value="own"${o==="own"?" selected":""}>Own meal</option><option value="out"${o==="out"?" selected":""}>Eating out</option></select></div>
-    <input name="t_${w}" maxlength="140" placeholder="What ${n} is having" value="${o==="own"?esc(S().adults[k][slot][w].text||""):""}"${o==="own"?"":" hidden"}>`}).join("")}</div>
-  <button class="btn wide">Save</button></form>`);
+  const a=A.adultMeal(k,slot),pl=S().adults?.[k]?.[slot]?.plan,sl=SLOTS.find(x=>x[0]===slot)[1],out=a.lia.mode==="out"&&a.amir.mode==="out";
+  const nowT=out?"Eating out":pl?(pl.share?(a.r?.title||"")+" (Ariadne's)":pl.title):slot==="lunch"?"":pText(a.lia),hasRec=!out&&[a.lia,a.amir].some(p=>p.dish);
+  const quick=[slot==="lunch"&&a.r&&!a.kid?`<button class="qchip" data-q="ari">${I.baby}Same as Ariadne</button>`:"",
+    `<button class="qchip" data-q="ai">${slot==="breakfast"?`${I.sunrise}Simple breakfast`:slot==="dinner"?`${I.moon}Leftovers`:`${I.spark}Let AI choose`}</button>`,
+    `<button class="qchip" data-q="out">${I.bag}Eating out</button>`].join("");
+  openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)}</p><h2 class="display">What's for ${sl.toLowerCase()}?</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  ${nowT?`<div class="nowcard"><span class="px"><em>Now</em><b>${esc(nowT)}</b></span>${hasRec?`<button class="link" data-rec="${k}|${slot}|lia">${I.book}Recipe</button>`:""}</div>`:""}
+  <div id="dishPick" data-k="${k}" data-slot="${slot}">
+  <label class="rsearch"><span class="sr">Search your recipes</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="dishQ" placeholder="Type a dish, e.g. pasta" autocomplete="off" enterkeyhint="done"></label>
+  <div class="qchips">${quick}</div>
+  <div id="dishRes">${dishResults(slot,"")}</div></div>
+  <details class="onlyone"><summary>Only one of you?</summary>
+  <form id="oneForm" data-k="${k}" data-slot="${slot}" class="stack">${PEOPLE.map(([w,n])=>{const o=S().adults?.[k]?.[slot]?.[w]?.mode||"";return `<div class="whorow"><span>${avatar(n,30)}${n}</span><select name="p_${w}"><option value="">Having this</option><option value="own"${o==="own"?" selected":""}>Own meal</option><option value="out"${o==="out"?" selected":""}>Eating out</option></select></div>
+    <input name="t_${w}" maxlength="140" placeholder="What ${n} is having" value="${o==="own"?esc(S().adults[k][slot][w].text||""):""}"${o==="own"?"":" hidden"}>`}).join("")}
+  <button class="btn wide">Save</button></form></details>`);
+}
+// Save a choice for both of them and clear any "eating out / own meal"
+async function saveDish(k,slot,plan,outBoth){
+  const curPl=S().adults?.[k]?.[slot]?.plan;let res;
+  try{if(plan!==undefined&&(plan||curPl))res=await post("adult-plan-save",{plans:{[k]:{[slot]:plan}}});
+    for(const [w] of PEOPLE){const old=S().adults?.[k]?.[slot]?.[w]?.mode||"",want=outBoth?"out":"";if(old!==want)res=await post("adult-set",{k,slot,who:w,value:outBoth?{mode:"out"}:null,by:me||""})}
+    if(res)S().adults=res.adults;closeSheet();render();status("Saved",true)}
+  catch(err){status("Not saved. Check the connection.",true,true)}
 }
 function editMeal(k,slot,who){
   const a=A.adultMeal(k,slot),both=who==="both",p=both?a.lia:a[who],name=both?"Lia & Amir":who==="amir"?"Amir":"Lia",sl=SLOTS.find(x=>x[0]===slot)[1];
@@ -862,7 +936,7 @@ function askPlan(){
 async function aiPlan(focus){
   const mon=ui.week;closeSheet();aiBusy="Filling the empty lunches…";aiNote="";render();
   try{
-    const res=await streamAI({task:"adultplan",weekStart:mon,today:todayKey(),focus,allergies:[...A.prefs().allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),A.prefs().other].filter(Boolean).join(", "),context:planContext(mon)},t=>{const n=(t.match(/"date"/g)||[]).length;const el=$(".aiplan .streaming");if(el)el.innerHTML=`<span class="dot"></span>Writing the menu… day ${Math.min(7,Math.max(1,n))} of 7`});
+    const res=await streamAI({task:"adultplan",weekStart:mon,today:todayKey(),focus,allergies:[...A.prefs().allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),A.prefs().other].filter(Boolean).join(", "),context:planContext(mon)},t=>{const n=(t.match(/"date"/g)||[]).length;const el=$(".wfill");if(el)el.innerHTML=`<span class="dot"></span>Writing the menu… day ${Math.min(7,Math.max(1,n))} of 7`});
     const plans={};
     (res.days||[]).slice(0,7).forEach((d,i)=>{const k=/^\d{4}-\d{2}-\d{2}$/.test(d.date)&&d.date>=mon&&d.date<=addDays(mon,6)?d.date:addDays(mon,i);plans[k]={};
       ["lunch"].forEach(s=>{const x=d[s],cur=S().adults?.[k]?.[s]?.plan;if(!x)return;
@@ -918,6 +992,19 @@ document.addEventListener("click",async e=>{
     try{const d=await post("adult-set",{k,slot:s,who:"eaten",value:on?{mode:"done"}:null,by:me||""});S().adults=d.adults;render()}catch(err){t.classList.toggle("on",!on);status("Not saved. Check the connection.",true,true)}return}
   if(t.dataset.act==="aiPlan"){if(!aiBusy)askPlan();return}
   if(t.dataset.edit){const [k,s]=t.dataset.edit.split("|");dishSheet(k,s);return}
+  if(t.dataset.pick||t.dataset.pnew||t.dataset.q){const box=$("#dishPick");if(!box)return;const k=box.dataset.k,s=box.dataset.slot;
+    if(t.dataset.q==="out"){saveDish(k,s,undefined,true);return}
+    if(t.dataset.q==="ai"){saveDish(k,s,null);return}
+    if(t.dataset.q==="ari"){saveDish(k,s,{share:A.adultMeal(k,s).r.id,locked:true});return}
+    if(t.dataset.pnew){const q=$("#dishQ").value.trim();if(!q)return;saveDish(k,s,{title:q.charAt(0).toUpperCase()+q.slice(1),ing:[],method:[],amir:null,locked:true});return}
+    const r=library().find(x=>x.title===t.dataset.pick);if(!r)return;
+    saveDish(k,s,{title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.lib||r.id||undefined,locked:true});return}
+  if(t.dataset.act==="toAri"){const r=LIB().find(x=>x.id===t.dataset.id);if(r)toAri(r);return}
+  if(t.dataset.act==="saveAri"){if(!ariDraft)return;t.disabled=true;
+    try{const d=await post("recipes",{recipes:[ariDraft.x]});S().recipes=d.recipes;const r=LIB().find(x=>x.id===ariDraft.from);
+      if(r){const d2=await post("adult-lib",{recipes:[{...r,ari:ariDraft.x.id}]});S().adults=d2.adults}
+      closeSheet();render();status("Added to Ariadne's recipes",true);ariDraft=null}
+    catch(err){t.disabled=false;status("Not saved. Check the connection.",true,true)}return}
   const act=t.dataset.act;
   if(act==="addText"){addText();return}
   if(act==="addPhoto"){$("#photoIn").click();return}
@@ -931,7 +1018,8 @@ document.addEventListener("click",async e=>{
     if(t.dataset.sure!=="1"){t.dataset.sure="1";t.classList.add("sure");setTimeout(()=>{if(t.isConnected){t.dataset.sure="";t.classList.remove("sure")}},3000);status("Tap × again to remove",true);return}
     try{const d=await post("grocery-del",{w,id:t.dataset.gdel});S().groceries=d.groceries;render()}catch(err){status("Not removed. Check the connection.",true,true)}return}
 });
-document.addEventListener("input",e=>{if(e.target.id!=="recQ")return;ui.recQ=e.target.value;const tmp=document.createElement("div");tmp.innerHTML=viewRecipes();$("#recList").innerHTML=tmp.querySelector("#recList").innerHTML});
+document.addEventListener("input",e=>{if(e.target.id==="dishQ"){const box=$("#dishPick");$("#dishRes").innerHTML=dishResults(box.dataset.slot,e.target.value);return}
+  if(e.target.id!=="recQ")return;ui.recQ=e.target.value;const tmp=document.createElement("div");tmp.innerHTML=viewRecipes();$("#recList").innerHTML=tmp.querySelector("#recList").innerHTML});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.matches?.(".wday")&&d.open)ui.openDay=d.dataset.day},true);
 document.addEventListener("change",e=>{
   if(e.target.id==="photoIn"){readPhoto(e.target.files[0]);return}
@@ -947,6 +1035,12 @@ document.addEventListener("submit",async e=>{
     const value=m==="out"?{mode:"out"}:m==="own"?(text?{mode:"own",text}:null):null;
     if(m==="own"&&!text){f.text.focus();return}
     try{let d;for(const who of f.dataset.who==="both"?["lia","amir"]:[f.dataset.who])d=await post("adult-set",{k:f.dataset.k,slot:f.dataset.slot,who,value,by:me||""});S().adults=d.adults;closeSheet();render();status("Saved",true)}
+    catch(err){status("Not saved. Check the connection.",true,true)}return}
+  if(f.id==="oneForm"){const k=f.dataset.k,slot=f.dataset.slot;let res;
+    try{for(const [w] of PEOPLE){const m=f["p_"+w].value,txt=f["t_"+w].value.trim(),old=S().adults?.[k]?.[slot]?.[w]?.mode||"";
+        if(m==="own"&&!txt){f["t_"+w].focus();return}
+        const value=m==="out"?{mode:"out"}:m==="own"?{mode:"own",text:txt}:null;if((value?.mode||"")!==old||m==="own")res=await post("adult-set",{k,slot,who:w,value,by:me||""})}
+      if(res)S().adults=res.adults;closeSheet();render();status("Saved",true)}
     catch(err){status("Not saved. Check the connection.",true,true)}return}
   if(f.id==="dishForm"){const k=f.dataset.k,slot=f.dataset.slot,d=f.d.value;let plan;
     if(d==="ai")plan=null;
