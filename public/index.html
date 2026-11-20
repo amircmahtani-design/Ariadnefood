@@ -253,6 +253,7 @@ select.bare:focus{box-shadow:none}
 .wfields .side,.wfields .cust{min-height:40px;padding:8px 12px;font-size:16px;border-radius:12px;background:var(--bg);border-color:transparent}
 .wfields .side::placeholder{color:var(--ink-3)}
 .gacts{display:grid;gap:10px}
+.grownup{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;padding:10px 14px;border-radius:14px;background:#EAF1E4;color:#33452A;font-size:15px;line-height:1.4}.grownup svg{width:18px;height:18px;flex:none;margin-top:2px}
 .fsel select{width:100%}
 .wfields .wl{display:flex}.wl .gmini{display:inline-block;margin-left:auto}
 .gmini select{min-height:34px;padding:2px 28px 2px 12px;border-radius:999px;border:1px solid var(--line);background-color:var(--bg);background-position:right 11px center;font-size:13.5px;font-weight:600;color:var(--ink-2);text-transform:none;letter-spacing:0;box-shadow:none}.gform{display:grid;gap:12px}
@@ -895,7 +896,7 @@ async function load(){
     S=await r.json();S.settings=S.settings||{};
     for(const [k,p] of Object.entries(pending))S.days[k]=merge(S.days[k]||{},clone(p));
     const first=!loaded;loaded=true;if(EMBED){window.ariReady=Date.now();try{parent.postMessage("ari-ready",location.origin)}catch(e){}return}if(PMODE){renderPrintPage();return}setWho();render();
-    const sw=PM.get("shop");if(PM.get("for"))ui.shopFor=PM.get("for");if(first&&sw&&/^\d{4}-\d{2}-\d{2}$/.test(sw)){history.replaceState(null,"",location.pathname);openShopList(sw)}
+    const sw=PM.get("shop");if(PM.get("for")&&sw)(ui.shopPick??={})[sw]=PM.get("for");if(first&&sw&&/^\d{4}-\d{2}-\d{2}$/.test(sw)){history.replaceState(null,"",location.pathname);openShopList(sw)}
     if(!me)askWho();
   }catch(e){if(!loaded)$("#view").innerHTML='<div class="errbox">Couldn\'t load. Check the connection and try again.</div>'}
 }
@@ -938,7 +939,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="13.8";
+const APP_VERSION="13.9";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1476,15 +1477,20 @@ function madeToday(id,k){const r=recipeById(id);if(!r||(+r.serves||1)<=1)return 
   if(["lunch","dinner"].some(s=>(S.days[k]?.meals||{})[s]?.recipeId===id))return parse(k).getDay()!==0&&!["lunch","dinner"].some(s=>prev[s]?.recipeId===id);
   return [mondayOf(k),addDays(mondayOf(k),7)].some(w=>weekBakes(w).some(x=>x.r.id===id&&x.mk===k))}
 const scaleTxt=f=>f===.5?"½":f===1?"1":`×${f}`;
+// How much to cook on a day: Ariadne's batch plus Lia & Amir's share when they eat it too
+function cookScale(id){const day=(ui.rday&&madeToday(id,ui.rday))?ui.rday:nextMakeDay(id);
+  const base=day?scaleFor(id,day):planScale(id),ex=day?(adultExtra(day).dishes.find(x=>x.r.id===id)?.f||0):0;return {f:base+ex,base,ex,day}}
 function planScale(id){for(const w of [planWeek(),mondayOf(todayKey())]){const x=weekBakes(w).find(x=>x.r.id===id);if(x)return /half/i.test(x.make)?.5:(+((x.make.match(/(\d+) times/)||[])[1])||1)}return 1}
 ui.rscale=ui.rscale||{};
-function scaleBar(r){const f=ui.rscale[r.id]??planScale(r.id),sv=+r.serves||0;
-  const day=(ui.rday&&madeToday(r.id,ui.rday))?ui.rday:nextMakeDay(r.id),pp=day&&portionPlan(r.id,day,f);
+function scaleBar(r){const cs=cookScale(r.id),f=ui.rscale[r.id]??cs.f,sv=+r.serves||0;
+  const day=cs.day,pp=day&&portionPlan(r.id,day,cs.ex&&f===cs.f?cs.base:f);
   const where=e=>e.d===pp.k?"eat fresh":pp.bake?(e.d>addDays(pp.k,3)?"freeze, thaw the night before":"keep in an airtight box"):"keep in the fridge";
   const plan=pp?`<div class="pplan${pp.short?" short":""}"><p><b>${esc(DOW[parse(day).getDay()])} ${dmy(day).slice(0,5)}: ${f===.5?"½ recipe":f===1?"full recipe":`recipe ×${f}`} makes ${halfTxt(pp.makes)} of her portions</b></p><ul>${pp.ent.map(e=>`<li><span>${esc(e.t)}</span><em>${e.q}, ${where(e)}</em></li>`).join("")}${pp.spare>0?`<li class="sp">${I.snow}<span>${halfTxt(pp.spare)} spare ${pp.spare>1?"portions":"portion"}</span><em>${pp.fr?"freeze straight away, with a sticker":"fridge, eat within 2 days"}</em></li>`:""}</ul>${pp.short?`<p class="warn">Not enough for every meal: choose ${f<1?"Full":"Double"}.</p>`:""}</div>`:"";
-  return `<div class="rscale" role="group" aria-label="How much to make">${[[.5,"½ recipe"],[1,"Full"],[2,"Double"]].map(([v,l])=>`<button data-sact="rscale" data-id="${esc(r.id)}" data-f="${v}" aria-pressed="${f===v}">${l}${sv?`<small>${fmtQ(sv*v)} ${sv*v===1?"portion":"portions"}</small>`:""}</button>`).join("")}</div>${plan}`}
+  const opts=[[.5,"½ recipe"],[1,"Full"],[2,"Double"]];if(cs.ex&&!opts.some(o=>o[0]===cs.f))opts.push([cs.f,`×${fmtQ(cs.f)}`]);
+  const grown=cs.ex?`<p class="grownup">${I.check}<span><b>Includes Lia & Amir:</b> ${fmtQ(cs.base)==="1"?"1 recipe":fmtQ(cs.base)+" recipe"} for Ariadne + ${fmtQ(cs.ex)} more for them = ${fmtQ(cs.f)} times the recipe. The amounts below are already scaled.</span></p>`:"";
+  return grown+`<div class="rscale" role="group" aria-label="How much to make">${opts.map(([v,l])=>`<button data-sact="rscale" data-id="${esc(r.id)}" data-f="${v}" aria-pressed="${f===v}">${l}${sv?`<small>${fmtQ(sv*v)} ${sv*v===1?"portion":"portions"}</small>`:""}</button>`).join("")}</div>${plan}`}
 function recipeBody(r,withNutri=true){
-  const f=ui.rscale?.[r.id]??planScale(r.id);
+  const f=ui.rscale?.[r.id]??cookScale(r.id).f;
   return `${r.sides?.length?`<p class="serve-with"><b>Serve with</b> ${r.sides.map(t=>{const sr=sideRecipe(t);return sr?`<button class="swlink" data-sact="openr" data-id="${esc(sr.id)}">${esc(t)}</button>`:esc(t)}).join(", ")}</p>`:""}${safeHtml(null,r)}${r.freezes?`<p class="freeze-note">${I.snow}<span>Freeze spares with a sticker: name and date made. Use within 3 months.</span></p>`:""}${r.ingredients?.length?`<h4>Ingredients</h4>${(+r.serves||0)>1?scaleBar(r):""}<ul class="ing">${r.ingredients.map(x=>`<li>${esc(scaleLine(x,(+r.serves||0)>1?f:1))}</li>`).join("")}</ul>`:""}
   ${(()=>{const c=COOKIE_OF[r.id]&&recipeById(COOKIE_OF[r.id]);return c?`<button class="also-r" data-sact="openr" data-id="${esc(c.id)}"><span>The cookie is made from its own recipe</span><b>See the ${esc(c.title)} recipe →</b></button>`:""})()}
   ${r.method?.length?`<h4>Method</h4><ol class="method">${r.method.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:""}
@@ -1805,8 +1811,9 @@ function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
     return {mode:"same",text:adultTitle(r.title),side,dish:r.title}};
   return {r,side,al,own,kid,locked:!!pl?.locked,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
 // What Catherine cooks on day k on top of Ariadne's batch: extra recipe for the dishes they share, and chicken for Amir's swaps
-const ADULT_COOK=false; // Catherine doesn't cook for Lia & Amir yet: Amir will say when
-function adultExtra(k){const dow=parse(k).getDay();if(dow===0||!ADULT_COOK)return {dishes:[],swaps:0,own:[]};const dishes=[],seen=new Set();
+const ADULT_COOK=true; // Catherine cooks shared dishes for Lia & Amir too...
+const ADULT_COOK_FROM="2026-11-28"; // ...from this week on: 21-27 Nov was already shopped for Ariadne only, so it stays as it is
+function adultExtra(k){const dow=parse(k).getDay();if(dow===0||!ADULT_COOK||k<ADULT_COOK_FROM)return {dishes:[],swaps:0,own:[]};const dishes=[],seen=new Set();
   ["lunch","dinner"].forEach(sl=>{const id=S.days[k]?.meals?.[sl]?.recipeId;if(!id||seen.has(id)||!madeToday(id,k))return;seen.add(id);const r=recipeById(id);let n=0;
     for(let i=0;i<3;i++){const d=addDays(k,i),ms=S.days[d]?.meals||{};if(i>0&&!["lunch","dinner"].some(s=>ms[s]?.recipeId===id))break;
       ["lunch","dinner"].forEach(s=>{if(ms[s]?.recipeId!==id)return;const a=adultMeal(d,s);if(a.lia.mode==="same")n++;if(a.amir.mode==="same")n++})}
@@ -1908,8 +1915,10 @@ function lineQty(line){
 const fmtG=g=>g>=1000?`${(Math.ceil(g/100)/10).toString().replace(/\.0$/,"")} kg`:g>=100?`${Math.ceil(g/50)*50} g`:`${Math.max(10,Math.ceil(g/10)*10)} g`;
 // Plain names on the shopping list, so anyone can find them in the shop
 const SHOP_NAME={coconut:"Dried coconut, grated (unsweetened)",passata:"Tomato passata (sieved tomatoes, jar or carton)",tahini:"Tahini (sesame paste)",flax:"Ground linseed (flaxseed)",bulgur:"Bulgur wheat (cracked wheat)",filo:"Filo pastry (thin pastry sheets, fridge)",cod:"White fish fillet (cod or hake)",sr_flour:"Self-raising flour",flour:"Plain white flour",parsley:"Fresh parsley and dill",chia:"Chia seeds",almonds:"Ground almonds",lentils_red:"Red lentils, dried",lentils_brown:"Brown lentils, dried",cheddar:"Mild cheddar cheese",pasta:"Pasta and orzo",tomato_paste:"Tomato paste (purée), small tin or tube",quinoa:"Quinoa",couscous:"Couscous",peanut_butter:"Peanut butter, smooth, no added salt"};
+// Who the list is for: Everyone by default, but weeks before Lia & Amir were cooked for default to Ariadne only
+const shopModeFor=mon=>ui.shopPick?.[mon]||(mon<ADULT_COOK_FROM?"ari":"all");
 function buildShopping(mon,mode){
-  mode=mode||ui.shopFor||"all";const baby=mode!=="us",grown=mode!=="ari";
+  mode=mode||shopModeFor(mon);const baby=mode!=="us",grown=mode!=="ari";
   const map={},other={},uses={},src={};
   const add=(k,from,g,c,tin)=>{const x=(map[k]??={k,uses:{},g:0,c:0,tins:0});x.uses[from]=(x.uses[from]||0)+1;x.g+=g||0;if(tin)x.tins+=c||0;else x.c+=c||0};
   for(let i=0;i<7&&baby;i++){const ms=S.days[addDays(mon,i)]?.meals||{};
@@ -1934,7 +1943,7 @@ function buildShopping(mon,mode){
     ["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);[a.lia,a.amir].forEach(p=>{if(!["same","swap"].includes(p.mode)||!p.side)return;sideParts(p.side).forEach(q=>q.items.forEach(([fk,g])=>add(fk,"Sides (Lia & Amir)",g*ADULT_P_())))})});
     const ing=(lines,from,f)=>(lines||[]).forEach(line=>{if(/homemade|^water|salt|pepper/i.test(line))return;const q=lineQty(line);if(q.length){q.forEach(x=>add(x.k,from,x.g*f,x.c*f,x.tin));return}
       if(/^(olive )?oil|spice|cumin|paprika|oregano|cinnamon|turmeric|^dried|^optional|^a (pinch|squeeze)/i.test(line))return;
-      const key=cap(line.replace(/\(.*?\)/g,"").replace(/^[\d½¼¾⅓.,\/\s-]*(g|kg|ml|l|tsp|tbsp|cups?|pieces?|slices?|handful|bunch|cloves?|tins?|cans?)?\b\s*(of\s+)?/i,"").trim());if(key)other[key]??={n:key,c:0}});
+      const key=cap(line.replace(/\(.*?\)/g,"").replace(/^[\d½¼¾⅓.,\/\s-]*(?:(?:to|or)\s+[\d½¼¾⅓.,\/\s-]+)?(g|kg|ml|l|tsp|tbsp|cups?|pieces?|slices?|handful|bunch|cloves?|tins?|cans?)?\b\s*(of\s+)?/i,"").replace(/,.*$/,"").trim());if(key)other[key]??={n:key,c:0}});
     const bf=adultMeal(k,"breakfast"),nb=(bf.lia.mode==="same")+(bf.amir.mode==="same");
     if(nb)ing(bf.bf.i,"Breakfast (Lia & Amir)",nb/2);
     ["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);if(!a.own)return;const nm=(a.lia.mode==="plan")+(a.amir.mode==="plan");
@@ -1982,11 +1991,11 @@ function poopN(d){const p=d?.poop;if(!p)return null;if(p.n!=null)return +p.n;ret
 function pantryOf(mon){return S.pantry?.[mon]||{have:[]}}
 function checkedWhen(iso){const d=new Date(iso);return `${DOW[d.getDay()].slice(0,3)} ${dmy(key(d)).slice(0,5)} at ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
 function openShopList(mon){
-  mon=mon||ui.week;if(ui.shopFor==="us")ui.shopFor="all";const P0=pantryOf(mon);
+  mon=mon||ui.week;const P0=pantryOf(mon),mode=shopModeFor(mon);
   // The kitchen check always covers everyone's food; once it's done the list can be narrowed to Ariadne only
-  buildShopping(mon,P0.at?ui.shopFor||"all":"all");const secs=window.__shop||[],P=P0,have=new Set(P.have||[]),got=new Set(S.shop?.[mon]||[]);
+  buildShopping(mon,P0.at?mode:"all");const secs=window.__shop||[],P=P0,have=new Set(P.have||[]),got=new Set(S.shop?.[mon]||[]);
   const head=`<div class="sh-h"><div><p class="eyebrow">Shopping list</p><h2 class="display">${esc(shortRange(mon))}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  ${P.at?`<div class="shopfor" role="group" aria-label="Who the list is for">${[["all","Everyone"],["ari","Ariadne only"]].map(([v,l])=>`<button data-sact="shopfor" data-v="${v}" data-w="${mon}" aria-pressed="${(ui.shopFor||"all")===v}">${l}</button>`).join("")}</div>`:""}`;
+  ${P.at?`<div class="shopfor" role="group" aria-label="Who the list is for">${[["all","Everyone"],["ari","Ariadne only"]].map(([v,l])=>`<button data-sact="shopfor" data-v="${v}" data-w="${mon}" aria-pressed="${mode===v}">${l}</button>`).join("")}</div>`:""}`;
   const all=secs.flatMap(sc=>sc.items);
   if(!all.length){openSheet(head+`<p class="shop-prog" style="margin:8px 0 6px">This week isn't planned yet.</p><p class="muted">Plan the week in My Week first. The shopping list then fills in by itself and follows any change to the plan.</p>`);return}
   const nm=x=>`<span class="nm">${esc(x.n)}${x.tip?`<small>${esc(x.f)}</small>`:""}</span>${x.q?`<span class="qt">${esc(x.q)}</span>`:""}`;
@@ -2035,7 +2044,7 @@ async function shopClear(btn){
   const sc=$("#sheetBody").scrollTop;openShopList(w);$("#sheetBody").scrollTop=sc;
 }
 async function sendShop(w){
-  const url=`${location.origin}/?shop=${w}${(ui.shopFor||"all")!=="all"?"&for="+ui.shopFor:""}`;
+  const url=`${location.origin}/?shop=${w}${shopModeFor(w)!=="all"?"&for="+shopModeFor(w):""}`;
   try{if(navigator.share){await navigator.share({title:"Shopping list",text:shopReady(w)?`Shopping list for ${shortRange(w)}, kitchen checked and ready. Tap an item once it's in the bag:`:`Shopping list for ${shortRange(w)}. Kitchen check still needed before shopping:`,url});return}}catch(e){if(e?.name==="AbortError")return}
   try{await navigator.clipboard.writeText(url);status("Link copied",true)}catch(e){status("Couldn't copy",true,true)}
 }
@@ -2205,7 +2214,7 @@ $("#sheet").addEventListener("click",async e=>{
     if(cur&&(cur.recipeId||cur.custom)&&!confirm(`Replace "${mealTitle(cur)}" on ${shortDay(k)}?`))return;setMeal(k,sl,s.dataset.id,null);closeSheet();render();status(`Added to ${shortDay(k)}`,true)}
   else if(act==="openr")openRecipe(s.dataset.id);
   else if(act==="shoptick")shopTick(s);
-  else if(act==="shopfor"){ui.shopFor=s.dataset.v;try{localStorage.setItem("ari-shopfor",ui.shopFor)}catch(e){}openShopList(s.dataset.w)}
+  else if(act==="shopfor"){(ui.shopPick??={})[s.dataset.w]=s.dataset.v;openShopList(s.dataset.w)}
   else if(act==="pantrytick")pantryTick(s);
   else if(act==="pantrydone")pantryDone(s,false);
   else if(act==="pantryundo")pantryDone(s,true);
