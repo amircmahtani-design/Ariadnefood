@@ -73,6 +73,21 @@ async function callAI(system, content, maxTokens) {
   return new Response(upstream.body, { headers: { "content-type": "text/event-stream", "cache-control": "no-store" } });
 }
 
+
+// ---------- Catherine's Day (house schedule at /house/) ----------
+const HOUSE_DEFAULT = {
+  // Activity start times by weekday (1 = Monday). Ariadne is out about 2 hours with Catherine.
+  activities: { 1: { t: "08:30", label: "Activity" }, 2: { t: "14:15", label: "Activity" }, 3: { t: "15:30", label: "Activity" }, 4: { t: "15:00", label: "Activity" }, 5: { t: "14:30", label: "Activity" } },
+  outMins: 120,
+  sheetsDay: 2,        // bedsheets and towels: Tuesday (Monday morning is the 8:30 class)
+  ironing: [],         // weekdays the ironing lady comes; laundry is done the day before
+  night: { name: "", from: "19:00", to: "06:00" },
+  weekly: [],          // repeating extra jobs: { id, dow, text, time }
+};
+const HDATE = /^\d{4}-\d{2}-\d{2}$/;
+const hid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const pruneDates = (o, keep) => { for (const k of Object.keys(o).sort().slice(0, -keep)) delete o[k]; return o; };
+
 const clip = (s, n) => (typeof s === "string" ? s.slice(0, n) : "");
 
 export default async (req) => {
@@ -254,6 +269,15 @@ export default async (req) => {
     return new Response(out, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
   }
 
+  if (req.method === "GET" && route === "house") {
+    const [house, ticks, extras, asks, settings] = await Promise.all([
+      store.get("house", { type: "json" }), store.get("house-ticks", { type: "json" }),
+      store.get("house-extras", { type: "json" }), store.get("house-asks", { type: "json" }), store.get("settings", { type: "json" }),
+    ]);
+    return json({ house: { ...HOUSE_DEFAULT, ...(house || {}) }, ticks: ticks || {}, extras: extras || {}, asks: (asks || []).slice(-60),
+      people: settings?.people || ["Amir", "Catherine", "Lia"], avatars: settings?.avatars || {} });
+  }
+
   if (req.method !== "POST") return json({ error: "Not found" }, 404);
   const raw = await req.text();
   if (raw.length > (route === "ai" ? 5_500_000 : 400_000)) return json({ error: "Too large" }, 413);
@@ -339,6 +363,68 @@ export default async (req) => {
     return json({ ok: true, asks: asks.slice(-60) });
   }
 
+  // Catherine's Day: ticks, one-off jobs, schedule settings, questions.
+  if (route === "house-tick") {
+    const d = String(body.date || ""), id = clip(body.id, 120);
+    if (!HDATE.test(d) || !id) return json({ error: "Bad request" }, 400);
+    const ticks = (await store.get("house-ticks", { type: "json" })) || {};
+    const day = ticks[d] || {};
+    if (body.on) day[id] = { by: clip(body.by, 40), at: new Date().toISOString() }; else delete day[id];
+    ticks[d] = day;
+    await store.setJSON("house-ticks", pruneDates(ticks, 70));
+    return json({ ok: true, ticks });
+  }
+  if (route === "house-extra") {
+    const d = String(body.date || "");
+    if (!HDATE.test(d)) return json({ error: "Bad request" }, 400);
+    const extras = (await store.get("house-extras", { type: "json" })) || {};
+    const list = extras[d] || [];
+    if (body.remove) extras[d] = list.filter((x) => x.id !== body.remove);
+    else {
+      const text = clip(body.text, 200).trim();
+      if (!text) return json({ error: "Type the job first." }, 400);
+      list.push({ id: "x" + hid(), text, time: /^\d{2}:\d{2}$/.test(body.time || "") ? body.time : "", mins: Math.min(Math.max(+body.mins || 30, 5), 240), by: clip(body.by, 40) });
+      extras[d] = list;
+    }
+    if (!extras[d]?.length) delete extras[d];
+    await store.setJSON("house-extras", pruneDates(extras, 70));
+    return json({ ok: true, extras });
+  }
+  if (route === "house-settings") {
+    if (!isObj(body.house)) return json({ error: "Bad request" }, 400);
+    const cur = { ...HOUSE_DEFAULT, ...((await store.get("house", { type: "json" })) || {}) };
+    const h = body.house, out = { ...cur };
+    if (isObj(h.activities)) {
+      out.activities = {};
+      for (const dw of [1, 2, 3, 4, 5, 6]) { const a = h.activities[dw]; if (isObj(a) && /^\d{2}:\d{2}$/.test(a.t || "")) out.activities[dw] = { t: a.t, label: clip(a.label, 40) || "Activity" }; }
+    }
+    if (h.outMins != null) out.outMins = Math.min(Math.max(+h.outMins || 120, 30), 300);
+    if (h.sheetsDay != null) out.sheetsDay = [1, 2, 3, 4, 5, 6].includes(+h.sheetsDay) ? +h.sheetsDay : 2;
+    if (Array.isArray(h.ironing)) out.ironing = [...new Set(h.ironing.map(Number).filter((x) => x >= 0 && x <= 6))];
+    if (isObj(h.night)) out.night = { name: clip(h.night.name, 40), from: /^\d{2}:\d{2}$/.test(h.night.from || "") ? h.night.from : "19:00", to: /^\d{2}:\d{2}$/.test(h.night.to || "") ? h.night.to : "06:00" };
+    if (Array.isArray(h.weekly)) out.weekly = h.weekly.filter(isObj).slice(0, 40).map((w) => ({ id: clip(w.id, 40) || "w" + hid(), dow: Math.min(Math.max(+w.dow || 1, 0), 6), text: clip(w.text, 200), time: /^\d{2}:\d{2}$/.test(w.time || "") ? w.time : "", mins: Math.min(Math.max(+w.mins || 30, 5), 240) })).filter((w) => w.text);
+    await store.setJSON("house", out);
+    return json({ ok: true, house: out });
+  }
+  if (route === "house-ask-save") {
+    const it = body.item;
+    if (!isObj(it) || !String(it.q || "").trim()) return json({ error: "Bad request" }, 400);
+    const asks = (await store.get("house-asks", { type: "json" })) || [];
+    asks.push({ id: "h" + hid(), q: clip(it.q, 1500), who: clip(it.who, 40), at: new Date().toISOString(), answer: clip(it.answer, 4000),
+      escalate: ["yes", "urgent"].includes(it.escalate) ? it.escalate : "no", toAmir: clip(it.toAmir, 600) });
+    await store.setJSON("house-asks", asks.slice(-300));
+    return json({ ok: true, asks: asks.slice(-60) });
+  }
+  if (route === "house-ask-reply") {
+    const asks = (await store.get("house-asks", { type: "json" })) || [];
+    const it = asks.find((x) => x.id === body.id);
+    if (!it) return json({ error: "Not found" }, 404);
+    if (body.reply) { it.reply = clip(body.reply, 2000); it.replyBy = clip(body.by, 40); it.replyAt = new Date().toISOString(); }
+    if (body.done) it.done = true;
+    await store.setJSON("house-asks", asks);
+    return json({ ok: true, asks: asks.slice(-60) });
+  }
+
   if (route === "insight") {
     if (!isObj(body.insight)) return json({ error: "Bad request" }, 400);
     await store.setJSON("insight", body.insight);
@@ -377,6 +463,24 @@ export default async (req) => {
     const analysis = clip(body.analysis, 12000);
     const focus = clip(body.focus, 400);
     const today = DATE_RE.test(body.today || "") ? body.today : new Date().toISOString().slice(0, 10);
+
+    if (body.task === "house-ask") {
+      const q = clip(body.q, 1500).trim();
+      if (!q) return json({ error: "Type a question first." }, 400);
+      const asks = (await store.get("house-asks", { type: "json" })) || [];
+      const rules = asks.filter((a) => a.reply).slice(-40).map((a) => `- Q: ${a.q}\n  Amir/Lia: ${a.reply}`).join("\n") || "- none yet";
+      const recent = asks.slice(-8).map((a) => `- ${a.who || "?"} asked: ${a.q}\n  helper said: ${a.answer}`).join("\n") || "- none";
+      const system = `You are the helper inside "Catherine's Day", the household schedule app for Amir and Lia's home in Dubai. Catherine is the live-in nanny for their daughter Ariadne (16 months, born 18/07/2025). You answer Catherine's questions about what to do and when, so that Amir and Lia are only asked when it is truly needed.
+How the house works: every day except Sunday (Catherine's day off) Catherine takes Ariadne to the park from 6:00 to about 8:00 and gives her breakfast at 8:30 (earlier when there is an early class). After breakfast Lia takes over with Ariadne so Catherine can do the house jobs. Catherine takes Ariadne to her activities (about 2 hours out). Catherine cooks Ariadne's food from the plan in Ariadne's Table (the meal app on the same site), cleans the cooking area and does the dishes. Beds are made every morning. Bedsheets and towels are changed once a week. Laundry is done the day before the ironing lady comes. A separate cleaning lady does the cleaning, so cleaning is NOT Catherine's job. Catherine has a 1 hour lunch break. Someone takes over at 19:00 and handles the night until 6:00.
+The schedule you are given is the source of truth for times and jobs. Use it to answer "what next", "when do I", and "I'm running late" questions: suggest a sensible re-order of the remaining jobs (the activity times, Ariadne's meals and the lunch break stay fixed). Be decisive: ONE clear answer and the next step. For food and recipe questions, answer briefly and tell her the details are in Ariadne's Table (its Ask tab knows the food plan).
+Escalate to Amir only when: it needs the parents' authority (spending money, changing a house rule, guests, anything about Ariadne's health), it depends on something only the parents know, or you are genuinely unsure. For any sign of illness, injury, choking or anything urgent: escalate as "urgent", tell her to call Amir or Lia right away, and in an emergency to call 998 (UAE ambulance).
+Earlier answers from Amir or Lia (follow them; they are house rules):
+${rules}
+Write simple, warm, plain English (Catherine's first language may not be English). Times in 24-hour or am/pm as the schedule shows; dates day first.
+Reply with ONLY JSON, no markdown: {"answer":"2-6 short sentences, written to the person asking","escalate":"no" or "yes" or "urgent","toAmir":"if escalating: the question for Amir in one sentence, otherwise empty"}`;
+      const content = `Now: ${clip(body.now, 40)}. Asked by: ${clip(body.who, 40) || "someone"}.\n\nSchedule:\n${clip(body.schedule, 12000)}\n\nRecent questions:\n${recent}\n\nQuestion: ${q}`;
+      return callAI(system, content, 900);
+    }
 
     if (body.task === "ask") {
       const q = clip(body.q, 1500).trim();

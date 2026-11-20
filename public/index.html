@@ -865,7 +865,7 @@ async function load(){
     const r=await fetch("/api/state",{cache:"no-store"});if(!r.ok)throw 0;
     S=await r.json();S.settings=S.settings||{};
     for(const [k,p] of Object.entries(pending))S.days[k]=merge(S.days[k]||{},clone(p));
-    const first=!loaded;loaded=true;if(PMODE){renderPrintPage();return}setWho();render();
+    const first=!loaded;loaded=true;if(EMBED){window.ariReady=Date.now();try{parent.postMessage("ari-ready",location.origin)}catch(e){}return}if(PMODE){renderPrintPage();return}setWho();render();
     const sw=PM.get("shop");if(first&&sw&&/^\d{4}-\d{2}-\d{2}$/.test(sw)){history.replaceState(null,"",location.pathname);openShopList(sw)}
     if(!me)askWho();
   }catch(e){if(!loaded)$("#view").innerHTML='<div class="errbox">Couldn\'t load. Check the connection and try again.</div>'}
@@ -909,7 +909,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="10.2";
+const APP_VERSION="10.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1628,6 +1628,19 @@ async function shrink(file){
 /* ---------- printing (opens its own page: ?print=week|shop|recipes) ---------- */
 const PM=new URLSearchParams(location.search);const PMODE=PM.get("print");
 if(PMODE)document.body.classList.add("pmode");
+/* Catherine's Day (/house/) loads this page hidden with ?embed=1 and reads each day's cooking from window.ariDay. */
+const EMBED=PM.has("embed");
+function recipeMins(r){const t=String(r?.time||"").toLowerCase(),h=t.match(/(\d+(?:\.\d+)?)\s*h/),m=t.match(/(\d+)\s*min/);const v=(h?+h[1]*60:0)+(m?+m[1]:0);const n=t.match(/^\s*(\d+)\s*$/);return v||(n?+n[1]:0)}
+window.ariDay=k=>{
+  const c=cookPlan(k),ms=S.days[k]?.meals||{},dow=parse(k).getDay(),sun=S.days[addDays(k,1)]?.meals||{},sunIds=new Set(["lunch","dinner"].map(s=>sun[s]?.recipeId).filter(Boolean));
+  const cook=c.cook.map(t=>{const m=t.match(/ \((breakfast|for Sunday)\)$/),base=m?t.slice(0,-m[0].length):t,r=S.recipes.find(r=>base===r.title);
+    return {id:r?.id||base,title:base,mins:recipeMins(r),note:m?.[1]==="breakfast"?"breakfast":(m?.[1]==="for Sunday"||(dow===6&&r&&sunIds.has(r.id)))?"also for Sunday":""}});
+  (c.sides||[]).forEach(r=>cook.push({id:r.id,title:"Side: "+r.title,mins:Math.min(recipeMins(r)||20,40),note:""}));
+  const bakes=[mondayOf(k),addDays(mondayOf(k),7)].flatMap(w=>weekBakes(w)).filter((x,i,a)=>x.mk===k&&a.findIndex(y=>y.r.id===x.r.id)===i)
+    .map(x=>({id:x.r.id,title:x.r.title,mins:recipeMins(x.r),part:x.part,make:x.make}));
+  const meals={};for(const [sl] of SLOTS)meals[sl]=mealTitle(ms[sl])||"";
+  return {off:!!c.off,left:!!c.left,cook,bakes,meals};
+};
 function openPrintPage(kind,ids){
   const u=`/?print=${kind}&w=${ui.week}${ids?.length?"&ids="+encodeURIComponent(ids.join(",")):""}`;
   closeSheet();const w=window.open(u,"_blank");if(!w)location.href=u;
