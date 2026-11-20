@@ -399,7 +399,17 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .pit .toggle{margin:0;flex:none;width:44px;justify-content:center}
 .pit input[name^=t]{flex:1}
 .ver{margin-top:var(--s6)}
-.addrec{margin:0 0 18px}
+.addrec{margin:0 0 14px}
+.rsearch{position:relative;display:block;margin:0 0 12px}
+.rsearch svg{position:absolute;left:14px;top:50%;width:20px;height:20px;transform:translateY(-50%);color:var(--ink-3)}
+.rsearch input{padding-left:44px;border-radius:999px;-webkit-appearance:none;appearance:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.rcats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 6px}
+.rcats button{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;min-height:44px;padding:0 14px;font-size:15px;font-weight:600;color:var(--ink-2)}
+.rcats button span{font-weight:500;color:var(--ink-3);margin-left:2px}
+.rcats button[aria-pressed="true"]{background:var(--sage);border-color:var(--sage);color:#fff}
+.rcats button[aria-pressed="true"] span{color:rgb(255 255 255 / .8)}
+.rl-n{font-weight:500;color:var(--ink-3);letter-spacing:0}
 .orline{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:14px}.orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--line-2)}
 .rl-h{margin:18px 4px 8px}
 .rlist{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-1);padding:2px 18px}
@@ -477,7 +487,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.4";
+const APP_VERSION="1.5";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -627,13 +637,35 @@ function viewShop(){
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
 
+// Recipe categories: worked out from the dish (or set by hand when editing), so a long list stays easy to browse
+const CATS=["Poultry","Meat","Fish & seafood","Ladera","Pasta & noodles","Soups","Vegetarian","Sides & salads","Breakfast","Basics & sauces"];
+function catOf(r){if(r.cat&&CATS.includes(r.cat))return r.cat;const m=r.meals||[],t=(r.title||"").toLowerCase(),all=(t+" "+(r.ing||[]).join(" ")).toLowerCase();
+  if(m.includes("basic")&&!m.some(x=>["lunch","dinner","breakfast"].includes(x)))return "Basics & sauces";
+  if(m.includes("breakfast")&&!m.some(x=>["lunch","dinner"].includes(x)))return "Breakfast";
+  if(/soup|σούπα|sopa/.test(t))return "Soups";
+  if(/arakas|imam|briam|fasolakia|gemista|ladera|ladero|in tomato sauce|giouvetsi|okra|bamies/.test(t))return "Ladera";
+  if(/\b(salmon|cod|hake|sardines?|tuna|fish|sea ?bass|bream|hamour|prawns?|shrimp|squid|calamari|mussels?|seafood)\b/.test(t))return "Fish & seafood";
+  if(/chicken|turkey|duck/.test(t))return "Poultry";
+  if(/beef|pork|lamb|veal|steak|meatball|keftedes|mince|bolognese|prosciutto/.test(t))return "Meat";
+  if(/pasta|noodle|spaghetti|penne|orzo|lasagn/.test(t))return "Pasta & noodles";
+  if(m.includes("side"))return "Sides & salads";
+  if(/\b(chicken|turkey)\b/.test(all))return "Poultry";
+  if(/\b(beef|pork|lamb|veal)\b/.test(all))return "Meat";
+  return "Vegetarian"}
+function recRow(r){return `<button class="rrow" data-lib="${esc(r.id)}"><span class="px"><b>${esc(r.title)}</b><small>${esc([r.time,r.serves].filter(Boolean).join(" · "))}</small>${r.amir?`<i class="pchip warn">Amir's version: ${esc(r.amir.title)}</i>`:""}</span><span class="chev">${I.right}</span></button>`}
 function viewRecipes(){
-  const lib=LIB().slice().sort((a,b)=>a.title.localeCompare(b.title)),has=(r,m)=>(r.meals||[]).includes(m);
-  const grp=[["Breakfast",lib.filter(r=>has(r,"breakfast"))],["Lunch & dinner",lib.filter(r=>has(r,"lunch")||has(r,"dinner"))],["Sides & salads",lib.filter(r=>has(r,"side"))],["Basics & sauces",lib.filter(r=>has(r,"basic"))]];
+  const lib=LIB().slice().sort((a,b)=>a.title.localeCompare(b.title)),q=(ui.recQ||"").trim().toLowerCase(),cat=ui.recCat||"";
+  const counts={};lib.forEach(r=>{const c=catOf(r);counts[c]=(counts[c]||0)+1});
+  const hit=r=>(!cat||catOf(r)===cat)&&(!q||(r.title+" "+(r.ing||[]).join(" ")+" "+(r.amir?.title||"")).toLowerCase().includes(q));
+  const shown=lib.filter(hit);
+  const list=!shown.length?`<p class="empty">${lib.length?"Nothing matches. Try another word.":"No dishes yet. Add the ones you love."}</p>`
+    :q||cat?`<div class="rlist">${shown.map(recRow).join("")}</div>`
+    :CATS.filter(c=>counts[c]).map(c=>`<h3 class="wk-sl rl-h">${c} <span class="rl-n">${counts[c]}</span></h3><div class="rlist">${shown.filter(r=>catOf(r)===c).map(recRow).join("")}</div>`).join("");
   return `<div class="pagehead"><div class="ph-t"><p class="eyebrow">${lib.length} ${lib.length===1?"dish":"dishes"}</p><h1 class="display">Our recipes</h1><p>AI fills empty meals from these first</p></div></div>
   <div class="house-acts addrec"><button class="btn sm" data-act="addRecipe">${I.plus}Add a dish</button><button class="btn ghost sm" data-act="recPhoto">${I.camera}From photos</button></div>
-  ${lib.length?grp.filter(([,l])=>l.length).map(([h,l])=>`<h3 class="wk-sl rl-h">${h}</h3><div class="rlist">${l.map(r=>`<button class="rrow" data-lib="${esc(r.id)}"><span class="px"><b>${esc(r.title)}</b><small>${esc([r.time,r.serves].filter(Boolean).join(" · "))}</small>${r.amir?`<i class="pchip warn">Amir's version: ${esc(r.amir.title)}</i>`:""}</span><span class="chev">${I.right}</span></button>`).join("")}</div>`).join("")
-    :`<p class="empty">No dishes yet. Add the ones you love and AI writes the recipe.</p>`}
+  <label class="rsearch"><span class="sr">Search recipes</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="recQ" placeholder="Search a dish or an ingredient" value="${esc(ui.recQ||"")}" autocomplete="off"></label>
+  <div class="rcats" role="group" aria-label="Recipe groups"><button data-rcat="" aria-pressed="${!cat}">All</button>${CATS.filter(c=>counts[c]).map(c=>`<button data-rcat="${esc(c)}" aria-pressed="${cat===c}">${c} <span>${counts[c]}</span></button>`).join("")}</div>
+  <div id="recList">${list}</div>
   <p class="ver">Version ${APP_VERSION}</p>`;
 }
 function addRecipe(){
@@ -674,7 +706,8 @@ function editRec(r){
   openSheet(`<div class="sh-h"><div><p class="eyebrow">Edit recipe</p><h2 class="display">${esc(r.title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <form id="recEdit" data-id="${esc(r.id)}" class="stack"><label><span class="lbl">Name</span><input name="title" maxlength="120" value="${esc(r.title)}" required></label>
   <div><span class="lbl">Good for</span><div class="checks">${[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["side","Side"],["basic","Basic / sauce"]].map(([m,l])=>`<label><input type="checkbox" name="meals" value="${m}"${(r.meals||[]).includes(m)?" checked":""}><span>${l}</span></label>`).join("")}</div></div>
-  <label><span class="lbl">Takes about</span><input name="time" maxlength="30" value="${esc(r.time||"")}"></label>
+  <div class="grid2"><label><span class="lbl">Group</span><select name="cat">${CATS.map(c=>`<option${catOf(r)===c?" selected":""}>${c}</option>`).join("")}</select></label>
+  <label><span class="lbl">Takes about</span><input name="time" maxlength="30" value="${esc(r.time||"")}"></label></div>
   <label><span class="lbl">Ingredients for two, one per line</span>${ta("ing",r.ing,7)}</label>
   <label><span class="lbl">Method, one step per line</span>${ta("method",r.method,6)}</label>
   <button class="btn wide">Save</button></form>`);
@@ -856,6 +889,7 @@ document.addEventListener("click",async e=>{
   if(t.dataset.wk){ui.week=addDays(ui.week,+t.dataset.wk);render();return}
   if(t.dataset.sw){ui.shopW=addDays(ui.shopW,+t.dataset.sw);render();return}
   if(t.dataset.for){ui.shopFor=t.dataset.for;ls.set("us-shopfor",ui.shopFor);render();return}
+  if(t.hasAttribute("data-rcat")){ui.recCat=t.dataset.rcat;render();return}
   if(t.dataset.lib){const r=LIB().find(x=>x.id===t.dataset.lib);if(r)libSheet(r);return}
   if(t.dataset.act==="addRecipe"){addRecipe();return}
   if(t.dataset.act==="recPhoto"){$("#recPhotoIn").click();return}
@@ -881,6 +915,7 @@ document.addEventListener("click",async e=>{
     if(t.dataset.sure!=="1"){t.dataset.sure="1";t.classList.add("sure");setTimeout(()=>{if(t.isConnected){t.dataset.sure="";t.classList.remove("sure")}},3000);status("Tap × again to remove",true);return}
     try{const d=await post("grocery-del",{w,id:t.dataset.gdel});S().groceries=d.groceries;render()}catch(err){status("Not removed. Check the connection.",true,true)}return}
 });
+document.addEventListener("input",e=>{if(e.target.id!=="recQ")return;ui.recQ=e.target.value;const tmp=document.createElement("div");tmp.innerHTML=viewRecipes();$("#recList").innerHTML=tmp.querySelector("#recList").innerHTML});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.matches?.(".wday")&&d.open)ui.openDay=d.dataset.day},true);
 document.addEventListener("change",e=>{
   if(e.target.id==="photoIn"){readPhoto(e.target.files[0]);return}
@@ -913,7 +948,7 @@ document.addEventListener("submit",async e=>{
       draftRec={title:r.title||name,meals:r.meals,time:r.time,ing:r.ing||[],method:r.method||[],tip:r.tip||"",amir:r.amir&&r.amir.title?r.amir:null};libSheet(draftRec,true)}
     catch(err){btn.disabled=false;btn.innerHTML=`${I.spark}Write the recipe`;status(err.message||"Couldn't write it. Try again.",true,true)}finally{busy=false}return}
   if(f.id==="recEdit"){const lines=v=>v.split("\n").map(x=>x.trim()).filter(Boolean),old=LIB().find(x=>x.id===f.dataset.id)||{};
-    const r={...old,id:f.dataset.id,title:f.title.value.trim(),meals:[...f.querySelectorAll("[name=meals]:checked")].map(x=>x.value),time:f.time.value.trim(),ing:lines(f.ing.value),method:lines(f.method.value)};
+    const r={...old,id:f.dataset.id,title:f.title.value.trim(),meals:[...f.querySelectorAll("[name=meals]:checked")].map(x=>x.value),time:f.time.value.trim(),cat:f.cat.value,ing:lines(f.ing.value),method:lines(f.method.value)};
     try{const d=await post("adult-lib",{recipes:[r]});S().adults=d.adults;libSheet(LIB().find(x=>x.id===r.id)||r);render();status("Saved",true)}catch(err){status("Not saved. Check the connection.",true,true)}return}
   if(f.id==="planForm"){aiPlan(f.focus.value.trim());return}
   if(f.id==="prefForm"){const me2=f.querySelector("[name=me]:checked")?.value;if(me2){me=me2;ls.set("ari-me",me);setWho()}

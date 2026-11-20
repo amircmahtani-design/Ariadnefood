@@ -355,7 +355,7 @@ export default async (req) => {
         if (!isObj(r) || !r.title) continue;
         const id = clip(r.id, 60) || clip(r.title, 60).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
         const meals = (Array.isArray(r.meals) ? r.meals : ["lunch", "dinner"]).filter((m) => ["breakfast", "lunch", "dinner", "side", "basic"].includes(m));
-        const rec = { id, ...dish(r), meals: meals.length ? meals : ["lunch", "dinner"], time: clip(r.time, 30), serves: clip(r.serves, 40), tip: clip(r.tip, 300), amir: dish(r.amir), at: new Date().toISOString() };
+        const rec = { id, ...dish(r), meals: meals.length ? meals : ["lunch", "dinner"], time: clip(r.time, 30), serves: clip(r.serves, 40), cat: clip(r.cat, 30), tip: clip(r.tip, 300), amir: dish(r.amir), at: new Date().toISOString() };
         const i = lib.findIndex((x) => x.id === id); if (i >= 0) lib[i] = rec; else lib.push(rec);
       }
     } else { const i = lib.findIndex((x) => x.id === body.id); if (i >= 0) lib.splice(i, 1); }
