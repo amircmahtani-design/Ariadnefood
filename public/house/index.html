@@ -308,6 +308,13 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 .toggle .box svg{width:18px;height:18px}
 .toggle input:checked+.box{background:var(--sage);border-color:var(--sage);color:#fff}
 .toggle input:focus-visible+.box{outline:2px solid var(--sage);outline-offset:2px}
+
+.setgrp{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-1);padding:4px 16px 16px;margin:0 0 14px}
+.setgrp .grph{font-family:var(--serif);font-variation-settings:"SOFT" 100;font-weight:560;font-size:20px;letter-spacing:-.01em;text-transform:none;color:var(--ink);margin:14px 0 6px}
+.actrow{display:grid!important;grid-template-columns:38px minmax(0,1.55fr) minmax(0,1fr);gap:8px;align-items:center;margin-bottom:8px}
+.actrow .tpick{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:4px}.actrow select{padding-left:10px;padding-right:24px;background-position:right 8px center}
+.actrow input{min-width:0}
+.routine h3{font-size:12.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin:12px 0 2px}
 </style>
 </head>
 <body>
@@ -339,7 +346,7 @@ input[type=time]{box-sizing:border-box;min-width:0;max-width:100%;-webkit-appear
 
 <script>
 "use strict";
-const APP_VERSION="1.3";
+const APP_VERSION="1.4";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -542,9 +549,9 @@ function viewWeek(){
     <button class="iconbtn" data-act="wnext" aria-label="Next week">${I.right}</button></header>`;
   const acts=[6,1,2,3,4,5].filter(i=>h0.activities?.[i]?.t);
   h+=`<button class="btn wide addchore" data-act="addchore">${I.plus}Add a chore</button>`;
-  h+=`<section class="routine"><h2>Weekly routine</h2><dl>${acts.map(i=>`<div><dt>${DOW[i]}</dt><dd>${esc(h0.activities[i].label&&h0.activities[i].label!=="Activity"?h0.activities[i].label:"Activity")} ${fmt(hm(h0.activities[i].t))}</dd></div>`).join("")}
-    <div><dt>Sheets &amp; towels</dt><dd>${DOW[+h0.sheetsDay||2]}</dd></div>
-    <div><dt>Laundry</dt><dd>${(h0.ironing||[]).length?(h0.ironing).map(i=>DOW[+i===1?6:+i-1]).join(", "):isParent()?`<button class="link" data-act="settings">Set the ironing day</button>`:"Not set"}</dd></div>
+  h+=`<section class="routine"><h2>Weekly routine</h2><h3>Ariadne's activities</h3><dl>${acts.length?"":`<div><dt>None set</dt><dd></dd></div>`}${acts.map(i=>`<div><dt>${DOW[i]}</dt><dd>${esc(h0.activities[i].label&&h0.activities[i].label!=="Activity"?h0.activities[i].label:"Activity")} ${fmt(hm(h0.activities[i].t))}</dd></div>`).join("")}
+    </dl><h3>House jobs</h3><dl><div><dt>Sheets &amp; towels</dt><dd>${DOW[+h0.sheetsDay||2]}</dd></div>
+    <div><dt>Laundry</dt><dd>${(h0.ironing||[]).length?(h0.ironing).map(i=>DOW[+i===1?6:+i-1]).join(", "):isParent()?`<button class="link" data-act="settings" data-at="setHouse">Set the ironing day</button>`:"Not set"}</dd></div>
     ${(h0.weekly||[]).map(w=>`<div><dt>${DOW[+w.dow]}</dt><dd>${esc(w.text)}${w.time?" · "+fmt(hm(w.time)):""}</dd></div>`).join("")}</dl></section>`;
   for(let i=0;i<7;i++){
     const k=addDays(mon,i),d=parse(k),day=buildDay(k),isT=k===t;
@@ -650,27 +657,30 @@ function addJob(){
   <button class="btn wide">Add job</button></form>`);
 }
 const DAYS6=[1,2,3,4,5,6];
-function openSettings(){
+function openSettings(at){
   const h=H.house;
   let s=`<div class="sh-h"><h2 class="display">Settings</h2><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <div class="opt-row" style="display:flex;align-items:center;gap:12px">${avatar(me,44)}<div style="flex:1"><b>${esc(me||"Nobody chosen")}</b><br><span class="small muted">This phone</span></div><button class="btn sm ghost" data-act="who">Change</button></div>`;
   if(!isParent()){s+=`<p class="note">Amir or Lia can change the activity times, the sheets day and the ironing day.</p><p class="ver">Catherine's Day v${APP_VERSION}</p>`;openSheet(s);return}
   s+=`<form id="setForm" class="set">
-  <h3>Ariadne's activities</h3><p class="small muted" style="margin-bottom:10px">Start time and name. Leave the time empty on a day with no activity.</p>
-  ${DAYS6.map(i=>{const a=h.activities?.[i]||{};return `<div class="actrow"><span>${DOW[i].slice(0,3)}</span><input type="time" name="at${i}" value="${esc(a.t||"")}" aria-label="${DOW[i]} start time"><input name="al${i}" value="${esc(a.label&&a.label!=="Activity"?a.label:"")}" placeholder="Activity" aria-label="${DOW[i]} activity name"></div>`}).join("")}
+  <section class="setgrp"><h3 class="grph">Ariadne's activities</h3><p class="small muted" style="margin-bottom:10px">Her classes and outings. Choose "None" on a day without one.</p>
+  ${DAYS6.map(i=>{const a=h.activities?.[i]||{},[ah,am]=(a.t||"").split(":");return `<div class="actrow"><span>${DOW[i].slice(0,3)}</span><span class="tpick"><select name="ah${i}" aria-label="${DOW[i]} start hour"><option value="">None</option>${[...Array(14)].map((_,x)=>pad(x+7)).map(v=>`<option value="${v}"${v===ah?" selected":""}>${fmt(+v*60).replace(":00","")}</option>`).join("")}</select><select name="am${i}" aria-label="${DOW[i]} start minutes">${["00","15","30","45"].map(v=>`<option${v===(am||"00")?" selected":""}>${v}</option>`).join("")}</select></span><input name="al${i}" value="${esc(a.label&&a.label!=="Activity"?a.label:"")}" placeholder="Name" aria-label="${DOW[i]} activity name"></div>`}).join("")}
   <label><span class="lbl">Time out of the house per activity</span><select name="outMins">${[60,90,120,150,180].map(m=>`<option value="${m}"${+h.outMins===m?" selected":""}>${m/60} hour${m>60?"s":""}</option>`).join("")}</select></label>
+  </section><section class="setgrp" id="setHouse"><h3 class="grph">House jobs</h3>
   <h3>Bedsheets and towels</h3><div class="checks">${[1,2].map(i=>`<label><input type="radio" name="sheetsDay" value="${i}"${+h.sheetsDay===i?" checked":""}><span>${DOW[i]}</span></label>`).join("")}</div>
   <h3>Ironing lady comes on</h3><p class="small muted" style="margin-bottom:10px">Laundry goes on Catherine's list the working day before.</p>
   <div class="checks">${DAYS6.map(i=>`<label><input type="checkbox" name="iron" value="${i}"${(h.ironing||[]).map(Number).includes(i)?" checked":""}><span>${DOW[i].slice(0,3)}</span></label>`).join("")}</div>
+  ${(h.weekly||[]).length?`<h3>Weekly chores</h3><ul class="wlist">${h.weekly.map(w=>`<li><span>${DOW[w.dow].slice(0,3)}${w.time?" "+fmt(hm(w.time)):""} · ${esc(w.text)}</span><button type="button" class="xdel" data-delw="${esc(w.id)}" aria-label="Remove">${I.close}</button></li>`).join("")}</ul>`:""}
+  </section><section class="setgrp"><h3 class="grph">Evening</h3>
   <h3>Night</h3><div class="grid2"><label><span class="lbl">Who takes over</span><input name="nightName" value="${esc(h.night?.name||"")}" placeholder="Name"></label><label><span class="lbl">From</span><input type="time" name="nightFrom" value="${esc(h.night?.from||"19:00")}"></label></div>
-  ${(h.weekly||[]).length?`<h3>Weekly jobs</h3><ul class="wlist">${h.weekly.map(w=>`<li><span>${DOW[w.dow].slice(0,3)}${w.time?" "+fmt(hm(w.time)):""} · ${esc(w.text)}</span><button type="button" class="xdel" data-delw="${esc(w.id)}" aria-label="Remove">${I.close}</button></li>`).join("")}</ul>`:""}
-  </form><p class="note">Changes save as you make them.</p><p class="ver">Catherine's Day v${APP_VERSION}</p>`;
+  </section></form><p class="note">Changes save as you make them.</p><p class="ver">Catherine's Day v${APP_VERSION}</p>`;
   openSheet(s);
+  if(at)setTimeout(()=>$("#"+at)?.scrollIntoView({block:"start",behavior:"smooth"}),250);
 }
 let setT;
 function saveSettings(){clearTimeout(setT);setT=setTimeout(async()=>{
   const f=$("#setForm");if(!f)return;const fd=new FormData(f),activities={};
-  DAYS6.forEach(i=>{const t=fd.get("at"+i);if(t)activities[i]={t,label:(fd.get("al"+i)||"").trim()||"Activity"}});
+  DAYS6.forEach(i=>{const hh=fd.get("ah"+i);if(hh)activities[i]={t:`${hh}:${fd.get("am"+i)||"00"}`,label:(fd.get("al"+i)||"").trim()||"Activity"}});
   const house={activities,outMins:+fd.get("outMins"),sheetsDay:+fd.get("sheetsDay")||2,ironing:fd.getAll("iron").map(Number),night:{name:(fd.get("nightName")||"").trim(),from:fd.get("nightFrom")||"19:00",to:H.house.night?.to||"06:00"}};
   try{const j=await post("house-settings",{house});H.house=j.house;render();status("Saved",true)}catch(e){status("Couldn't save. Try again.",true,true)}},400)}
 
@@ -691,7 +701,7 @@ document.addEventListener("click",async e=>{
   else if(act==="wnext"){ui.week=addDays(ui.week,7);render()}
   else if(act==="addjob")addJob();
   else if(act==="addchore")addChore();
-  else if(act==="settings")openSettings();
+  else if(act==="settings")openSettings(a.dataset.at);
   else if(act==="who")askWho();
   else if(act==="print")printWeek();
   else if(act==="ask")ask();
