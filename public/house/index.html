@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FFF8EE"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Catherine's Day">
+<title>Catherine's Day · Home Planner</title>
+<link rel="icon" href="/house/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/house/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..650,100&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/house/main.css?v=1">
+</head><body>
+<header class="top"><div class="shell top-inner">
+<a href="/house/" class="identity" aria-label="Catherine's Day home"><span class="brandmark"><svg viewBox="0 0 44 44" fill="none" aria-hidden="true"><path d="M7 20 22 8l15 12v16H7V20Z" fill="#fff9f0" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M18 36V25h8v11" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m16 17 6 5 6-5" stroke="#D18A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="brand-text">Catherine's <em>day</em><small>OUR HOME, IN RHYTHM</small></span></a>
+<button id="whoBtn" class="profile" type="button" aria-label="Change profile"><span class="profile-dot">C</span><span id="whoName">Choose profile</span><span class="down">⌄</span></button>
+</div></header>
+<div id="app" class="shell page"><div class="loading"><div class="loader">✳</div><h1>Getting the day ready…</h1><p>Loading your shared home plan.</p></div></div>
+<nav class="bottom-nav" aria-label="Main navigation"><div class="nav-inner">
+<button class="navtab active" data-view="today" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4m8-4v4M4 10h16m-11 5h6"/></svg><span>Today</span></button>
+<button class="navtab" data-view="weekly" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 4h3m3 0h3m-9 4h3"/></svg><span>Weekly</span></button>
+<button class="navtab" data-view="ask" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5c0 4.5-3.6 8-8 8a9 9 0 0 1-3.7-.8L4 20l1.3-4.2A8.1 8.1 0 0 1 4 11.5a8 8 0 0 1 16 0Z"/><path d="M9 9.5a3 3 0 0 1 5.8 1.2c0 1.7-2.8 1.9-2.8 3.3M12 17h.01"/></svg><span>Ask</span><i class="unread" id="askCount" hidden>0</i></button>
+</div></nav>
+<div id="overlay" class="overlay" hidden><div class="overlay-scrim" data-action="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Settings"><div id="sheetInner"></div></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/house/app.js?v=1" defer></script>
+</body></html>
