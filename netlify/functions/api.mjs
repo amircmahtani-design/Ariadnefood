@@ -338,7 +338,7 @@ export default async (req) => {
         if (!["breakfast", "lunch", "dinner"].includes(sl)) continue;
         const cur = ((adults[k] ??= {})[sl] ??= {});
         if (!isObj(pl)) { delete cur.plan; continue; }
-        cur.plan = pl.share ? { share: clip(pl.share, 80) } : { ...dish(pl), amir: dish(pl.amir) };
+        cur.plan = pl.share ? { share: clip(pl.share, 80), locked: !!pl.locked } : { ...dish(pl), amir: dish(pl.amir), locked: !!pl.locked };
         if (body.reset) { delete cur.lia; delete cur.amir; }
       }
     }
@@ -608,7 +608,8 @@ Plan breakfast, lunch and dinner for 7 days starting ${week} (Saturday to Friday
 Their food: high protein, lots of vegetables, whole grains, good fats, little sugar, nothing deep-fried, real home cooking that tastes good. Varied through the week; no dish more than twice. Use ingredients easy to buy in Dubai supermarkets (Spinneys, Carrefour, Waitrose). Bread and pitta are homemade at home: say "homemade bread" or "homemade pitta" when used, never buy them.
 ALLERGIES: Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts"}. Lia eats everything.
 When a meal for both would contain one of Amir's allergens (for example salmon for Lia), give Amir his own alternative in "amir". Otherwise leave "amir" out, and prefer meals they can both eat.
-SHARING WITH ARIADNE: you get Ariadne's lunches and dinners for the week. Where it is genuinely logical, Lia and Amir eat the same dish as her, cooked in a bigger batch (e.g. bolognese, roast chicken drumsticks, keftedakia, a good stew). Do this only 3 to 5 times in the week, never for toddler-style food (patties, bites, fingers, purees, mash, cookies, snacks), and never for the same dish two meals in a row. To share, set the meal to {"share":"<Ariadne's recipe id for that day and meal>"}. If the shared dish contains Amir's allergens, add "amir" with his alternative.
+CHOSEN MEALS: some meals are already chosen by Lia and Amir (listed as CHOSEN). Keep them exactly as they are, and plan every other meal around them so the whole week is balanced: vary the proteins (chicken, beef, lamb, turkey, eggs, dairy, and fish for Lia only), don't repeat a chosen meal's main protein at the other meal that day, and balance heavier and lighter days. Still return every meal of every day; for a CHOSEN meal repeat its title, and when it is marked NEEDS RECIPE write its "ing" and "method" (and "amir" if it has his allergens).
+SHARING WITH ARIADNE: you get Ariadne's lunches and dinners for the week. Dishes marked [toddler only] are never shared: bites, patties, fingers and the like are hers alone. Where it is genuinely logical, Lia and Amir eat the same dish as her, cooked in a bigger batch (e.g. bolognese, roast chicken drumsticks, keftedakia, a good stew). Do this only 3 to 5 times in the week, never for toddler-style food (patties, bites, fingers, purees, mash, cookies, snacks), and never for the same dish two meals in a row. To share, set the meal to {"share":"<Ariadne's recipe id for that day and meal>"}. If the shared dish contains Amir's allergens, add "amir" with his alternative.
 Sunday is the nanny's day off: Sunday lunch and dinner are quick (15 to 25 minutes) or shared. Breakfasts take 10 minutes or less; they make breakfast themselves.
 Quantities are for TWO people (Amir's alternative: for ONE). Ingredient lines start with the amount in grams or a count, in simple shop English: "300 g chicken breast", "2 eggs", "1 avocado", "200 g Greek yoghurt", "150 g broccoli". Method: 3 to 6 short steps.
 Reply with ONLY JSON, no markdown:
