@@ -339,7 +339,7 @@ export default async (req) => {
   // Lia & Amir: save an AI-planned week ({k:{slot:plan}}); a plan of null clears that meal back to the default
   if (route === "adult-plan-save") {
     const adults = (await store.get("adults", { type: "json" })) || {};
-    const dish = (d) => isObj(d) && d.title ? { title: clip(d.title, 120), ing: (Array.isArray(d.ing) ? d.ing : []).map((x) => clip(x, 100)).filter(Boolean).slice(0, 25), method: (Array.isArray(d.method) ? d.method : []).map((x) => clip(x, 400)).filter(Boolean).slice(0, 12), time: clip(d.time, 30) } : null;
+    const dish = (d) => isObj(d) && d.title ? { title: clip(d.title, 120), ing: (Array.isArray(d.ing) ? d.ing : []).map((x) => clip(x, 220)).filter(Boolean).slice(0, 25), method: (Array.isArray(d.method) ? d.method : []).map((x) => clip(x, 400)).filter(Boolean).slice(0, 12), time: clip(d.time, 30) } : null;
     for (const [k, slots] of Object.entries(isObj(body.plans) ? body.plans : {})) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !isObj(slots)) continue;
       for (const [sl, pl] of Object.entries(slots)) {
@@ -357,7 +357,7 @@ export default async (req) => {
   if (route === "adult-lib" || route === "adult-lib-del") {
     const adults = (await store.get("adults", { type: "json" })) || {};
     const lib = adults._lib || [];
-    const dish = (d) => isObj(d) && d.title ? { title: clip(d.title, 120), ing: (Array.isArray(d.ing) ? d.ing : []).map((x) => clip(x, 100)).filter(Boolean).slice(0, 30), method: (Array.isArray(d.method) ? d.method : []).map((x) => clip(x, 400)).filter(Boolean).slice(0, 14) } : null;
+    const dish = (d) => isObj(d) && d.title ? { title: clip(d.title, 120), ing: (Array.isArray(d.ing) ? d.ing : []).map((x) => clip(x, 220)).filter(Boolean).slice(0, 30), method: (Array.isArray(d.method) ? d.method : []).map((x) => clip(x, 400)).filter(Boolean).slice(0, 14) } : null;
     if (route === "adult-lib") {
       for (const r of (Array.isArray(body.recipes) ? body.recipes : []).slice(0, 40)) {
         if (!isObj(r) || !r.title) continue;
