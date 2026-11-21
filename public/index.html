@@ -944,7 +944,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.5";
+const APP_VERSION="14.6";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1220,13 +1220,15 @@ function freshDishes(k){const ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]
 const NO_COOK_BF=new Set(["spanakplain","fruitplate","ricottatoast","pbtoast","hummustoast"]);
 // Bread and pitta: a full batch goes in the freezer and is used up over the following weeks, so only bake when the stock runs out.
 const HOME_BAKES=new Set(["homepitta","homebread","homebroth"]);
+const FREEZER_STOCK=["carrotcookies"];
 const BROTH=new Set(["homebroth"]);
 function homeStock(id,mon){let stock=0,w=mondayOf(addDays(todayKey(),1));
   while(w<mon){const n=bakeNeeds(w)[id]?.n||0,sv=+recipeById(id)?.serves||8;if(n>stock)stock+=Math.ceil((n-stock)/sv)*sv;stock-=n;w=addDays(w,7)}
   return stock}
 function weekBakes(mon){
   const need=bakeNeeds(mon);
-  for(const id of HOME_BAKES){const x=need[id];if(!x)continue;const st=homeStock(id,mon);if(st>=x.n)delete need[id];else x.stock=st}
+  // Bread, pitta, broth and the carrot bites (a batch of 24 lasts weeks): use what's in the freezer before baking again
+  for(const id of [...HOME_BAKES,...FREEZER_STOCK]){const x=need[id];if(!x)continue;const st=homeStock(id,mon);if(st>=x.n)delete need[id];else x.stock=st}
   return bakeList(mon,need)}
 function bakeNeeds(mon){
   const need={},from=mon===mondayOf(todayKey())?todayKey():mon;
