@@ -945,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.11";
+const APP_VERSION="14.12";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1219,6 +1219,8 @@ const COOKIE_OF={spanakbreakfast:"carrotcookies",spanakbreakfast2:"courgettecook
 const cookieAmt=(id,sl)=>id==="carrotcookies"?(sl==="snack"?1:.5):.5;
 function freshDishes(k){const ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]?.meals||{},y=new Set(["lunch","dinner"].map(s=>prev[s]?.recipeId).filter(Boolean));
   return new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!y.has(id))).size+(parse(k).getDay()===6?2:0)}
+// Dishes that come for free from another cook (the chicken picked off the broth bones): never on the cooking list
+const noCook=id=>id==="brothchicken"||!!recipeById(id)?.nocook;
 const NO_COOK_BF=new Set(["spanakplain","fruitplate","ricottatoast","pbtoast","hummustoast"]);
 // Bread and pitta: a full batch goes in the freezer and is used up over the following weeks, so only bake when the stock runs out.
 const HOME_BAKES=new Set(["homepitta","homebread","homebroth"]);
@@ -1299,10 +1301,10 @@ function cookPlan(k){
   const dow=parse(k).getDay(),ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]?.meals||{},T=id=>recipeById(id)?.title||"";
   if(dow===0)return {off:true,cook:[],bake:[]};
   const yIds=new Set(["lunch","dinner"].map(s=>prev[s]?.recipeId).filter(Boolean));
-  const cook=[...new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!yIds.has(id)))].map(T);
+  const cook=[...new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!yIds.has(id)&&!noCook(id)))].map(T);
   const bf=ms.breakfast?.recipeId,bfr=bf&&recipeById(bf);
   if(bfr&&!COOKIE_OF[bf]&&!NO_COOK_BF.has(bf)&&(+bfr.serves||1)<=1)cook.unshift(`${bfr.title} (breakfast)`);
-  if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>{const id=sun[s]?.recipeId;if(id&&!["lunch","dinner"].some(x=>ms[x]?.recipeId===id))cook.push(`${T(id)} (for Sunday)`)})}
+  if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>{const id=sun[s]?.recipeId;if(id&&!noCook(id)&&!["lunch","dinner"].some(x=>ms[x]?.recipeId===id))cook.push(`${T(id)} (for Sunday)`)})}
   const seen=new Set(),bake=[],bakeShort=[],bakeIds=[];
   for(const w of [mondayOf(k),addDays(mondayOf(k),7)])for(const x of weekBakes(w))if(x.mk===k&&!seen.has(x.r.id)){seen.add(x.r.id);bakeIds.push(x.r.id);bakeShort.push(`${/half/i.test(x.make)?"½ ":""}${x.r.title}${x.part==="morning"?" (am)":x.part==="afternoon"?" (pm)":""}`);bake.push(`${x.make.replace(/^Make /,"").replace(/^the /,"")} of ${x.r.title}, ${x.part==="as soon as you can"?"as soon as you can":"in the "+x.part}`)}
   const sides=[];const cookedIds=new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!yIds.has(id)));
