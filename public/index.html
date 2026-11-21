@@ -944,7 +944,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.7";
+const APP_VERSION="14.8";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1781,6 +1781,7 @@ const adultTitle=t=>String(t||"").replace(/\s*\b(bites?|fingers?|nuggets?)\b/gi,
 // Grown-up sides when they share her dish: a carb and a salad, rotating through the week (fries only on Saturday)
 const ADULT_SIDES={6:"French fries and Greek salad",0:"orzo and Greek salad",1:"baked sweet potato and green salad",2:"roast potatoes and Greek salad",3:"rice and green salad",4:"potato wedges and peas",5:"wholewheat pitta and Greek salad"};
 function autoSide(k,r){const dow=parse(k).getDay(),t=(r?.title||"").toLowerCase();
+  if(/\b(tacos?|enchiladas?|chill?i con carne|fajitas?|burritos?|nachos?|tinga|mexican)\b/.test(t)&&!/greek/.test(t))return "pico de gallo and guacamole";
   if(/\b(pasta|orzo|rice|potato|potatoes|wedges|spaghetti|penne|noodles|bread|pitta|pie|lasagn\w*|risotto|couscous|quinoa|chips|fries|giouvetsi|bolognese)\b/.test(t))return ["Greek salad","green salad","steamed greens"][dow%3];
   return ADULT_SIDES[dow]}
 const ADULT_P_=()=>+PREFS().portion||3; // one grown-up portion, in Ariadne's portions
