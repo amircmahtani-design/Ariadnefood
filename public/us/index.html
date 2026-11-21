@@ -221,6 +221,8 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .sheet.open .sheet-bg{opacity:1}
 .sheet.open .sheet-card{transform:none;opacity:1}
 .sh-h{display:flex;gap:var(--s3);align-items:flex-start;justify-content:space-between;margin-bottom:var(--s4)}
+/* the close button stays in reach however the card was scrolled, and after turning the phone */
+.sheet-card>.sh-h:first-child{position:sticky;top:calc(-1 * var(--s5));z-index:3;background:var(--bg);margin:calc(-1 * var(--s5)) -20px var(--s4);padding:var(--s5) 20px var(--s3)}
 .sh-h h2{font-size:27px}
 .who{display:grid;gap:10px;margin-top:var(--s5)}
 .who-row{justify-content:flex-start;gap:12px;padding-left:10px}
@@ -590,7 +592,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.5";
+const APP_VERSION="4.6";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -894,6 +896,9 @@ function editRec(r){
 
 /* ---------- sheets ---------- */
 function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.hidden=false;requestAnimationFrame(()=>sh.classList.add("open"));$("#sheetBody").scrollTop=0;if($("#pushBox"))window.AriPush?.mount()}
+// iOS keeps a stale size/scroll on the open sheet after rotating: re-measure it and bring the top (with Close) back into view.
+addEventListener("orientationchange",()=>setTimeout(()=>{const c=$("#sheetBody"),sh=$("#sheet");if(!sh||sh.hidden)return;c.style.maxHeight="none";void c.offsetHeight;c.style.maxHeight="";c.scrollTop=0},350));
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet()});
 function closeSheet(){const sh=$("#sheet");sh.classList.remove("open");setTimeout(()=>{if(!sh.classList.contains("open")){sh.hidden=true;$("#sheetBody").innerHTML=""}},260)}
 function askWho(){
   openSheet(`<div class="who-sheet"><h2 class="display">Who's using this phone?</h2><p class="muted">So the list shows who added each thing.</p>
