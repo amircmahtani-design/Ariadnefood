@@ -944,7 +944,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.6";
+const APP_VERSION="14.7";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1214,7 +1214,8 @@ function viewDay(){
 /* My Week */
 /* Bake only what the week needs, so she mostly eats fresh. */
 const COOKIE_OF={spanakbreakfast:"carrotcookies",spanakbreakfast2:"courgettecookies",carrotsnack:"carrotcookies",courgsnack:"courgettecookies"};
-const COOKIE_AMT={carrotcookies:1}; // how many she has each time: 1 fluffy carrot bite (mini muffin); ½ a courgette cookie
+// How much she has each time. Carrot bites (big, 10 a batch): ½ at breakfast next to the triangles, a whole one as a snack. Courgette cookie: ½.
+const cookieAmt=(id,sl)=>id==="carrotcookies"?(sl==="snack"?1:.5):.5;
 function freshDishes(k){const ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]?.meals||{},y=new Set(["lunch","dinner"].map(s=>prev[s]?.recipeId).filter(Boolean));
   return new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!y.has(id))).size+(parse(k).getDay()===6?2:0)}
 const NO_COOK_BF=new Set(["spanakplain","fruitplate","ricottatoast","pbtoast","hummustoast"]);
@@ -1247,7 +1248,7 @@ function bakeNeeds(mon){
     // sides cooked in broth (rice, couscous) go with the dishes cooked that day
     [...new Set(["lunch","dinner"].filter(sl=>seen.has(ms[sl]?.recipeId)).flatMap(sl=>String(ms[sl].side||"").split(/\s*\+\s*/)).map(t=>t&&cookedSide(t)).filter(Boolean))].forEach(r=>(r.ingredients||[]).forEach(l=>{const m=l.match(/([\d.]+)\s*ml\s+(?:hot\s+)?homemade broth/i);if(m)add("homebroth",k,Math.ceil(+m[1]/250*2)/2,`for ${r.title}`)}));
     for(const sl of ["breakfast","snack"]){const id=ms[sl]?.recipeId;if(!id)continue;
-      if(COOKIE_OF[id]){add(COOKIE_OF[id],k,COOKIE_AMT[COOKIE_OF[id]]??.5,sl==="snack"?"for snack":"at breakfast");continue}
+      if(COOKIE_OF[id]){add(COOKIE_OF[id],k,cookieAmt(COOKIE_OF[id],sl),sl==="snack"?"for snack":"at breakfast");continue}
       const r=recipeById(id),fruitOnly=r&&(r.parts||[]).flatMap(p=>p.items||[]).every(([k])=>FOODS[k]?.group==="fruit");if(r&&!fruitOnly&&(+r.serves||6)>1&&(r.freezes||/cookie|muffin|bar|finger|bites|fritter|pancake/i.test(r.title)))add(id,k,1,sl==="snack"?"for snack":"at breakfast")}}
   return need}
 function bakeList(mon,need){
