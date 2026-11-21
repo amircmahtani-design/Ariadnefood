@@ -805,6 +805,7 @@ body.pmode #ptools{display:flex;position:sticky;top:0;z-index:5;align-items:cent
 .sp li{display:flex;gap:2.4mm;align-items:flex-start;padding:1.4mm 0;border-bottom:.4pt solid #F2ECE2;break-inside:avoid}
 .sp .box{flex:none;width:3.8mm;height:3.8mm;border:.8pt solid #A7B89C;border-radius:1mm;margin-top:.5mm}
 .sp li b{display:block;font-weight:600;font-size:9.2pt}.sp li small{display:block;color:#7D8274;font-size:7.3pt;line-height:1.3}
+.ck .dn{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.5}
 @media print{
   html,body{background:#fff!important;padding:0!important;margin:0}
   body>*:not(#print){display:none!important}
@@ -943,7 +944,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.2";
+const APP_VERSION="14.3";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1297,14 +1298,14 @@ function cookPlan(k){
   const bf=ms.breakfast?.recipeId,bfr=bf&&recipeById(bf);
   if(bfr&&!COOKIE_OF[bf]&&!NO_COOK_BF.has(bf)&&(+bfr.serves||1)<=1)cook.unshift(`${bfr.title} (breakfast)`);
   if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>{const id=sun[s]?.recipeId;if(id&&!["lunch","dinner"].some(x=>ms[x]?.recipeId===id))cook.push(`${T(id)} (for Sunday)`)})}
-  const seen=new Set(),bake=[],bakeShort=[];
-  for(const w of [mondayOf(k),addDays(mondayOf(k),7)])for(const x of weekBakes(w))if(x.mk===k&&!seen.has(x.r.id)){seen.add(x.r.id);bakeShort.push(`${/half/i.test(x.make)?"½ ":""}${x.r.title}${x.part==="morning"?" (am)":x.part==="afternoon"?" (pm)":""}`);bake.push(`${x.make.replace(/^Make /,"").replace(/^the /,"")} of ${x.r.title}, ${x.part==="as soon as you can"?"as soon as you can":"in the "+x.part}`)}
+  const seen=new Set(),bake=[],bakeShort=[],bakeIds=[];
+  for(const w of [mondayOf(k),addDays(mondayOf(k),7)])for(const x of weekBakes(w))if(x.mk===k&&!seen.has(x.r.id)){seen.add(x.r.id);bakeIds.push(x.r.id);bakeShort.push(`${/half/i.test(x.make)?"½ ":""}${x.r.title}${x.part==="morning"?" (am)":x.part==="afternoon"?" (pm)":""}`);bake.push(`${x.make.replace(/^Make /,"").replace(/^the /,"")} of ${x.r.title}, ${x.part==="as soon as you can"?"as soon as you can":"in the "+x.part}`)}
   const sides=[];const cookedIds=new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!yIds.has(id)));
   if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>sun[s]?.recipeId&&cookedIds.add(sun[s].recipeId))}
   const sideSrc=[...["lunch","dinner"].map(s=>ms[s]).filter(m=>m&&cookedIds.has(m.recipeId))];
   if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>sun[s]&&sideSrc.push(sun[s]))}
   sideSrc.forEach(m=>String(m.side||"").split(/\s*\+\s*/).forEach(t=>{const r=t&&cookedSide(t);if(r&&!sides.includes(r))sides.push(r)}));
-  return {off:false,cook:cook.filter(Boolean),bake,bakeShort,sides,left:!cook.length&&yIds.size>0};
+  return {off:false,cook:cook.filter(Boolean),bake,bakeShort,bakeIds,sides,left:!cook.length&&yIds.size>0};
 }
 /* Check that everything on the day's menu exists by the time she eats it. */
 function bakeFor(id,k){for(const w of [mondayOf(k),addDays(mondayOf(k),-7)]){const x=weekBakes(w).find(x=>x.r.id===id&&x.days.includes(k));if(x)return x}return null}
@@ -1862,7 +1863,9 @@ function buildWeek(mon){
   return `<section class="page">${pgHead("Week plan",`Week of ${shortRange(mon)}`)}
   <div class="wk"><div></div>${ks.map(k=>{const d=parse(k),we=d.getDay()===0||d.getDay()===6;return `<div class="dh${we?" we":""}"><b>${DOW[d.getDay()].slice(0,3)}</b><span>${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</span></div>`}).join("")}
   ${SLOTS.map(([s,l])=>`<div class="sl">${SLOT_ICON[s]}${l}</div>${ks.map(k=>cell(k,s)).join("")}`).join("")}
-  <div class="sl">To cook</div>${ks.map(k=>{const c=cookPlan(k);return `<div class="c ck">${c.off?"<i>Day off: reheat</i>":[...c.cook.map(x=>`<b>${esc(x)}</b>`),...(c.sides||[]).map(r=>`<i>+ ${esc(r.title.toLowerCase())}</i>`),...c.bakeShort.map(x=>`<i>Bake ${esc(x)}</i>`)].join("")||"<i>Leftovers</i>"}</div>`}).join("")}
+  <div class="sl">To cook</div>${ks.map(k=>{const c=cookPlan(k),T=S.cookTicks?.[k]||{},dn=id=>T[id]?" dn":""; // ticked off in the app: printed crossed out
+    const cid=t=>{const b=t.replace(/ \((breakfast|for Sunday)\)$/,"");return S.recipes.find(r=>r.title===b)?.id};
+    return `<div class="c ck">${c.off?"<i>Day off: reheat</i>":[...c.cook.map(x=>`<b class="${dn("cook:"+cid(x))}">${esc(x)}</b>`),...(c.sides||[]).map(r=>`<i class="${dn("cook:"+r.id)}">+ ${esc(r.title.toLowerCase())}</i>`),...c.bakeShort.map((x,i)=>`<i class="${dn("bake:"+c.bakeIds[i])}">Bake ${esc(x)}</i>`)].join("")||"<i>Leftovers</i>"}</div>`}).join("")}
   <div class="sl">Vitamin D</div>${ks.map(k=>tick(k,d=>d.vitD?.done)).join("")}
   <div class="sl">Poops</div>${ks.map(k=>{const n=poopN(S.days[k]);return `<div class="c tk"><span class="pn">${n==null?"":n}</span></div>`}).join("")}
 </div>
