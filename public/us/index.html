@@ -590,7 +590,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.4";
+const APP_VERSION="4.5";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -1185,7 +1185,7 @@ document.addEventListener("submit",async e=>{
       if(res)S().adults=res.adults;closeSheet();render();status(d==="pick"&&plan&&!plan.ing.length?"Saved. AI writes the recipe when it fills the week":"Saved",true)}
     catch(err){status("Not saved. Check the connection.",true,true)}return}
   if(f.id==="recForm"){const name=f.name.value.trim();if(!name)return;const btn=f.querySelector(".btn");btn.disabled=true;btn.innerHTML=`<span class="dot"></span>Writing the recipe…`;busy=true;
-    try{const P=A.prefs(),r=await streamAI({task:"adultrecipe",name,focus:f.notes.value.trim(),allergies:[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")});
+    try{const P=A.prefs(),r=await streamAI({task:"adultrecipe",name,focus:f.notes.value.trim(),have:LIB().map(x=>x.title).join("; "),allergies:[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")});
       draftRec={title:r.title||name,meals:r.meals,time:r.time,ing:r.ing||[],method:r.method||[],tip:r.tip||"",amir:r.amir&&r.amir.title?r.amir:null};libSheet(draftRec,true)}
     catch(err){btn.disabled=false;btn.innerHTML=`${I.spark}Write the recipe`;status(err.message||"Couldn't write it. Try again.",true,true)}finally{busy=false}return}
   if(f.id==="recEdit"){const lines=v=>v.split("\n").map(x=>x.trim()).filter(Boolean),old=LIB().find(x=>x.id===f.dataset.id)||{};

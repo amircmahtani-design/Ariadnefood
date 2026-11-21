@@ -673,7 +673,11 @@ Reply with ONLY JSON, no markdown:
 {"title":"","meals":["lunch","dinner"],"time":"30 min","ing":[""],"method":[""],"tip":"one short line, optional","amir":{"title":"","ing":[],"method":[]}}`;
       if (imgs.length) return callAI(system + `
 FROM PHOTOS: the photos show a recipe (a cookbook page, handwritten card, a screenshot) or a finished dish. Copy a written recipe faithfully, scaled to two people, in grams where you can; keep their wording for the title. If it is only a photo of food, work out a sensible home recipe for it. Allergy rules above still apply.`, [...imgs, { type: "text", text: `Turn this into a recipe for Lia and Amir.${name ? ` It's called: ${name}.` : ""}${focus ? ` Notes: ${focus}` : ""}` }], 3000);
-      return callAI(system, `Dish: ${name}${focus ? `\nNotes: ${focus}` : ""}`, 2500);
+      const have = clip(body.have, 12000);
+      const dedupe = have ? `
+THEIR RECIPE BOOK ALREADY HAS: ${have}
+Never write a dish they already have. If the name is general (like "pasta", "chicken", "soup" or "salad"), choose a different, well-loved dish of that kind that is NOT in their book, and use its proper name as the title. If they name a specific dish they already have, write a clearly different version of it and say in "tip" how it differs.` : "";
+      return callAI(system + dedupe, `Dish: ${name}${focus ? `\nNotes: ${focus}` : ""}`, 2500);
     }
 
     // Lia & Amir send one of their own dishes across to Ariadne's recipe book
