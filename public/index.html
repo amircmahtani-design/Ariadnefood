@@ -945,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.12";
+const APP_VERSION="14.13";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1279,6 +1279,20 @@ const halfTxt=n=>`${Math.floor(n)||""}${n%1?"½":""}`||"0";
 /* What to cook on a given day: fresh lunch/dinner dishes (not yesterday's leftovers), made-to-order breakfast, and any baking due that day. */
 /* Sides that need cooking, and the recipe each one opens. */
 const SIDE_COOK=[[/^(plain |boiled )?rice$/i,"siderice"],[/^(buttered )?orzo$/i,"sideorzo"],[/^couscous$/i,"sidecouscous"],[/^roast(ed)? potato/i,"roastpotatoes"],[/^(pasta|pasta shapes)$/i,"sidepasta"],[/carrot coins/i,"carrotcoins"],[/green beans/i,"greenbeans"],[/broccoli( trees)?$/i,"broccolitrees"],[/sweet potato wedges/i,"sweetwedges"],[/buttered peas|^peas$/i,"buttpeas"],[/cauliflower/i,"cauliroast"],[/pepper strips/i,"peppers"],[/pumpkin wedges/i,"pumpkinwedges"],[/courgette fries/i,"courgettefries"]];
+/* Every lunch and dinner gets a vegetable she can SEE, even when there's veg hidden in the main. Rotates widely so her palate grows. */
+const VEG_ROT=["roast carrot coins","buttery broccoli trees","roast green beans with lemon","crispy courgette fries","buttered peas with spring onion","roast cauliflower florets","cucumber sticks","roast aubergine fingers","cinnamon pumpkin wedges","roast parsnip fingers","roast beetroot & orange","roast red pepper strips","soft celery sticks"];
+const VEG_FROM={"roast red pepper strips":"2026-11-28","soft celery sticks":"2026-11-28"}; // reintroduced from Saturday 28/11/2026
+function sideHasVeg(side){return String(side||"").split(/\s*\+\s*/).some(t=>{t=t.trim().toLowerCase();if(!t)return false;if(VEG_ROT.includes(t))return true;
+  if(sideParts(t).some(p=>p.items.some(([k])=>FOODS[k]?.group==="veg")))return true;const r=sideRecipe(t);return !!r&&(r.parts||[]).some(p=>p.items.some(([k])=>FOODS[k]?.group==="veg"))})}
+function fillVegSides(from,to){let n=0,changed=0;const keys=Object.keys(S.days).filter(k=>k>=from&&(!to||k<=to)).sort();
+  for(const k of keys){const ms=S.days[k]?.meals||{},meals={};let used=new Set();
+    for(const s of ["lunch","dinner"]){const m=ms[s];if(!m||!(m.recipeId||m.custom)||Object.keys(m.log||{}).length||sideHasVeg(m.side))continue;
+      const r=m.recipeId&&recipeById(m.recipeId),inside=new Set((r?.parts||[]).flatMap(p=>p.items.map(([f])=>f)));
+      const ok=VEG_ROT.filter(v=>(!VEG_FROM[v]||k>=VEG_FROM[v])&&!used.has(v)&&!sideParts(v).some(p=>p.items.some(([f])=>inside.has(f))));
+      const v=(ok.length?ok:VEG_ROT)[(n++)%(ok.length||VEG_ROT.length)];used.add(v);
+      meals[s]={...m,side:[m.side,v].filter(Boolean).join(" + ")};changed++}
+    if(Object.keys(meals).length)patchDay(k,{meals})}
+  return changed}
 function sideRecipe(t){t=String(t).trim();const hit=SIDE_COOK.find(([re])=>re.test(t));if(hit&&recipeById(hit[1]))return recipeById(hit[1]);
   return S.recipes.find(r=>(r.meals||[]).includes("side")&&r.title.toLowerCase()===t.toLowerCase())||null}
 function cookedSide(t){const r=sideRecipe(t);return r&&!/no-cook|fingers|sticks|tzatziki|salad|fruit/i.test(r.title)&&r.id!=="fruitplate"&&r.id!=="avocucumber"?r:null}
@@ -1756,6 +1770,7 @@ async function aiPlan(){
         if((s==="lunch"||s==="dinner")&&id&&(id===bId||(String(bId).startsWith("spanakbreakfast")&&/spanakopita/i.test(recipeById(id)?.title||""))))return;
         meals[s]=id?{recipeId:id,side:x.side||null,custom:null,log:null,like:null}:{custom:String(x.recipe||""),recipeId:null,side:x.side||null}});
       patchDay(k,{meals})});
+    fillVegSides(mon,addDays(mon,6));
     busy=false;render();status(newR.length?`Planned · ${newR.length} new recipes added`:"Week planned",true);
     if(res.note){const l=$("#planlive");if(l)l.innerHTML=`<p class="card box small" style="margin:-8px 0 20px">${esc(res.note)}</p>`}
   }catch(err){busy=false;render();const l=$("#planlive");if(l)l.innerHTML=`<div class="errbox" style="margin:-8px 0 20px">${esc(err.message)}</div>`}
