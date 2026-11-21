@@ -868,6 +868,7 @@ const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v)
 let S={days:{},recipes:[],settings:{people:["Amir","Catherine","Lia"],milkDefault:600,dropUg:10,vitDTarget:15,formula:{}},insight:null};
 // My Week opens on the week you're planning: from Thursday, that's the one starting this coming Saturday.
 const planWeek=()=>{const t=todayKey(),d=parse(t).getDay();return [4,5].includes(d)?addDays(mondayOf(t),7):mondayOf(t)};
+const custOpen=new Set(); // slots where "Something else" was picked but nothing typed yet
 const ui={view:ls.get("ari-view")||"day",date:todayKey(),week:planWeek(),rq:"",rf:"all"};
 if(!["day","week","her","recipes","ask"].includes(ui.view))ui.view="day";
 let me=ls.get("ari-me")||"";
@@ -944,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.9";
+const APP_VERSION="14.10";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1157,7 +1158,7 @@ function viewDay(){
   </div>`;
   h+=SLOTS.map(([s,label])=>{
     const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),parts=partsFor(m),log=m.log||{},title=mealTitle(m);
-    const sel=r?r.id:(m.custom?"__custom":"");
+    const sel=r?r.id:(m.custom||custOpen.has(k+s)?"__custom":"");
     const ok=`${k}|${s}`,open=!!ui.openMeals?.[ok],loggedN=Object.values(log).filter(Boolean).length,done=parts.length&&loggedN>=parts.length;
     const status=!title?"":loggedN?(done?`<span class="pill on">${I.check}Logged</span>`:`<span class="pill acc">${loggedN} of ${parts.length}</span>`):`<span class="pill">To log</span>`;
     return `<article class="meal card${open?" open":""}" data-slot="${s}">
@@ -1376,7 +1377,7 @@ function viewWeek(){
       <div class="wd-h"><button class="wd-title" data-act="openDay"><span class="wd-dow">${DOW[d.getDay()]}</span><span class="wd-date">${d.getDate()} ${MONTHS[d.getMonth()]}</span></button>
       <span class="wd-meta">${k===t?'<span class="pill acc">Today</span>':""}<span class="pill${day.vitD?.done?" on":""}">${day.vitD?.done?I.check:I.sun}Vit D</span><span class="pill${logged===4?" on":""}">${logged}/4</span></span></div>
       ${cookRow(k)}
-      ${SLOTS.map(([s,l])=>{const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom?"__custom":"");
+      ${SLOTS.map(([s,l])=>{const m=meals[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom||custOpen.has(k+s)?"__custom":"");
         return `<div class="wrow" data-slot="${s}">${pic(r,"wthumb",m.custom||"")}
           <div class="wfields"><span class="wl">${SLOT_ICON[s]}${l}${groupSelect(s,"gmini")}</span>
           <span class="selwrap"><select class="bare" data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel,m.custom)}</select>${I.down}</span>
@@ -1417,7 +1418,7 @@ function gridCell(k,s){
   <div class="gacts">${r?`<button class="btn wide" data-sact="grec" data-id="${esc(r.id)}" data-day="${k}">${I.bowl}See the recipe</button>`:""}<button class="btn ${r?"ghost ":""}wide" data-sact="gchange" data-day="${k}" data-slot="${s}">${I.pencil}${title?"Change dish":"Choose a dish"}</button></div>`);
 }
 function gridChange(k,s){
-  const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom?"__custom":""),l=SLOTS.find(x=>x[0]===s)[1];
+  const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom||custOpen.has(k+s)?"__custom":""),l=SLOTS.find(x=>x[0]===s)[1];
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${parse(k).getDate()} ${MONTHS[parse(k).getMonth()].slice(0,3)} · ${l}</p><h2 class="display">Change dish</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   <div class="gform" data-day="${k}" data-slot="${s}">
     <label class="f"><span>Group</span>${groupSelect(s,"fsel")}</label>
@@ -2117,6 +2118,7 @@ $("#tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)r
 $("#whoBtn").addEventListener("click",()=>loaded&&openSettings());
 const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo(0,y)};
 function setMeal(k,slot,val,side,custom){
+  if(val==="__custom")custOpen.add(k+slot);else custOpen.delete(k+slot);
   const cur=S.days[k]?.meals?.[slot]||{};
   const p=val==="__custom"?{recipeId:null,custom:custom??cur.custom??"",side:side??cur.side??null}:val?{recipeId:val,custom:null,side:side??cur.side??null}:{recipeId:null,custom:null,side:null};
   if(val&&val!=="__custom"&&val!==cur.recipeId){const nr=recipeById(val);if(nr?.sides?.length){const have=String(p.side||"").split(/\s*\+\s*/).filter(Boolean);const out=[...nr.sides];have.forEach(h=>{if(!out.some(o=>o.toLowerCase()===h.toLowerCase()))out.push(h)});p.side=out.join(" + ")}}
