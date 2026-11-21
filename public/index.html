@@ -945,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.10";
+const APP_VERSION="14.11";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1167,7 +1167,7 @@ function viewDay(){
         <span class="mt-row">${title?`<span class="dish">${esc(title)}</span>`:`<span class="empty-t">Nothing planned yet</span>`}<span class="chev">${I.down}</span></span>
       </button>
       <div class="meal-body"${open?"":" hidden"}>
-        <div class="meal-acts">${r?(()=>{const mk=madeToday(r.id,k),f=mk?scaleFor(r.id,k):0;return `<button class="link" data-act="recipe" data-id="${esc(r.id)}"${f?` data-scale="${f}"`:""}>${I.bowl}See the recipe${f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:""}</button>`})():"<span></span>"}<button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
+        <div class="meal-acts">${r?(()=>{const mk=madeToday(r.id,k),f=mk?scaleFor(r.id,k):0;return `<button class="link" data-act="recipe" data-id="${esc(r.id)}"${f?` data-scale="${f}"`:""}>${I.bowl}See the recipe${f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:""}</button>`})():(m.custom?aiBtn(k,s):"<span></span>")}<button class="media-btn" data-act="change">${title?I.pencil:I.plus}<span>${title?"Change":"Add"}</span></button></div>
         <div class="change" hidden>
           <label class="f"><span>Group</span>${groupSelect(s,"fsel")}</label>
           <label class="f"><span>Meal</span><select data-pick>${recipeOptions(s,sel,m.custom)}</select></label>
@@ -1381,7 +1381,7 @@ function viewWeek(){
         return `<div class="wrow" data-slot="${s}">${pic(r,"wthumb",m.custom||"")}
           <div class="wfields"><span class="wl">${SLOT_ICON[s]}${l}${groupSelect(s,"gmini")}</span>
           <span class="selwrap"><select class="bare" data-wpick aria-label="${l} on ${shortDay(k)}">${recipeOptions(s,sel,m.custom)}</select>${I.down}</span>
-          ${r?`<button class="wrec" data-act="recipe" data-id="${esc(r.id)}" data-day="${k}">${I.bowl}See the recipe</button>`:""}
+          ${r?`<button class="wrec" data-act="recipe" data-id="${esc(r.id)}" data-day="${k}">${I.bowl}See the recipe</button>`:m.custom?aiBtn(k,s,"wrec"):""}
           ${sel==="__custom"?`<input class="cust" data-wcustom value="${esc(m.custom)}" placeholder="What is it?" aria-label="Custom ${l.toLowerCase()} on ${shortDay(k)}">`:""}
           ${(s==="lunch"||s==="dinner")&&(m.recipeId||m.custom)?plateTags(m):""}
           ${m.side?"":`<button class="addside" data-act="showSide" aria-label="Add a side for ${l.toLowerCase()} on ${shortDay(k)}">+ side</button>`}
@@ -1412,10 +1412,22 @@ function weekGrid(mon){
 }
 
 // Tapping a dish in the sideways week: see its recipe or change it
+const aiBtn=(k,s,cls="link")=>`<button class="${cls}" data-act="aiRecipe" data-day="${k}" data-slot="${s}">${I.spark}Write the recipe</button>`;
+// A typed-in dish: link it to a recipe with the same name, or have the AI write one, save it and put it on the plan.
+async function aiRecipeFor(k,s,btn){
+  const m=S.days[k]?.meals?.[s];const text=String(m?.custom||"").trim();if(!text)return;
+  const same=S.recipes.find(r=>r.title.trim().toLowerCase()===text.toLowerCase());
+  if(same){setMeal(k,s,same.id,m.side||null);render();status("Linked to your recipe",true);return}
+  if(btn){btn.disabled=true;btn.innerHTML=`<span class="dot"></span>Writing the recipe…`}
+  try{const res=await streamAI({task:"dish",title:text,slot:s,side:m.side||""});if(!res.recipe)throw new Error("Couldn't write that one. Try again.");
+    const rec=cleanRecipe(res.recipe,newId(res.recipe.title||text));if(!rec.meals.includes(s))rec.meals.push(s);
+    const d=await post("recipe",{recipe:rec});S.recipes=d.recipes;setMeal(k,s,rec.id,m.side||null);closeSheet&&closeSheet();render();openRecipe(rec.id);status("Recipe written and saved",true)}
+  catch(err){status(err.message||"Couldn't write the recipe",false,true);if(btn){btn.disabled=false;btn.innerHTML=`${I.spark}Write the recipe`}}
+}
 function gridCell(k,s){
   const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),title=mealTitle(m),l=SLOTS.find(x=>x[0]===s)[1];
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${parse(k).getDate()} ${MONTHS[parse(k).getMonth()].slice(0,3)} · ${l}</p><h2 class="display">${esc(title||"Nothing planned yet")}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <div class="gacts">${r?`<button class="btn wide" data-sact="grec" data-id="${esc(r.id)}" data-day="${k}">${I.bowl}See the recipe</button>`:""}<button class="btn ${r?"ghost ":""}wide" data-sact="gchange" data-day="${k}" data-slot="${s}">${I.pencil}${title?"Change dish":"Choose a dish"}</button></div>`);
+  <div class="gacts">${r?`<button class="btn wide" data-sact="grec" data-id="${esc(r.id)}" data-day="${k}">${I.bowl}See the recipe</button>`:m.custom?`<button class="btn wide" data-sact="aiRecipe" data-day="${k}" data-slot="${s}">${I.spark}Write the recipe</button>`:""}<button class="btn ${r?"ghost ":""}wide" data-sact="gchange" data-day="${k}" data-slot="${s}">${I.pencil}${title?"Change dish":"Choose a dish"}</button></div>`);
 }
 function gridChange(k,s){
   const m=S.days[k]?.meals?.[s]||{},r=m.recipeId&&recipeById(m.recipeId),sel=r?r.id:(m.custom||custOpen.has(k+s)?"__custom":""),l=SLOTS.find(x=>x[0]===s)[1];
@@ -2132,6 +2144,7 @@ $("#view").addEventListener("click",async e=>{
   const a=e.target.closest("[data-act]");if(!a)return;const act=a.dataset.act;
   if(act==="ask"){doAsk();return}
   if(act==="gcell"){gridCell(a.dataset.day,a.dataset.slot);return}
+  if(act==="aiRecipe"){aiRecipeFor(a.dataset.day,a.dataset.slot,a);return}
   if(act==="showSide"){const inp=a.parentElement.querySelector("[data-wside]");a.remove();inp.hidden=false;inp.focus();return}
   if(act==="areply"){askReply(a.dataset.id);return}
   if(act==="adone"){askReply(a.dataset.id,true);return}
@@ -2218,6 +2231,7 @@ $("#sheet").addEventListener("click",async e=>{
   const s=e.target.closest("[data-sact]");if(!s)return;const act=s.dataset.sact;
   if(act==="grec"){ui.rday=s.dataset.day||null;openRecipe(s.dataset.id);return}
   if(act==="gchange"){gridChange(s.dataset.day,s.dataset.slot);return}
+  if(act==="aiRecipe"){aiRecipeFor(s.dataset.day,s.dataset.slot,s);return}
   if(act==="gsave"){const f=s.closest(".gform"),v=f.querySelector("[data-gpick]").value;setMeal(f.dataset.day,f.dataset.slot,v,f.querySelector("[data-gside]").value.trim()||null,f.querySelector("[data-gcustom]").value.trim());closeSheet();render();status("Saved",true);return}
   if(act==="rscale"){ui.rscale[s.dataset.id]=+s.dataset.f;const sc=$("#sheetBody").scrollTop;openRecipe(s.dataset.id);$("#sheetBody").scrollTop=sc;return}
   if(act==="edit")editRecipe(s.dataset.id);

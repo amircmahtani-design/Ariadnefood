@@ -685,6 +685,15 @@ Reply with ONLY JSON, no markdown: {"recipe":${RECIPE_SHAPE}}`;
       return callAI(system, `Lia and Amir's recipe:\n${src}`, 2500);
     }
 
+    if (body.task === "dish") {
+      const title = clip(body.title, 160), slot = clip(body.slot, 20), side = clip(body.side, 160);
+      if (!title) return json({ error: "Type the dish first." }, 400);
+      const system = `The family typed a dish into Ariadne's plan that isn't in their recipes yet. Write the recipe for it, for Ariadne. ${ABOUT}
+Keep their name for the dish as the title (tidy the spelling and capitals only). Write a practical home recipe with real quantities in grams and ml, a toddler batch of about 4 portions unless the dish is clearly a single plate (then serves 1). If it is leftovers or a simple assembly (e.g. "leftover chicken from the broth"), say what to use, how much for her portion, how to reheat it safely and how to cut it. No added salt or sugar, gentle spice, her textures and the safe cut in the method. Don't include the sides in the recipe; they are planned separately.
+Reply with ONLY JSON, no markdown: {"recipe":${RECIPE_SHAPE}}`;
+      return callAI(system, `Dish: ${title}\nMeal: ${slot || "lunch"}${side ? `\nPlanned sides: ${side}` : ""}`, 2500);
+    }
+
     if (body.task === "photo") {
       const imgs = (Array.isArray(body.images) ? body.images : []).slice(0, 4)
         .filter((s) => typeof s === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(s))
