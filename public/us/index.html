@@ -558,6 +558,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 .onlyone[open] summary{margin-bottom:8px}
 .btn.ari svg{color:#5B4A78}
 .sentari{display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:#5B4A78;padding:10px 0}.sentari svg{width:18px;height:18px}
+.addmenu{margin-top:18px}.addmenu .onmenu{margin:0 0 12px;background:none;padding:0}
 </style>
 </head>
 <body>
@@ -589,7 +590,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.3";
+const APP_VERSION="4.4";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -864,7 +865,8 @@ function libSheet(r,draft){
   <h3 class="rh">Method</h3><ol class="rmeth">${lst(r.method)}</ol>
   ${r.amir?`<div class="amirv"><h3 class="rh">For Amir: ${esc(r.amir.title)}</h3><ul class="ring">${lst(r.amir.ing)}</ul>${(r.amir.method||[]).length?`<ol class="rmeth">${lst(r.amir.method)}</ol>`:""}</div>`:""}`;
     // Saved recipes open folded: add it to a day straight away, or tap to read the whole recipe
-    return draft?full:`<details class="rfull"><summary>${I.book}<span>See the full recipe<small>${(r.ing||[]).length} ingredients · ${(r.method||[]).length} steps${r.amir?" · Amir's version":""}</small></span>${I.down}</summary>${full}</details>${onMenu(r)}`})()}
+    // Saved recipes open in full; adding it to a day is folded underneath
+    return draft?full:`${full}<details class="rfull addmenu"><summary>${I.plus}<span>Add to the weekly menu<small>Pick breakfast, lunch or dinner, then a day</small></span>${I.down}</summary>${onMenu(r)}</details>`})()}
   <div class="sh-acts">${draft?`<button class="btn wide" data-act="saveRec">Save to our recipes</button><button class="btn ghost wide" data-act="addRecipe">Try again</button>`
     :`${r.ari&&A.recipeById(r.ari)?`<p class="sentari">${I.baby}In Ariadne's recipes too</p>`:`<button class="btn ghost wide ari" data-act="toAri" data-id="${esc(r.id)}">${I.baby}Ariadne could eat this</button>`}<button class="btn ghost wide" data-act="editRec" data-id="${esc(r.id)}">${I.pen}Edit</button><button class="btn ghost wide del" data-act="delRec" data-id="${esc(r.id)}">Remove from our recipes</button>`}</div>`);
 }
