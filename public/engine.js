@@ -44,10 +44,11 @@ function makeEngine(FOODS, getState){
     const r=m.recipeId&&recipeById(m.recipeId);let parts=[];
     if(r)parts=(r.parts&&r.parts.length?clone(r.parts):[{name:r.title,items:[]}]);
     else if(m.custom)parts=sideParts(m.custom);
-    if(r&&m.side)parts=parts.concat(sideParts(m.side));
+    if(r&&m.side){if(fruitSide(m.side))parts=parts.filter(p=>p.name.trim().toLowerCase()!=="fruit");parts=parts.concat(sideParts(m.side))} // the side names the fruit, so no separate "Fruit" too
     const seen={};return parts.map(p=>{let n=p.name;while(seen[n])n+=" ";seen[n]=1;return {...p,name:n}});
   }
-  function mealTitle(m){if(!m)return "";const r=m.recipeId&&recipeById(m.recipeId);if(r)return r.title+(m.side?" + "+m.side:"");return m.custom||""}
+  const fruitSide=t=>sideParts(t).some(p=>p.items.some(([k])=>FOODS[k]?.group==="fruit"&&k!=="avocado"));
+  function mealTitle(m){if(!m)return "";const r=m.recipeId&&recipeById(m.recipeId);if(r){if(m.side&&/\bfruit\b/i.test(r.title)&&fruitSide(m.side))return r.title.replace(/\bfruit\b/i,m.side.toLowerCase());return r.title+(m.side?" + "+m.side:"")}return m.custom||""}
   function recipeNutrition(r){const t={};(r.parts||[]).forEach(p=>addItems(t,p.items,1));return t}
   function dayNutrition(k){
     const st=S(),day=st.days[k]||{},meals=day.meals||{},tot={},groups={},missed=[],ate=[];let logged=0;
