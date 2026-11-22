@@ -593,7 +593,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.9";
+const APP_VERSION="4.10";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -1082,7 +1082,7 @@ function weekBalance(k,skip){const mon=mondayOf(k),c={},meals=[];
 async function aiPick(k,s,btn){
   const mon=ui.week,day=DOW[parse(k).getDay()],other=s==="dinner"?"lunch":"dinner",oa=A.adultMeal(k,other);
   const eaten=[];for(let i=-3;i<7;i++){const d=addDays(k,i);if(d===k)continue;["lunch","dinner"].forEach(x=>{const p=S().adults?.[d]?.[x]?.plan;const t=p?.share?A.adultMeal(d,x).r?.title:p?.title;if(t)eaten.push(`${d} ${x}: ${t}`)})}
-  const lib=LIB().filter(r=>(r.meals||[]).includes(s)||(s==="dinner"&&(r.meals||[]).includes("lunch")));
+  const lib=LIB().filter(r=>((r.meals||[]).includes(s)||(s==="dinner"&&(r.meals||[]).includes("lunch")))&&!(s==="dinner"&&catOf(r)==="Ladera")); // ladera is a lunch
   const bal=weekBalance(k,[k,s]);
   const ctx=`Choose ${s} for ${day} ${k}.\nThat day's ${other}: ${pText(oa.lia)||"not set"}\nTHIS WEEK SO FAR (Sat-Fri, without this meal): ${bal.line}\n${bal.meals.join("\n")}\nMISSING THIS WEEK: ${bal.miss.join(", ")||"nothing"}${bal.much.length?`\nTOO MUCH ALREADY: ${bal.much.join(", ")}`:""}\nEaten around it:\n${eaten.join("\n")||"nothing yet"}\nTheir book (id | title | time | group):\n${lib.map(r=>`${r.id} | ${r.title} | ${r.time||""} | ${catOf(r)}`).join("\n")}`;
   if(btn){btn.disabled=true;btn.innerHTML=`<span class="dot"></span>Choosing…`}
