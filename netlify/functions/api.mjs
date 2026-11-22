@@ -648,8 +648,8 @@ Each new recipe has these fields: ${RECIPE_SHAPE}`;
 
     if (body.task === "adultpick") {
       const slot = body.slot === "dinner" ? "dinner" : "lunch";
-      const system = `You choose ONE ${slot} for Lia and Amir from their own recipe book. ${slot === "dinner" ? "Dinner is something quick and fun to make (or a light meal), never a long cook." : "Lunch is the main meal of the day."} Don't repeat a dish already eaten this week, and don't use the same main protein as the other meal that day. Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts (almonds are fine)"}; if your pick contains one, choose another.
-Reply with ONLY JSON, no markdown: {"lib":"<id from the book>","why":"one short line"}`;
+      const system = `You choose ONE ${slot} for Lia and Amir from their own recipe book. ${slot === "dinner" ? "Dinner is something quick and fun to make (or a light meal), never a long cook." : "Lunch is the main meal of the day."} Don't repeat a dish already eaten this week, and don't use the same main protein as the other meal that day. Most important: look at THIS WEEK SO FAR and MISSING THIS WEEK, and pick the dish that best fills what the week is missing (a ladera, pulses, a meat-free meal, fish for Lia, red meat or chicken) while staying right for this meal; avoid adding more of anything listed as TOO MUCH. A ladera or vegetable stew needs a protein on the side (feta and boiled eggs, grilled chicken): put it in "side". "why" says what gap it fills. Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts (almonds are fine)"}; if your pick contains one, choose another (a fish dish is fine only if the book has an Amir version).
+Reply with ONLY JSON, no markdown: {"lib":"<id from the book>","side":"optional protein or carb to add","why":"one short line"}`;
       return callAI(system, clip(body.context, 12000), 300);
     }
 

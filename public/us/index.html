@@ -545,6 +545,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 .alsoari{display:flex;align-items:center;gap:10px;min-height:44px;margin:0 0 10px;padding:0 14px;border-radius:14px;background:#EFEAF5;color:#4A3D63;font-size:15px;font-weight:600;cursor:pointer}
 .alsoari input{width:20px;height:20px;accent-color:#5B4A78;flex:none}.alsoari span{display:inline-flex;align-items:center;gap:7px}.alsoari svg{width:17px;height:17px}
 .hasari{display:inline-flex!important;align-items:center;gap:5px;color:#5B4A78!important}.hasari svg{width:14px;height:14px}
+.wbal{background:var(--sage-mist);border-radius:14px;padding:10px 14px;margin:0 0 14px;font-size:15px;line-height:1.45;color:var(--ink-2)}.wbal b{color:var(--ink);font-weight:700;margin-right:4px}.wbal p+p{margin-top:4px;color:var(--ink)}.wbal .terra{color:var(--terra-ink);font-weight:600}
 .qchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
 .qchip{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 16px;border-radius:999px;border:0;background:var(--surface);box-shadow:var(--sh-1);font-size:15px;font-weight:600;color:var(--ink)}
 .qchip svg{width:17px;height:17px;color:var(--sage)}
@@ -592,7 +593,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.8";
+const APP_VERSION="4.9";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -934,6 +935,7 @@ function dishSheet(k,slot){
     `<button class="qchip" data-q="out">${I.bag}Eating out</button>`].join("");
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)}</p><h2 class="display">What's for ${sl.toLowerCase()}?</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
   ${nowT?`<div class="nowcard"><span class="px"><em>Now</em><b>${esc(nowT)}</b></span>${hasRec?`<button class="link" data-rec="${k}|${slot}|lia">${I.book}Recipe</button>`:""}</div>`:""}
+  ${slot==="breakfast"?"":(()=>{const b=weekBalance(k,[k,slot]);return `<div class="wbal"><p><b>This week so far</b> ${esc(b.line)}${b.much.length?` · <span class="terra">${esc(b.much.join(", "))}</span>`:""}</p>${b.miss.length?`<p>Missing: ${esc(b.miss.join(", "))}</p>`:""}</div>`})()}
   <div id="dishPick" data-k="${k}" data-slot="${slot}">
   <label class="rsearch"><span class="sr">Search your recipes</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="dishQ" placeholder="Type a dish, e.g. pasta" autocomplete="off" enterkeyhint="done"></label>
   <div class="qchips">${quick}</div>
@@ -1057,16 +1059,36 @@ function askPlan(){
   <label><span class="lbl">Anything to keep in mind? (optional)</span><textarea name="focus" rows="3" placeholder="e.g. Lighter dinners, Lia away Tuesday"></textarea></label>
   <button class="btn wide">${I.spark}Fill ${gaps>1?`${gaps} lunches`:"1 lunch"}</button></form>`);
 }
+/* What their week looks like food-wise, so changing a meal can fill what's missing. Sat–Fri week, lunches and dinners with a real dish. */
+function mealKind(t){t=t.toLowerCase();const k=new Set();
+  if(/\b(ladera|lathera|fasolakia|briam|gemista|arakas|bamies|okra|spanakorizo|imam|giouvetsi of veg|aginares|artichokes? .*peas|green beans? .*tomato)\b/.test(t))k.add("ladera");
+  if(/\b(lentils?|fakes|fasolada|beans?\b(?! sprouts)|chickpeas?|revithia|split peas|fava|dal)\b/.test(t)&&!/green beans?/.test(t.replace(/green beans?[^,]*$/,"")))k.add("pulses");
+  if(/\b(salmon|cod|hake|sea ?bass|bream|sardines?|tuna|fish|prawns?|shrimps?|sole|mackerel)\b/.test(t))k.add("fish");
+  if(/\b(chicken|turkey)\b/.test(t))k.add("poultry");
+  if(/\b(beef|veal|lamb|pork|goat|steak|kima)\b/.test(t))k.add("red meat");
+  if(/\b(mince|minced|keftedakia|keftedes|meatballs?|patties|kofta|burgers?|bolognese|biftekia|soutzoukakia|youvarlakia|kima)\b/.test(t))k.add("mince");
+  if(!["fish","poultry","red meat"].some(x=>k.has(x)))k.add("vegetarian");
+  return k}
+function weekBalance(k,skip){const mon=mondayOf(k),c={},meals=[];
+  for(let i=0;i<7;i++){const d=addDays(mon,i);["lunch","dinner"].forEach(s=>{if(skip&&d===skip[0]&&s===skip[1])return;const a=A.adultMeal(d,s);if(!a||a.lia.mode==="out"||a.lia.mode==="none"||a.lia.mode==="left")return;
+    const pl=S().adults?.[d]?.[s]?.plan,t=[pText(a.lia),...(a.r?.ingredients||[]),...(pl?.ing||[])].join(" ");if(!pText(a.lia)||/^leftovers/i.test(pText(a.lia)))return;
+    meals.push(`${DOW[parse(d).getDay()].slice(0,3)} ${s}: ${pText(a.lia)}`);mealKind(t).forEach(x=>c[x]=(c[x]||0)+1)})}
+  const miss=[];if(!c.ladera)miss.push("a ladera or vegetable stew");if(!c.pulses)miss.push("lentils or beans");if(!c.vegetarian)miss.push("a meat-free meal");
+  if((c["red meat"]||0)<2)miss.push("red meat");if((c.poultry||0)<2)miss.push("chicken");if(!c.fish)miss.push("fish (for Lia)");
+  const much=[];if((c.mince||0)>=4)much.push(`${c.mince} minced-meat dishes`);if((c.fish||0)>2)much.push(`${c.fish} fish dishes`);
+  const line=["poultry","red meat","fish","ladera","pulses","vegetarian"].map(x=>`${c[x]||0} ${x}`).join(" · ");
+  return {c,miss,much,meals,line}}
 // One meal, picked now by the AI from their own book
 async function aiPick(k,s,btn){
   const mon=ui.week,day=DOW[parse(k).getDay()],other=s==="dinner"?"lunch":"dinner",oa=A.adultMeal(k,other);
   const eaten=[];for(let i=-3;i<7;i++){const d=addDays(k,i);if(d===k)continue;["lunch","dinner"].forEach(x=>{const p=S().adults?.[d]?.[x]?.plan;const t=p?.share?A.adultMeal(d,x).r?.title:p?.title;if(t)eaten.push(`${d} ${x}: ${t}`)})}
   const lib=LIB().filter(r=>(r.meals||[]).includes(s)||(s==="dinner"&&(r.meals||[]).includes("lunch")));
-  const ctx=`Choose ${s} for ${day} ${k}.\nThat day's ${other}: ${pText(oa.lia)||"not set"}\nEaten around it:\n${eaten.join("\n")||"nothing yet"}\nTheir book (id | title | time | group):\n${lib.map(r=>`${r.id} | ${r.title} | ${r.time||""} | ${catOf(r)}`).join("\n")}`;
+  const bal=weekBalance(k,[k,s]);
+  const ctx=`Choose ${s} for ${day} ${k}.\nThat day's ${other}: ${pText(oa.lia)||"not set"}\nTHIS WEEK SO FAR (Sat-Fri, without this meal): ${bal.line}\n${bal.meals.join("\n")}\nMISSING THIS WEEK: ${bal.miss.join(", ")||"nothing"}${bal.much.length?`\nTOO MUCH ALREADY: ${bal.much.join(", ")}`:""}\nEaten around it:\n${eaten.join("\n")||"nothing yet"}\nTheir book (id | title | time | group):\n${lib.map(r=>`${r.id} | ${r.title} | ${r.time||""} | ${catOf(r)}`).join("\n")}`;
   if(btn){btn.disabled=true;btn.innerHTML=`<span class="dot"></span>Choosing…`}
   try{const P=A.prefs(),res=await streamAI({task:"adultpick",slot:s,context:ctx,allergies:[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")});
     const r=LIB().find(l=>l.id===res.lib)||LIB().find(l=>l.title.toLowerCase()===String(res.lib||"").toLowerCase());if(!r)throw new Error("Couldn't choose one. Try again.");
-    const ok=await saveDish(k,s,{title:r.title,ing:r.ing||[],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id,locked:true});
+    const sd=String(res.side||"").trim();const ok=await saveDish(k,s,{title:r.title+(sd&&!r.title.toLowerCase().includes(sd.toLowerCase())?` with ${sd}`:""),ing:[...(r.ing||[]),...(sd?[`Side: ${sd}`]:[])],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id,locked:true});
     if(ok!==false)status(`${r.title}${res.why?`: ${res.why}`:""}`,true)}
   catch(err){status(err.message||"Couldn't choose one. Try again.",true,true);if(btn){btn.disabled=false;btn.innerHTML=`${I.spark}Let AI choose`}}
 }
