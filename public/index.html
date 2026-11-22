@@ -945,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.14";
+const APP_VERSION="14.15";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1118,7 +1118,7 @@ function kitchenNote(k){
   const AX=adultExtra(k),axOf=id=>AX.dishes.find(d=>d.r.id===id);
   const T=S.cookTicks?.[k]||{};
   const tk=(id,inner)=>{const t=T[id];return `<div class="krow${t?" done":""}"><button class="ktick" data-act="cooktick" data-id="${esc(id)}" data-day="${k}" aria-pressed="${!!t}" aria-label="${t?"Done, tap to undo":"Mark as done"}">${I.check}</button><div class="kbody">${inner}</div></div>`};
-  const link=(r,label,notes)=>{const f=(+r.serves||1)>1?scaleFor(r.id,k):0,pp=f&&!/^Side:/.test(label)?portionPlan(r.id,k,f):null,ax=!/^(Side|Bake|Make):/.test(label)&&axOf(r.id);notes=ax?[`Plus ${adultTxt(ax.f)} for Lia & Amir`,...notes]:notes;const meta=[f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:"",pp?`<em class="frz${pp.spare>0&&pp.fr?" on":""}">${freezeTxt(pp)}</em>`:"",...notes.map(n=>`<em>${n}</em>`)].filter(Boolean).join("");
+  const link=(r,label,notes)=>{const f=(+r.serves||1)>1?scaleFor(r.id,k):0,pp=f&&!/^Side:/.test(label)?portionPlan(r.id,k,f):null,ax=!/^(Side|Bake|Make):/.test(label)&&axOf(r.id);notes=ax?[adultNote(ax),...notes]:notes;const meta=[f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:"",pp?`<em class="frz${pp.spare>0&&pp.fr?" on":""}">${freezeTxt(pp)}</em>`:"",...notes.map(n=>`<em>${n}</em>`)].filter(Boolean).join("");
     return `<button class="klink" data-act="recipe" data-id="${esc(r.id)}" data-day="${k}"${f?` data-scale="${f}"`:""}><span class="kname">${label}</span>${meta?`<span class="kmeta">${meta}</span>`:""}</button>`};
   const items=c.cook.map(t=>{const m=t.match(/ \((breakfast|for Sunday)\)$/),base=m?t.slice(0,-m[0].length):t,r=S.recipes.find(r=>base===r.title);if(!r)return esc(t);
     return tk("cook:"+r.id,link(r,esc(base),[m?.[1]==="breakfast"?"breakfast":"",dow===6&&sunIds.has(r.id)?"also for Sunday":""].filter(Boolean)))});
@@ -1306,6 +1306,7 @@ function portionPlan(id,k,f){
   const ent=[];
   if(bx){n=bx.n;bx.uses.forEach((u,i)=>{const m=u.match(/^(½|1) (at breakfast|for snack) (\w+)$/);if(m)ent.push({d:bx.days[i],t:`${m[3]} ${/snack/.test(m[2])?"snack":"breakfast"}`,q:m[1]==="½"?"½ portion":"1 portion"})});eat=ent.map(e=>e.t)}
   else{for(let i=0;i<4;i++){const d=addDays(k,i),ms=S.days[d]?.meals||{};const hit=["lunch","dinner"].filter(s=>ms[s]?.recipeId===id);if(!hit.length){if(i>0)break;continue}hit.forEach(s=>{ent.push({d,t:`${DOW[parse(d).getDay()]} ${s}`,q:"1 portion"});eat.push(`${lab(d)} ${s}`);n++})}}
+  if(!bx){const ax=adultExtra(k).dishes.find(x=>x.r.id===id);if(ax){n+=ax.ap;ent.push({d:k,t:"Lia & Amir",q:`${halfTxt(ax.ap)} portions`});eat.push("Lia & Amir")}}
   const makes=sv*f,spare=Math.floor(makes-n+1e-9);
   return {makes,n,eat,ent,k,bake:!!bx,spare,short:n>makes,fr:!!r.freezes||!!bx};
 }
@@ -1514,7 +1515,7 @@ function scaleFor(id,k){
 function madeToday(id,k){const r=recipeById(id);if(!r||(+r.serves||1)<=1)return false;const prev=S.days[addDays(k,-1)]?.meals||{};
   if(["lunch","dinner"].some(s=>(S.days[k]?.meals||{})[s]?.recipeId===id))return parse(k).getDay()!==0&&!["lunch","dinner"].some(s=>prev[s]?.recipeId===id);
   return [mondayOf(k),addDays(mondayOf(k),7)].some(w=>weekBakes(w).some(x=>x.r.id===id&&x.mk===k))}
-const scaleTxt=f=>f===.5?"½":f===1?"1":`×${f}`;
+const scaleTxt=f=>f===.5?"½":f===1?"1":f<1?qtr(f):`×${qtr(f)}`;
 // How much to cook on a day: Ariadne's batch plus Lia & Amir's share when they eat it too
 function cookScale(id){const day=(ui.rday&&madeToday(id,ui.rday))?ui.rday:nextMakeDay(id);
   const base=day?scaleFor(id,day):planScale(id),ex=day?(adultExtra(day).dishes.find(x=>x.r.id===id)?.f||0):0;return {f:base+ex,base,ex,day}}
@@ -1802,7 +1803,9 @@ async function shrink(file){
 /* ---------- Amir & Lia (the /us/ app reads these through ?embed=1) ----------
    They eat what Ariadne eats, in grown-up portions. Amir is allergic to fish, seafood, chickpeas and nuts:
    when her dish has any of those, Lia still has it and Amir gets a swap. */
-const adultTxt=f=>f===.5?"half a recipe":f===1?"1 more recipe":`${String(f).replace(".5","½")} more recipes`;
+const qtr=x=>{const w=Math.floor(x+1e-9),r=Math.round((x-w)*4)/4;return `${w||""}${{.25:"¼",.5:"½",.75:"¾"}[r]||""}`||"0"};
+const adultTxt=f=>!f?"":f===1?"1 more recipe":`${qtr(f)} more recipe${f>1?"s":""}`;
+const adultNote=d=>d.f?`Plus ${adultTxt(d.f)} for Lia & Amir`:"Enough for Lia & Amir too: no spares to freeze";
 const PREFS=()=>({allergies:["fish","seafood","chickpeas","nuts"],other:"",portion:3,...(S.adults?._prefs||{})});
 // Toddler-style dishes are Ariadne's alone: never shared with Lia and Amir
 const TODDLER_ONLY=/\b(puree|purée)\b/i; // Lia & Amir now eat Ariadne's menu: only purées stay hers
@@ -1814,7 +1817,7 @@ function autoSide(k,r){const dow=parse(k).getDay(),t=(r?.title||"").toLowerCase(
   if(/\b(tacos?|enchiladas?|chill?i con carne|fajitas?|burritos?|nachos?|tinga|mexican)\b/.test(t)&&!/greek/.test(t))return "pico de gallo and guacamole";
   if(/\b(pasta|orzo|rice|potato|potatoes|wedges|spaghetti|penne|noodles|bread|pitta|pie|lasagn\w*|risotto|couscous|quinoa|chips|fries|giouvetsi|bolognese)\b/.test(t))return ["Greek salad","green salad","steamed greens"][dow%3];
   return ADULT_SIDES[dow]}
-const ADULT_P_=()=>+PREFS().portion||3; // one grown-up portion, in Ariadne's portions
+const ADULT_P_=()=>+PREFS().portion||1.5; // one grown-up portion, in Ariadne's portions (500 g of keftedakia fed her two days plus Lia & Amir: 1.5)
 // Their own breakfast (Ariadne's is too small and too soft): a weekly rotation, high in protein, no nuts
 const ADULT_BF=[
   {t:"Overnight oats with yoghurt & fruit",i:["100 g oats","250 g Greek yoghurt","200 ml milk","1 tbsp chia seeds","150 g berries"],method:["The night before, mix the oats, yoghurt, milk and chia in two jars.","Cover and leave in the fridge overnight.","In the morning, top with the berries."]},
@@ -1857,9 +1860,11 @@ const ADULT_COOK=true; // Catherine cooks shared dishes for Lia & Amir too...
 const ADULT_COOK_FROM="2026-11-28"; // ...from this week on: 21-27 Nov was already shopped for Ariadne only, so it stays as it is
 function adultExtra(k){const dow=parse(k).getDay();if(dow===0||!ADULT_COOK||k<ADULT_COOK_FROM)return {dishes:[],swaps:0,own:[]};const dishes=[],seen=new Set();
   ["lunch","dinner"].forEach(sl=>{const id=S.days[k]?.meals?.[sl]?.recipeId;if(!id||seen.has(id)||!madeToday(id,k))return;seen.add(id);const r=recipeById(id);let n=0;
-    for(let i=0;i<3;i++){const d=addDays(k,i),ms=S.days[d]?.meals||{};if(i>0&&!["lunch","dinner"].some(s=>ms[s]?.recipeId===id))break;
-      ["lunch","dinner"].forEach(s=>{if(ms[s]?.recipeId!==id)return;const a=adultMeal(d,s);if(a.lia.mode==="same")n++;if(a.amir.mode==="same")n++})}
-    if(n){const base=scaleFor(id,k);let f=Math.max(.5,Math.ceil(n*ADULT_P_()/(+r.serves||1)*2)/2);f=eggRound(r,base+f)-base;dishes.push({r,n,f})}});
+    let bn=0;for(let i=0;i<3;i++){const d=addDays(k,i),ms=S.days[d]?.meals||{};if(i>0&&!["lunch","dinner"].some(s=>ms[s]?.recipeId===id))break;
+      ["lunch","dinner"].forEach(s=>{if(ms[s]?.recipeId!==id)return;bn++;const a=adultMeal(d,s);if(a.lia.mode==="same")n++;if(a.amir.mode==="same")n++})}
+    // Everyone eating it on every day it's served (Ariadne's leftovers day included) comes out of one pot:
+    // cook only what's missing on top of her batch, so her "spare to freeze" portions feed Lia & Amir first.
+    if(n){const base=scaleFor(id,k),sv=+r.serves||1,need=bn+n*ADULT_P_(),have=base*sv;let f=need>have?Math.ceil((need-have)/sv*4)/4:0;if(f)f=eggRound(r,base+f)-base;dishes.push({r,n,f,ap:n*ADULT_P_()})}});
   const sw=d=>["lunch","dinner"].filter(s=>adultMeal(d,s).amir.mode==="swap").length;
   const own=[];["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);if(!a.own)return;if(a.lia.mode==="plan"||a.amir.mode==="plan")own.push({slot:sl,title:a.own.title,who:a.lia.mode==="plan"&&a.amir.mode==="plan"?"":a.lia.mode==="plan"?"Lia":"Amir"});if(a.amir.mode==="alt")own.push({slot:sl,title:a.amir.text,who:"Amir"})});
   return {dishes,swaps:sw(k)+(dow===6?sw(addDays(k,1)):0),own}}
@@ -1876,7 +1881,7 @@ window.ariDay=k=>{
   const cook=c.cook.map(t=>{const m=t.match(/ \((breakfast|for Sunday)\)$/),base=m?t.slice(0,-m[0].length):t,r=S.recipes.find(r=>base===r.title);
     return {id:r?.id||base,title:base,mins:recipeMins(r),note:m?.[1]==="breakfast"?"breakfast":(m?.[1]==="for Sunday"||(dow===6&&r&&sunIds.has(r.id)))?"also for Sunday":""}});
   (c.sides||[]).forEach(r=>cook.push({id:r.id,title:"Side: "+r.title,mins:Math.min(recipeMins(r)||20,40),note:""}));
-  const AX=adultExtra(k);cook.forEach(x=>{const d=AX.dishes.find(d=>d.r.id===x.id);if(d)x.note=[x.note,`plus ${adultTxt(d.f)} for Lia & Amir`].filter(Boolean).join(" · ")});
+  const AX=adultExtra(k);cook.forEach(x=>{const d=AX.dishes.find(d=>d.r.id===x.id);if(d)x.note=[x.note,adultNote(d).replace(/^P/,"p").replace(/^E/,"e")].filter(Boolean).join(" · ")});
   (AX.own||[]).forEach((d,i)=>cook.push({id:"adult"+d.slot+i,title:`${d.who?`For ${d.who}`:"For Lia & Amir"}: ${d.title}`,mins:30,note:`their ${d.slot}`}));
   if(AX.swaps)cook.push({id:"amirchicken",title:`For Amir: ${AX.swaps} chicken ${AX.swaps>1?"breasts":"breast"}, grilled`,mins:20,note:"no fish for him"});
   const bakes=[mondayOf(k),addDays(mondayOf(k),7)].flatMap(w=>weekBakes(w)).filter((x,i,a)=>x.mk===k&&a.findIndex(y=>y.r.id===x.r.id)===i)

@@ -592,7 +592,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.7";
+const APP_VERSION="4.8";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -973,7 +973,7 @@ function recipeSheet(k,slot,who){
   const a=A.adultMeal(k,slot);let d=null,note="",title="";
   const p=who==="ari"?null:a[who];
   if(who==="ari"||(p&&typeof p.dish==="string")){const r=a.r;if(!r)return;title=r.title;d={ing:r.ingredients||[],method:r.method||[],time:r.time};
-    const ex=A.adultExtra(k).dishes.find(x=>x.r.id===r.id);note=`Ariadne's recipe, made in a bigger batch for you two${ex?` (${ex.f===.5?"half a recipe":ex.f===1?"1 more recipe":ex.f+" more recipes"} on top of hers)`:""}. Season your portions at the table.`;}
+    const ex=A.adultExtra(k).dishes.find(x=>x.r.id===r.id);note=ex&&!ex.f?"Ariadne's recipe: her batch already covers you two. Season your portions at the table.":`Ariadne's recipe, made in a bigger batch for you two${ex?` (${String(ex.f).replace(/\.25$/,"¼").replace(/\.5$/,"½").replace(/\.75$/,"¾").replace(/^0(?=[¼½¾])/,"")} more recipe${ex.f>1?"s":""} on top of hers)`:""}. Season your portions at the table.`;}
   else if(p&&p.dish){d=p.dish;title=d.title;if(slot!=="breakfast")note=p.mode==="alt"?"For Amir only (1 portion).":"For two.";}
   else{const q=[a.lia,a.amir].find(x=>x.dish);if(!q)return;return recipeSheet(k,slot,q===a.lia?"lia":"amir")}
   openSheet(`<div class="sh-h"><div><p class="eyebrow">${DOW[parse(k).getDay()]} ${shortDate(k)} · ${SLOTS.find(x=>x[0]===slot)[1]}${d.time?` · ${esc(d.time)}`:""}</p><h2 class="display">${esc(title)}</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
@@ -1097,7 +1097,7 @@ function openSettings(){
   <div class="setgrp"><h3 class="grph">Amir's allergies</h3><p class="small muted" style="margin:0 0 10px">Any dish with these gets an alternative for Amir. Lia still has the dish.</p>
     <div class="checks">${["fish","seafood","chickpeas","nuts"].map(a=>`<label><input type="checkbox" name="al" value="${a}"${P.allergies.includes(a)?" checked":""}><span>${a==="nuts"?"Nuts (not almonds)":cap(a)}</span></label>`).join("")}</div>
     <label style="display:block;margin-top:12px"><span class="lbl">Anything else he avoids (comma separated)</span><input name="other" maxlength="160" value="${esc(P.other||"")}" placeholder="e.g. sesame"></label></div>
-  <div class="setgrp"><h3 class="grph">Portion size</h3><label><span class="lbl">One grown-up portion is about</span><select name="portion">${[2,2.5,3,3.5,4].map(v=>`<option value="${v}"${+P.portion===v?" selected":""}>${String(v).replace(".5","½")} of Ariadne's portions</option>`).join("")}</select></label>
+  <div class="setgrp"><h3 class="grph">Portion size</h3><label><span class="lbl">One grown-up portion is about</span><select name="portion">${[1,1.5,2,2.5,3].map(v=>`<option value="${v}"${(+P.portion||1.5)===v?" selected":""}>${String(v).replace(".5","½")} of Ariadne's portions</option>`).join("")}</select></label>
     <p class="small muted" style="margin-top:8px">Used when you share her dish: Catherine makes that much more.</p></div>
   <button class="btn wide">Save</button></form><p class="ver">Version ${APP_VERSION}</p>`);
 }
