@@ -945,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.15";
+const APP_VERSION="14.16";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1837,7 +1837,8 @@ const AMIR_SWAPS=["Grilled steak with chimichurri","Grilled chicken breast with 
 function swapText(al,k){const i=k?Math.round(parse(k).getTime()/864e5)%AMIR_SWAPS.length:1;return al.includes("fish")||al.includes("seafood")?AMIR_SWAPS[i]:al.includes("chickpeas")?"Lean beef or chicken patties":al.includes("nuts")?"The same dish, made without nuts":`Something without ${al.join(" or ")}`}
 function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
   if(slot==="breakfast"){const b=pl&&pl.title&&pl.locked?{t:pl.title,i:pl.ing||[],method:pl.method||[]}:adultBf(k);const one=who=>{const o=ov[who];return o?.mode==="out"?{mode:"out",text:"Eating out"}:o?.mode==="own"?{mode:"own",text:o.text||"Own breakfast"}:{mode:"same",text:b.t,dish:{title:b.t,ing:b.i,method:b.method||[]}}};return {r:null,bf:b,side:"",al:[],lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
-  const m=S.days[k]?.meals?.[slot],r=m?.recipeId&&recipeById(m.recipeId),side=(pl?.share&&pl.side)||(r&&(!pl||pl.share)?autoSide(k,r):m?.side||""),al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
+  // a "share" of one of her dishes at another meal (e.g. her lunch moved to their dinner) points straight at that recipe
+  const m0=S.days[k]?.meals?.[slot],m=pl?.share&&pl.share!==m0?.recipeId&&recipeById(pl.share)?{recipeId:pl.share}:m0,r=m?.recipeId&&recipeById(m.recipeId),side=(pl?.share&&pl.side)||(r&&(!pl||pl.share)?autoSide(k,r):m?.side||""),al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
   const own=pl&&pl.title&&!pl.share?pl:null,oal=own?allergensOf({title:own.title,ingredients:own.ing||[]},""):[];
   // Dinner is usually leftovers: theirs from lunch, or Ariadne's dishes in the fridge
   if(slot==="dinner"&&!pl){const lu=adultMeal(k,"lunch");
@@ -1861,7 +1862,7 @@ const ADULT_COOK_FROM="2026-11-28"; // ...from this week on: 21-27 Nov was alrea
 function adultExtra(k){const dow=parse(k).getDay();if(dow===0||!ADULT_COOK||k<ADULT_COOK_FROM)return {dishes:[],swaps:0,own:[]};const dishes=[],seen=new Set();
   ["lunch","dinner"].forEach(sl=>{const id=S.days[k]?.meals?.[sl]?.recipeId;if(!id||seen.has(id)||!madeToday(id,k))return;seen.add(id);const r=recipeById(id);let n=0;
     let bn=0;for(let i=0;i<3;i++){const d=addDays(k,i),ms=S.days[d]?.meals||{};if(i>0&&!["lunch","dinner"].some(s=>ms[s]?.recipeId===id))break;
-      ["lunch","dinner"].forEach(s=>{if(ms[s]?.recipeId!==id)return;bn++;const a=adultMeal(d,s);if(a.lia.mode==="same")n++;if(a.amir.mode==="same")n++})}
+      ["lunch","dinner"].forEach(s=>{const mine=ms[s]?.recipeId===id,moved=!mine&&S.adults?.[d]?.[s]?.plan?.share===id;if(!mine&&!moved)return;if(mine)bn++;const a=adultMeal(d,s);if(a.lia.mode==="same")n++;if(a.amir.mode==="same")n++})}
     // Everyone eating it on every day it's served (Ariadne's leftovers day included) comes out of one pot:
     // cook only what's missing on top of her batch, so her "spare to freeze" portions feed Lia & Amir first.
     if(n){const base=scaleFor(id,k),sv=+r.serves||1,need=bn+n*ADULT_P_(),have=base*sv;let f=need>have?Math.ceil((need-have)/sv*4)/4:0;if(f)f=eggRound(r,base+f)-base;dishes.push({r,n,f,ap:n*ADULT_P_()})}});

@@ -593,7 +593,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.10";
+const APP_VERSION="4.11";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -1081,11 +1081,23 @@ function weekBalance(k,skip){const mon=mondayOf(k),c={},meals=[];
 // One meal, picked now by the AI from their own book
 async function aiPick(k,s,btn){
   const mon=ui.week,day=DOW[parse(k).getDay()],other=s==="dinner"?"lunch":"dinner",oa=A.adultMeal(k,other);
+  const bal=weekBalance(k,[k,s]);
   const eaten=[];for(let i=-3;i<7;i++){const d=addDays(k,i);if(d===k)continue;["lunch","dinner"].forEach(x=>{const p=S().adults?.[d]?.[x]?.plan;const t=p?.share?A.adultMeal(d,x).r?.title:p?.title;if(t)eaten.push(`${d} ${x}: ${t}`)})}
   const lib=LIB().filter(r=>((r.meals||[]).includes(s)||(s==="dinner"&&(r.meals||[]).includes("lunch")))&&!(s==="dinner"&&catOf(r)==="Ladera")); // ladera is a lunch
-  const bal=weekBalance(k,[k,s]);
   const ctx=`Choose ${s} for ${day} ${k}.\nThat day's ${other}: ${pText(oa.lia)||"not set"}\nTHIS WEEK SO FAR (Sat-Fri, without this meal): ${bal.line}\n${bal.meals.join("\n")}\nMISSING THIS WEEK: ${bal.miss.join(", ")||"nothing"}${bal.much.length?`\nTOO MUCH ALREADY: ${bal.much.join(", ")}`:""}\nEaten around it:\n${eaten.join("\n")||"nothing yet"}\nTheir book (id | title | time | group):\n${lib.map(r=>`${r.id} | ${r.title} | ${r.time||""} | ${catOf(r)}`).join("\n")}`;
   if(btn){btn.disabled=true;btn.innerHTML=`<span class="dot"></span>Choosing…`}
+  // Dinner change while the week has no ladera: ladera belongs at lunch, so flip — a ladera for lunch, that day's lunch moves to dinner.
+  const lu=A.adultMeal(k,"lunch"),luPl=S().adults?.[k]?.lunch?.plan,ladIds=new Set(LIB().filter(r=>catOf(r)==="Ladera").map(r=>r.id));
+  if(s==="dinner"&&bal.miss.some(x=>/ladera/.test(x))&&ladIds.size&&!["out","own","none"].includes(lu.lia.mode)&&(luPl?.share||lu.r||luPl?.title)&&!/ladera|arakas|fasolakia|briam/i.test(pText(lu.lia))){
+    try{const lad=LIB().filter(r=>ladIds.has(r.id)),P=A.prefs();
+      const lctx=`Choose lunch for ${day} ${k}. It must be a ladera from this list.\nTHIS WEEK SO FAR: ${bal.line}\n${bal.meals.join("\n")}\nEaten around it:\n${eaten.join("\n")||"nothing yet"}\nTheir book (id | title | time | group):\n${lad.map(r=>`${r.id} | ${r.title} | ${r.time||""} | Ladera`).join("\n")}`;
+      const res=await streamAI({task:"adultpick",slot:"lunch",context:lctx,allergies:[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")});
+      const r=lad.find(l=>l.id===res.lib)||lad[0],sd=String(res.side||"feta and homemade bread").trim();
+      const lunchPlan={title:`${r.title} with ${sd}`,ing:[...(r.ing||[]),`Side: ${sd}`],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id,locked:true};
+      const dinnerPlan=luPl&&!luPl.share&&luPl.title?{...luPl,locked:true}:{share:luPl?.share||lu.r.id,side:luPl?.side||lu.side||"",locked:true};
+      const d=await post("adult-plan-save",{plans:{[k]:{lunch:lunchPlan,dinner:dinnerPlan}}});S().adults=d.adults;closeSheet();render();
+      status(`Flipped: ${r.title} for lunch, ${pText(lu.lia)} moves to dinner`,true);return}
+    catch(err){/* fall back to a normal dinner pick */}}
   try{const P=A.prefs(),res=await streamAI({task:"adultpick",slot:s,context:ctx,allergies:[...P.allergies.map(a=>a==="nuts"?"nuts (almonds are fine)":a),P.other].filter(Boolean).join(", ")});
     const r=LIB().find(l=>l.id===res.lib)||LIB().find(l=>l.title.toLowerCase()===String(res.lib||"").toLowerCase());if(!r)throw new Error("Couldn't choose one. Try again.");
     const sd=String(res.side||"").trim();const ok=await saveDish(k,s,{title:r.title+(sd&&!r.title.toLowerCase().includes(sd.toLowerCase())?` with ${sd}`:""),ing:[...(r.ing||[]),...(sd?[`Side: ${sd}`]:[])],method:r.method||[],time:r.time||"",amir:r.amir||null,lib:r.id,locked:true});
