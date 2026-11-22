@@ -945,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.16";
+const APP_VERSION="14.17";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1838,7 +1838,7 @@ function swapText(al,k){const i=k?Math.round(parse(k).getTime()/864e5)%AMIR_SWAP
 function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
   if(slot==="breakfast"){const b=pl&&pl.title&&pl.locked?{t:pl.title,i:pl.ing||[],method:pl.method||[]}:adultBf(k);const one=who=>{const o=ov[who];return o?.mode==="out"?{mode:"out",text:"Eating out"}:o?.mode==="own"?{mode:"own",text:o.text||"Own breakfast"}:{mode:"same",text:b.t,dish:{title:b.t,ing:b.i,method:b.method||[]}}};return {r:null,bf:b,side:"",al:[],lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
   // a "share" of one of her dishes at another meal (e.g. her lunch moved to their dinner) points straight at that recipe
-  const m0=S.days[k]?.meals?.[slot],m=pl?.share&&pl.share!==m0?.recipeId&&recipeById(pl.share)?{recipeId:pl.share}:m0,r=m?.recipeId&&recipeById(m.recipeId),side=(pl?.share&&pl.side)||(r&&(!pl||pl.share)?autoSide(k,r):m?.side||""),al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
+  const m0=S.days[k]?.meals?.[slot],m=pl?.share&&pl.share!==m0?.recipeId&&recipeById(pl.share)?{recipeId:pl.share}:m0,r=m?.recipeId&&recipeById(m.recipeId),side=pl&&pl.title&&!pl.share?"":(pl?.share&&pl.side)||(r&&(!pl||pl.share)?autoSide(k,r):m?.side||""),al=r?allergensOf(r,side):[],kid=r&&TODDLER_ONLY.test(r.title);
   const own=pl&&pl.title&&!pl.share?pl:null,oal=own?allergensOf({title:own.title,ingredients:own.ing||[]},""):[];
   // Dinner is usually leftovers: theirs from lunch, or Ariadne's dishes in the fridge
   if(slot==="dinner"&&!pl){const lu=adultMeal(k,"lunch");
