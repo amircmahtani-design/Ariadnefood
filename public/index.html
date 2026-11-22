@@ -945,7 +945,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.13";
+const APP_VERSION="14.14";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1821,7 +1821,8 @@ const ADULT_BF=[
   {t:"Scrambled eggs on homemade toast",i:["5 eggs","1 tsp butter","2 slices homemade bread","150 g cherry tomatoes"],method:["Whisk the eggs with a pinch of salt and pepper.","Melt the butter in a pan over low heat, add the eggs and stir gently until just set.","Serve on toast with the tomatoes."]},
   {t:"French toast with fruit",i:["3 eggs","100 ml milk","4 slices homemade bread","1 tsp butter","½ tsp cinnamon","150 g berries","100 g Greek yoghurt"],method:["Whisk the eggs, milk and cinnamon in a shallow dish.","Dip the bread slices on both sides.","Fry in a little butter over medium heat, 2 to 3 minutes a side, until golden.","Serve with yoghurt and berries."]},
   {t:"Oat pancakes with yoghurt & fruit",i:["100 g oats","2 eggs","1 banana","100 ml milk","1 tsp baking powder","100 g Greek yoghurt","150 g berries"],method:["Blend the oats, eggs, banana, milk and baking powder until smooth.","Cook small pancakes in a lightly oiled pan over medium heat, 2 minutes a side.","Serve with yoghurt and berries."]}];
-const adultBf=k=>ADULT_BF[Math.round(parse(k).getTime()/864e5)%ADULT_BF.length];
+// Overnight oats are made the night before, and Catherine is off on Sundays: never on a Monday
+const adultBf=k=>{let i=Math.round(parse(k).getTime()/864e5)%ADULT_BF.length;if(parse(k).getDay()===1&&/overnight/i.test(ADULT_BF[i].t))i=(i+1)%ADULT_BF.length;return ADULT_BF[i]};
 const ALLERGY=[["fish",/\b(salmon|cod|hake|sardines?|tuna|fish|sea ?bass|mackerel|anchov\w*|haddock|trout)\b/i],["seafood",/\b(prawns?|shrimps?|squid|calamari|mussels?|crab|lobster|octopus|clams?|scallops?)\b/i],["chickpeas",/\b(chickpeas?|hummus|houmous|garbanzo|falafel)\b/i],["nuts",/\b(peanuts?|walnuts?|cashews?|pistachios?|hazelnuts?|pecans?|pine nuts?|nut butter|nuts)\b/i]];
 function allergyRules(){const P=PREFS(),on=ALLERGY.filter(([n])=>P.allergies.includes(n));
   const words=String(P.other||"").split(/[,;\n]/).map(w=>w.trim()).filter(w=>w.length>2);

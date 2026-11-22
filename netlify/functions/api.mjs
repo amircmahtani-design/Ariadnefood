@@ -646,6 +646,13 @@ Each new recipe has these fields: ${RECIPE_SHAPE}`;
       return callAI(system, content, 6000);
     }
 
+    if (body.task === "adultpick") {
+      const slot = body.slot === "dinner" ? "dinner" : "lunch";
+      const system = `You choose ONE ${slot} for Lia and Amir from their own recipe book. ${slot === "dinner" ? "Dinner is something quick and fun to make (or a light meal), never a long cook." : "Lunch is the main meal of the day."} Don't repeat a dish already eaten this week, and don't use the same main protein as the other meal that day. Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts (almonds are fine)"}; if your pick contains one, choose another.
+Reply with ONLY JSON, no markdown: {"lib":"<id from the book>","why":"one short line"}`;
+      return callAI(system, clip(body.context, 12000), 300);
+    }
+
     if (body.task === "adultplan") {
       const week = DATE_RE.test(body.weekStart || "") ? body.weekStart : today;
       const system = `You plan the LUNCHES for Lia and Amir, a healthy, fit couple in Dubai, parents of a toddler (Ariadne) whose meals are planned separately. Breakfasts are a simple fixed rotation and dinner is usually leftovers from the fridge, so you plan lunches only.
@@ -654,6 +661,7 @@ FAVOURITES: dishes marked [FAV] are the ones they cook most. Pick most lunches f
 Balance the week: vary the proteins (chicken, beef, lamb, pork, turkey, eggs, halloumi or feta, pulses, and fish for Lia only), don't repeat a dish, and keep CHOSEN lunches exactly as they are. Lunches are cooked at home and their leftovers become dinner, so dishes that keep well (stews, ladera, pies, bakes, soups) are good choices a few times a week. Never pick toddler-style food. Sunday lunch is quick (15 to 25 minutes).
 ALLERGIES: Amir must never eat: ${clip(body.allergies, 300) || "fish, seafood, chickpeas, nuts (almonds are fine)"}. Lia eats everything. If a lunch has one of Amir's allergens, add "amir": his own simple alternative for one person {"title":"","ing":[],"method":[]}.
 Only if the library has nothing suitable at all may you write a new lunch as {"title":"","ing":[],"method":[]}, quantities for two.
+Overnight oats are never on a Monday: they are made the night before and Catherine is off on Sundays.
 Reply with ONLY JSON, no markdown:
 {"note":"one sentence on the lunches you picked and why","days":[{"date":"YYYY-MM-DD","lunch":{"lib":"id","side":"brown rice"}}]}`;
       const content = clip(body.context, 40000) || "No details.";
