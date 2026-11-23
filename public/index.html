@@ -950,7 +950,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.32";
+const APP_VERSION="14.33";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1169,16 +1169,28 @@ function flavourCard(k){const t=todayKey(),dow=parse(t).getDay();if(k!==t||me!==
   return `<div class="balnote flavcard"><p><b>Next week's flavour of the week</b>The AI writes next week's menu ${dow===3?"tonight from 19:00":"today"}. Here's the cuisine it would weave into two or three of her meals:</p>${flavourBox(nw)}</div>`}
 const algOk=k=>k&&(algEligible().includes(k)||algState(k)==="intro")?k:null;
 function algChosen(mon){const p=algPickFor(mon);return p&&p.status!=="off"&&p.key?p.key:null} // undecided = the suggestion goes ahead
-function algPlanText(mon){const el=algEligible(),inDiet=ALG.filter(([x])=>algState(x)==="ok").map(([,n])=>n),hold=ALG.filter(([x])=>algState(x)==="reaction").map(([,n])=>n),going=ALG.filter(([x])=>algState(x)==="intro").map(([,n])=>n);
-  return (going.length?`Still being introduced, finish it before anything new: ${going.join(", ")}: give it at lunch on 2 weekdays this week and put its key in "allergen". `:
-    el.length?`NEW ALLERGEN THIS WEEK: you choose ONE from these (key: name, how to give it): ${el.map(a=>`${a}: ${algName(a)}, ${ALG_HOW[a]}`).join("; ")}. Prefer the one that fits this week's dishes best. Introduce it at LUNCH on 3 weekdays (Monday to Friday, never Saturday or Sunday), a day or two apart: day 1 a tiny amount, day 2 a bit more, day 3 a normal amount, mixed into a food she already loves. Peanut, tree nuts and shrimp are made for her only, in their own pan, never shared with Amir (he is allergic). Put the key in "allergen" and the dates in "allergenDays", and name them in "note". `:'No new allergen this week: leave "allergen" empty. ')
-    +`Already in her diet, keep each in her week 2 or 3 times: ${inDiet.join(", ")||"none"}.`+(hold.length?` ON HOLD after a reaction, never use: ${hold.join(", ")}.`:"")}
+function algPlanText(mon){const el=algEligible(),inDiet=ALG.filter(([x])=>algState(x)==="ok").map(([,n])=>n),hold=ALG.filter(([x])=>algState(x)==="reaction").map(([,n])=>n),going=ALG.filter(([x])=>algState(x)==="intro").map(([x])=>x);
+  const wd=[...Array(7)].map((_,i)=>addDays(mon,i)).filter(k=>{const d=parse(k).getDay();return d>=1&&d<=5});
+  const notYet=Object.keys(ALG_RE).filter(a=>algState(a)!=="ok"),byAlg=notYet.map(a=>{const ids=S.recipes.filter(r=>recipeAllergens(r).includes(a)).map(r=>r.id);return ids.length?`${algName(a)} (${a}): ${ids.join(", ")}`:""}).filter(Boolean);
+  return (going.length?`Still being introduced, finish it before anything new: ${going.map(algName).join(", ")}: give it at lunch on 2 of these weekdays: ${wd.join(", ")}. Put its key in "allergen". `:
+    el.length?`NEW ALLERGEN THIS WEEK: you choose ONE from these (key: name, how to give it): ${el.map(a=>`${a}: ${algName(a)}, ${ALG_HOW[a]}`).join("; ")}. Prefer the one that fits this week's dishes best. Introduce it at LUNCH on 3 of these weekdays only: ${wd.join(", ")}, a day or two apart: day 1 a tiny amount, day 2 a bit more, day 3 a normal amount, mixed into a food she already loves. Peanut, tree nuts and shrimp are made for her only, in their own pan, never shared with Amir (he is allergic). Put the key in "allergen" and the 3 dates in "allergenDays", and name them in "note". `:'No new allergen this week: leave "allergen" empty. ')
+    +`Already in her diet, keep each in her week 2 or 3 times: ${inDiet.join(", ")||"none"}.`+(hold.length?` ON HOLD after a reaction, never use: ${hold.join(", ")}.`:"")
+    +(byAlg.length?` RECIPES THAT CONTAIN AN ALLERGEN SHE HASN'T HAD YET: never plan them, except a recipe carrying the one allergen you are introducing, and then only on its introduction days: ${byAlg.join("; ")}.`:"")}
+// Safety net after the AI plans: any meal carrying an allergen she hasn't had (other than this week's, on its days) is swapped for a safe dish
+function algSafePlan(mon,allergen,days){let n=0;const ok=a=>algState(a)==="ok"||(a===allergen);
+  for(let i=0;i<7;i++){const k=addDays(mon,i);SLOTS.forEach(([s])=>{const m=S.days[k]?.meals?.[s];const r=m?.recipeId&&recipeById(m.recipeId);if(!r||Object.keys(m.log||{}).length)return;
+    const bad=recipeAllergens(r).filter(a=>!(algState(a)==="ok"||(a===allergen&&days.includes(k))));if(!bad.length)return;
+    const alt=S.recipes.filter(x=>(x.meals||[]).includes(s)&&!recipeAllergens(x).some(a=>!ok(a)||a===allergen)&&!restingMap()[x.id]&&x.id!==r.id).sort((a,b)=>(b.fav?1:0)-(a.fav?1:0))[0];
+    if(alt){patchDay(k,{meals:{[s]:{recipeId:alt.id}}});n++}})}
+  return n}
 /* ---------- allergens: one new allergen a week, chosen by Amir on Wednesday, introduced at lunch on weekdays ---------- */
 const ALG=[["egg","Egg"],["milk","Milk & dairy"],["wheat","Wheat"],["fish","Fish"],["sesame","Sesame"],["soy","Soy"],["peanut","Peanut",1],["almond","Almond",1],["cashew","Cashew",1],["walnut","Walnut",1],["hazelnut","Hazelnut",1],["pistachio","Pistachio",1],["shrimp","Shrimp (shellfish)",1]];
 const ALG_HOW={sesame:"¼ tsp tahini on toast fingers or half a tahini cookie, building to a whole cookie",soy:"a spoon of crumbled firm tofu in her scrambled egg, or silken tofu blended into pancake batter",
   peanut:"¼ tsp smooth peanut butter thinned with warm water, stirred into oats or spread very thin on toast",almond:"¼ tsp ground almonds or smooth almond butter in pancake batter or oats",cashew:"¼ tsp smooth cashew butter in oats or spread very thin",
   walnut:"¼ tsp very finely ground walnut in oats or pancakes",hazelnut:"¼ tsp ground hazelnut or plain hazelnut butter (not chocolate spread)",pistachio:"¼ tsp very finely ground pistachio in oats or baking",
   shrimp:"a small piece of well-cooked shrimp, finely chopped into a fishcake, rice or pasta, in its own pan"};
+const ALG_RE={sesame:/tahini|sesame|hummus/i,soy:/\btofu\b|\bsoy|edamame|miso/i,peanut:/peanut/i,almond:/almond/i,cashew:/cashew/i,walnut:/walnut/i,hazelnut:/hazelnut|nutella/i,pistachio:/pistachio/i,shrimp:/shrimp|prawn/i};
+const recipeAllergens=r=>{const t=[r?.title||"",...(r?.ingredients||[])].join(" ");return Object.keys(ALG_RE).filter(a=>ALG_RE[a].test(t))};
 const ALG_DONE0={egg:1,milk:1,wheat:1,fish:1}; // already in her diet when the app started
 const algName=a=>(ALG.find(x=>x[0]===a)||[,a])[1];
 const algState=a=>S.settings?.allergens?.[a]?.status||(ALG_DONE0[a]?"ok":"todo");
@@ -1902,7 +1914,8 @@ async function aiPlan(monArg,auto){
         meals[s]=id?{recipeId:id,side:x.side||null,custom:null,log:null,like:null}:{custom:String(x.recipe||""),recipeId:null,side:x.side||null}});
       patchDay(k,{meals})});
     fillVegSides(mon,addDays(mon,6));
-    patchDay(mon,{autoplan:{at:todayKey(),running:false,failed:false,done:true,auto:!!auto,flavour:String(res.flavour||"").slice(0,80),allergen:algOk(res.allergen)||null,allergenDays:algOk(res.allergen)?(res.allergenDays||[]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&d>=mon&&d<=addDays(mon,6)).sort().slice(0,3):[],note:String(res.note||"").slice(0,700)}});
+    const algK=algOk(res.allergen),algD=algK?(res.allergenDays||[]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&d>=mon&&d<=addDays(mon,6)&&parse(d).getDay()>=1&&parse(d).getDay()<=5).sort().slice(0,3):[];algSafePlan(mon,algK,algD);
+    patchDay(mon,{autoplan:{at:todayKey(),running:false,failed:false,done:true,auto:!!auto,flavour:String(res.flavour||"").slice(0,80),allergen:algK||null,allergenDays:algD,note:String(res.note||"").slice(0,700)}});
     busy=false;render();status(auto?"Next week planned by AI":newR.length?`Planned · ${newR.length} new recipes added`:"Week planned",true);
     if(res.note&&!auto){const l=$("#planlive");if(l)l.innerHTML=`<p class="card box small" style="margin:-8px 0 20px">${esc(res.note)}</p>`}
   }catch(err){if(auto)patchDay(mon,{autoplan:{running:false,failed:true}});busy=false;render();const l=$("#planlive");if(l&&!auto)l.innerHTML=`<div class="errbox" style="margin:-8px 0 20px">${esc(err.message)}</div>`}
