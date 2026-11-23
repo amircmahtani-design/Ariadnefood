@@ -593,7 +593,7 @@ b.mute{color:var(--ink-3)!important;font-style:italic}
 
 <script>
 "use strict";
-const APP_VERSION="4.11";
+const APP_VERSION="4.12";
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ls={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
@@ -635,7 +635,7 @@ const AL_NAME={fish:"fish",seafood:"seafood",chickpeas:"chickpeas",nuts:"nuts"};
 const ui={view:"week",date:todayKey(),week:mondayOf(todayKey()),shopW:null,shopFor:ls.get("us-shopfor")||"us"};
 if(!["week","recipes"].includes(ui.view))ui.view="week"; // Today and Shopping were retired: the week and the recipes are all they need
 let me=ls.get("ari-me")||"",A=null,busy=false;
-function hook(){try{const w=$("#ariFrame").contentWindow;if(w&&w.ariUs&&w.ariUs.ready()){const first=!A;A=w.ariUs;if(first){ui.shopW=A.planWeek();render();setWho();if(!me)askWho()}}}catch(e){}}
+function hook(){try{const w=$("#ariFrame").contentWindow;if(w&&w.ariUs&&w.ariUs.ready()){const first=!A;A=w.ariUs;if(first){ui.shopW=A.planWeek();render();setWho();if(!me)askWho();if(ui.view==="week")scrollToToday(".wrow.today")}}}catch(e){}}
 window.addEventListener("message",e=>{if(e.origin===location.origin&&e.data==="ari-ready")setTimeout(hook,0)});
 $("#ariFrame").addEventListener("load",()=>setTimeout(hook,300));
 setTimeout(()=>{if(!A)$("#view").innerHTML='<div class="errbox">Couldn\'t load. Check the connection and try again.</div>'},20000);
@@ -900,6 +900,9 @@ function openSheet(html){const sh=$("#sheet");$("#sheetBody").innerHTML=html;sh.
 // iOS keeps a stale size/scroll on the open sheet after rotating: re-measure it and bring the top (with Close) back into view.
 addEventListener("orientationchange",()=>setTimeout(()=>{const c=$("#sheetBody"),sh=$("#sheet");if(!sh||sh.hidden)return;c.style.maxHeight="none";void c.offsetHeight;c.style.maxHeight="";c.scrollTop=0},350));
 addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet()});
+// Portrait week list: open at today's day instead of the top (landscape shows the whole week in the grid anyway)
+function scrollToToday(sel){requestAnimationFrame(()=>{const el=document.querySelector(sel);if(!el||matchMedia("(orientation: landscape)").matches&&innerHeight<600){scrollTo(0,0);return}
+  const h=document.querySelector("header,.top,.appbar")?.getBoundingClientRect().height||0;scrollTo(0,Math.max(0,el.getBoundingClientRect().top+scrollY-h-12))})}
 function closeSheet(){const sh=$("#sheet");sh.classList.remove("open");setTimeout(()=>{if(!sh.classList.contains("open")){sh.hidden=true;$("#sheetBody").innerHTML=""}},260)}
 function askWho(){
   openSheet(`<div class="who-sheet"><h2 class="display">Who's using this phone?</h2><p class="muted">So the list shows who added each thing.</p>
@@ -1140,7 +1143,7 @@ function openSettings(){
 document.addEventListener("click",async e=>{
   const t=e.target.closest("button,[data-close]");if(!t)return;
   if(t.matches("[data-close]")){closeSheet();return}
-  if(t.dataset.view){ui.view=t.dataset.view;ls.set("us-view",ui.view);render();scrollTo(0,0);return}
+  if(t.dataset.view){ui.view=t.dataset.view;ls.set("us-view",ui.view);render();if(ui.view==="week")scrollToToday(".wrow.today");else scrollTo(0,0);return}
   if(t.id==="whoBtn"){A?openSettings():askWho();return}
   if(t.dataset.who){me=t.dataset.who;ls.set("ari-me",me);setWho();closeSheet();return}
   if(!A)return;

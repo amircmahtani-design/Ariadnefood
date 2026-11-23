@@ -902,6 +902,7 @@ async function load(){
     const first=!loaded;loaded=true;if(EMBED){window.ariReady=Date.now();try{parent.postMessage("ari-ready",location.origin)}catch(e){}return}if(PMODE){renderPrintPage();return}setWho();render();
     const sw=PM.get("shop");if(PM.get("for")&&sw)(ui.shopPick??={})[sw]=PM.get("for");if(first&&sw&&/^\d{4}-\d{2}-\d{2}$/.test(sw)){history.replaceState(null,"",location.pathname);openShopList(sw)}
     if(!me)askWho();
+    if(first&&ui.view==="week")scrollToToday(`#d-${todayKey()}`);
   }catch(e){if(!loaded)$("#view").innerHTML='<div class="errbox">Couldn\'t load. Check the connection and try again.</div>'}
 }
 function patchDay(k,p){
@@ -946,7 +947,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.18";
+const APP_VERSION="14.20";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1227,7 +1228,12 @@ const NO_COOK_BF=new Set(["spanakplain","fruitplate","ricottatoast","pbtoast","h
 const HOME_BAKES=new Set(["homepitta","homebread","homebroth"]);
 const FREEZER_STOCK=["carrotcookies"];
 const BROTH=new Set(["homebroth"]);
-function homeStock(id,mon){let stock=0,w=mondayOf(addDays(todayKey(),1));
+// What's left of a batch already made: the last time it was ticked off as made (before today), less what's been eaten since
+function madeStock(id){const t=todayKey();let d=null;for(let i=1;i<=28&&!d;i++){const k=addDays(t,-i);if(S.cookTicks?.[k]?.["bake:"+id])d=k}
+  if(!d)return 0;let left=+recipeById(id)?.serves||8;
+  for(let w=mondayOf(d);w<=mondayOf(t);w=addDays(w,7)){const x=bakeNeeds(w,d)[id];if(x)left-=x.per.filter(([k])=>k>=d&&k<t).reduce((a,[,n])=>a+n,0)}
+  return Math.max(0,left)}
+function homeStock(id,mon){let stock=madeStock(id),w=mondayOf(todayKey());
   while(w<mon){const n=bakeNeeds(w)[id]?.n||0,sv=+recipeById(id)?.serves||8;if(n>stock)stock+=Math.ceil((n-stock)/sv)*sv;stock-=n;w=addDays(w,7)}
   return stock}
 function weekBakes(mon){
@@ -1235,9 +1241,9 @@ function weekBakes(mon){
   // Bread, pitta, broth and the carrot bites (a batch of 24 lasts weeks): use what's in the freezer before baking again
   for(const id of [...HOME_BAKES,...FREEZER_STOCK]){const x=need[id];if(!x)continue;const st=homeStock(id,mon);if(st>=x.n)delete need[id];else x.stock=st}
   return bakeList(mon,need)}
-function bakeNeeds(mon){
-  const need={},from=mon===mondayOf(todayKey())?todayKey():mon;
-  const add=(id,k,amt,where)=>{(need[id]??={n:0,uses:[],first:null,days:[]});need[id].n+=amt;need[id].days.push(k);need[id].uses.push(`${amt===.5?"½":amt===1?"1":fmtQ(amt)} ${where} ${DOW[parse(k).getDay()].slice(0,3)}`);if(!need[id].first)need[id].first={k,bf:where==="at breakfast"}};
+function bakeNeeds(mon,fromK){
+  const need={},from=fromK||(mon===mondayOf(todayKey())?todayKey():mon);
+  const add=(id,k,amt,where)=>{(need[id]??={n:0,uses:[],first:null,days:[],per:[]});need[id].n+=amt;need[id].days.push(k);need[id].per.push([k,amt]);need[id].uses.push(`${amt===.5?"½":amt===1?"1":fmtQ(amt)} ${where} ${DOW[parse(k).getDay()].slice(0,3)}`);if(!need[id].first)need[id].first={k,bf:where==="at breakfast"}};
   for(let i=0;i<7;i++){const k=addDays(mon,i);if(k<from)continue;const ms=S.days[k]?.meals||{};
     // Homemade bread and pitta (Lia prefers nothing shop-made): count what the week uses so they get baked in time
     for(const sl of ["breakfast","lunch","dinner","snack"]){const m=ms[sl];if(!m)continue;const r=m.recipeId&&recipeById(m.recipeId);
@@ -2156,7 +2162,10 @@ async function doPrintAction(){
 if(PMODE){addEventListener("resize",fitPages);$("#ptGo").addEventListener("click",doPrintAction);$("#ptBack").addEventListener("click",e=>{if(history.length<2&&window.opener){e.preventDefault();window.close()}})}
 
 /* ---------- events ---------- */
-$("#tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;ui.view=t.dataset.view;if(ui.view==="day")ui.date=todayKey();if(ui.view==="week")ui.week=planWeek();ls.set("ari-view",ui.view);render();window.scrollTo(0,0)});
+// Portrait week list: open at today's day instead of the top (landscape shows the whole week in the grid anyway)
+function scrollToToday(sel){requestAnimationFrame(()=>{const el=document.querySelector(sel);if(!el||matchMedia("(orientation: landscape)").matches&&innerHeight<600){scrollTo(0,0);return}
+  const h=document.querySelector("header,.top,.appbar")?.getBoundingClientRect().height||0;scrollTo(0,Math.max(0,el.getBoundingClientRect().top+scrollY-h-12))})}
+$("#tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;ui.view=t.dataset.view;if(ui.view==="day")ui.date=todayKey();if(ui.view==="week")ui.week=planWeek();ls.set("ari-view",ui.view);render();if(ui.view==="week")scrollToToday(`#d-${todayKey()}`);else window.scrollTo(0,0)});
 $("#whoBtn").addEventListener("click",()=>loaded&&openSettings());
 const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo(0,y)};
 function setMeal(k,slot,val,side,custom){
