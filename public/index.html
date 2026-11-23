@@ -949,7 +949,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.23";
+const APP_VERSION="14.24";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1144,7 +1144,7 @@ function fzWeekIds(){const t=todayKey(),m=mondayOf(t),ids=new Set();
   // carrot cookies and carrot bites share one freezer count, shown once as the cookies (what's actually in there)
   if(ids.delete("carrotcookies"))ids.add("carrotoatcookies");
   return [...ids].filter(id=>recipeById(id))}
-function freezerCard(){const t=todayKey();if(parse(t).getDay()!==FZ_DAY)return "";
+function freezerCard(k){const t=todayKey();if(parse(k).getDay()!==FZ_DAY||k<t)return ""; // shows on Thursday, including when you look ahead to it
   const cnt=id=>S.freezer?.[id]?.at===t;
   const shown=[...new Set(ui.fzExtra||[])].filter(id=>recipeById(id));
   const rows=shown.map(id=>{const r=recipeById(id),left=freezerLeft(id),v=left==null?"":String(left);
@@ -1172,7 +1172,7 @@ function viewDay(){
     
     ${k!==t?`<button class="link center-link" data-act="today">Back to today</button>`:""}
   </header>
-  ${k===t?freezerCard():""}${pantryNote(k)}${kitchenNote(k)}
+  ${freezerCard(k)}${pantryNote(k)}${kitchenNote(k)}
   <div class="essentials">
     <button class="tile vitd${vd.done?" on":""}" data-act="vitd" aria-pressed="${!!vd.done}" aria-label="Vitamin D, ${vd.done?"given":"tap once given"}">
       <span class="tile-top"><span class="tile-ic">${I.sun}</span><strong>Vitamin D</strong></span>
