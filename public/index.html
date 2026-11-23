@@ -1153,7 +1153,7 @@ function freezerCard(){const t=todayKey(),ids=fzWeekIds(),last=Object.values(S.f
   let open=due;try{const v=localStorage.getItem("ari-fz-open");if(v!=null&&!due)open=v==="1"}catch(e){}
   return `<details class="kitchen kfold fzfold"${open?" open":""}><summary><b>Freezer check</b><span class="kcount">${due?"due today":last?`counted ${dmy(last).slice(0,5)}`:""}</span></summary>
   <p class="fznote">How many pieces, slices or portions are in the freezer? Leave a ? if it isn't there. The app takes off what she eats, adds each batch ticked as made, and puts it back on the list before it runs out.</p>${rows}
-  <div class="fzadd"><label class="search">${I.search}<input type="search" data-fzsearch placeholder="Search something else in the freezer"></label>
+  <div class="fzadd"><label class="search">${I.search}<input type="search" data-fzsearch placeholder="Search freezer items"></label>
   <select data-fzpick aria-label="Add something"><option value="">Add something else…</option>${all.map(r=>`<option value="${esc(r.id)}">${esc(r.title)}</option>`).join("")}</select></div></details>`}
 async function saveFreezer(id,n){const items={[id]:n==null?null:{n,at:todayKey(),by:me||""}};
   try{const d=await post("freezer",{items});S.freezer=d.freezer;keepScroll(render);status("Freezer updated",true)}catch(e){status("Not saved, check the connection",true,true)}}
