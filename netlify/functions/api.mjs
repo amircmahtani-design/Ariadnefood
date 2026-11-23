@@ -668,11 +668,11 @@ Fix the gaps with the smallest changes that keep the family's cooking routine in
 1. SIDES first: change the side of any meal (a short plain description, e.g. "roasted red pepper strips and wholemeal pitta", "orange segments and squashed blueberries"). Lunch and dinner sides always keep a visible vegetable and a carb. Breakfast and snack sides can carry fruit, dairy or fibre.
 2. SNACKS: you may switch a snack to another library snack only if it needs no extra baking (fruit, cheese and other no-cook snacks) or is a made-ahead item already used that week.
 3. MAIN DISHES only if a gap can't be fixed with sides and snacks (e.g. iron, zinc, omega-3): swap a library lunch/dinner recipe for another library lunch/dinner recipe, at most 2 swaps. A swap replaces that dish everywhere in the week, which keeps the cook-two-eat-twice rhythm. Never swap to a resting recipe or to one with the same protein as the other meal on those days. Never change breakfast recipes or anything already eaten.
-Don't change what is already fine: every change must fix a named gap.
+Don't change what is already fine: every change must fix a named gap. List ONLY meals you actually change (never a "keep as planned" entry), at most 14 changes.
 Reply with ONLY JSON, no markdown:
 {"note":"2-3 plain sentences: what she was short of and what you changed","swaps":[{"from":"recipe id","to":"recipe id","why":"short"}],"changes":[{"date":"YYYY-MM-DD","slot":"breakfast|lunch|snack|dinner","side":"new side or omit","recipe":"snack recipe id or omit","why":"short"}]}`;
       const content = `Today is ${today}.\n\n${analysis}\n\nTHE PLANNED WEEK:\n${clip(body.plan, 6000)}\n\nRecipe library (id: title [meals]):\n${library}`;
-      return callAI(system, content, 2500);
+      return callAI(system, content, 3500);
     }
 
     if (body.task === "adultpick") {
