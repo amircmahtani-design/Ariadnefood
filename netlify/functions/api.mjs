@@ -239,10 +239,11 @@ export default async (req) => {
     const adults = (await store.get("adults", { type: "json" })) || {};
     const groceries = (await store.get("groceries", { type: "json" })) || {};
     const ht = (await store.get("house-ticks", { type: "json" })) || {};
+    const freezer = (await store.get("freezer", { type: "json" })) || {};
     const cookTicks = {}; for (const k of Object.keys(ht).sort().slice(-10)) cookTicks[k] = Object.fromEntries(Object.entries(ht[k] || {}).filter(([id]) => /^(cook|bake):/.test(id)));
     // Ariadne's Table and Catherine's Day don't need Lia & Amir's recipe library: leave it out so the app loads fast
-    if (new URL(req.url).searchParams.has("lean") && adults._lib) { const { _lib, ...rest } = adults; return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults: rest, groceries, cookTicks }); }
-    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults, groceries, cookTicks });
+    if (new URL(req.url).searchParams.has("lean") && adults._lib) { const { _lib, ...rest } = adults; return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults: rest, groceries, cookTicks, freezer }); }
+    return json({ days, recipes, settings: { ...DEFAULT_SETTINGS, ...settings }, insight, asks: (asks || []).slice(-60), shop, pantry, adults, groceries, cookTicks, freezer });
   }
 
   // Plain-text report for Claude (or anyone) to read: what she ate, gaps, plan, recipes, and how to write back.
@@ -490,6 +491,17 @@ export default async (req) => {
     ticks[d] = day;
     await store.setJSON("house-ticks", pruneDates(ticks, 70));
     return json({ ok: true, ticks });
+  }
+  if (route === "freezer") {
+    // What's actually in the freezer: { id: { n, at, by } } — set by hand; the app works down from it
+    const fz = (await store.get("freezer", { type: "json" })) || {};
+    for (const [id, v] of Object.entries(body.items || {})) {
+      const key = clip(id, 80); if (!key) continue;
+      if (v == null) delete fz[key];
+      else if (Number.isFinite(+v.n) && +v.n >= 0 && HDATE.test(String(v.at || ""))) fz[key] = { n: Math.round(+v.n * 2) / 2, at: String(v.at), by: clip(v.by, 40) };
+    }
+    await store.setJSON("freezer", fz);
+    return json({ ok: true, freezer: fz });
   }
   if (route === "house-extra") {
     const d = String(body.date || "");
