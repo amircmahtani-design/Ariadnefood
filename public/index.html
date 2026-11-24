@@ -950,7 +950,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.35";
+const APP_VERSION="14.36";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1123,7 +1123,7 @@ function kitchenNote(k){
   const AX=adultExtra(k),axOf=id=>AX.dishes.find(d=>d.r.id===id);
   const T=S.cookTicks?.[k]||{};
   const tk=(id,inner)=>{const t=T[id];return `<div class="krow${t?" done":""}"><button class="ktick" data-act="cooktick" data-id="${esc(id)}" data-day="${k}" aria-pressed="${!!t}" aria-label="${t?"Done, tap to undo":"Mark as done"}">${I.check}</button><div class="kbody">${inner}</div></div>`};
-  const link=(r,label,notes)=>{const f=(+r.serves||1)>1?scaleFor(r.id,k):0,pp=f&&!/^Side:/.test(label)?portionPlan(r.id,k,f):null,ax=!/^(Side|Bake|Make):/.test(label)&&axOf(r.id);notes=ax?[adultNote(ax),...notes]:notes;const meta=[f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:"",pp?`<em class="frz${pp.spare>0&&pp.fr?" on":""}">${freezeTxt(pp)}</em>`:"",...notes.map(n=>`<em>${n}</em>`)].filter(Boolean).join("");
+  const link=(r,label,notes)=>{const ax=!/^(Side|Bake|Make):/.test(label)&&axOf(r.id),f=(+r.serves||1)>1?scaleFor(r.id,k)+(ax?.f||0):0,pp=f&&!/^Side:/.test(label)?portionPlan(r.id,k,f):null;notes=ax?[adultNote(ax),...notes]:notes;const meta=[f?`<span class="qchip">${scaleTxt(f)} recipe</span>`:"",pp?`<em class="frz${pp.spare>0&&pp.fr?" on":""}">${freezeTxt(pp)}</em>`:"",...notes.map(n=>`<em>${n}</em>`)].filter(Boolean).join("");
     return `<button class="klink" data-act="recipe" data-id="${esc(r.id)}" data-day="${k}"${f?` data-scale="${f}"`:""}><span class="kname">${label}</span>${meta?`<span class="kmeta">${meta}</span>`:""}</button>`};
   const items=c.cook.map(t=>{const m=t.match(/ \((breakfast|for Sunday)\)$/),base=m?t.slice(0,-m[0].length):t,r=S.recipes.find(r=>base===r.title);if(!r)return esc(t);
     return tk("cook:"+r.id,link(r,esc(base),[m?.[1]==="breakfast"?"breakfast":"",dow===6&&sunIds.has(r.id)?"also for Sunday":""].filter(Boolean)))});
@@ -1990,7 +1990,7 @@ async function shrink(file){
    when her dish has any of those, Lia still has it and Amir gets a swap. */
 const qtr=x=>{const w=Math.floor(x+1e-9),r=Math.round((x-w)*4)/4;return `${w||""}${{.25:"¼",.5:"½",.75:"¾"}[r]||""}`||"0"};
 const adultTxt=f=>!f?"":f===1?"1 more recipe":`${qtr(f)} more recipe${f>1?"s":""}`;
-const adultNote=d=>[d.who?.length?(d.f?`Plus ${adultTxt(d.f)} for ${whoTxt(d)}`:`Covers ${whoTxt(d)} too`):"",d.swap&&!d.who?.includes("Amir")?`Not for Amir: he has ${d.swap.toLowerCase()} (allergy)`:""].filter(Boolean).join(" · ");
+const adultNote=d=>[d.who?.length?(d.f?`Includes ${adultTxt(d.f)} for ${whoTxt(d)}`:`Covers ${whoTxt(d)} too`):"",d.swap&&!d.who?.includes("Amir")?`Not for Amir: he has ${d.swap.toLowerCase()} (allergy)`:""].filter(Boolean).join(" · ");
 const PREFS=()=>({allergies:["fish","seafood","chickpeas","nuts"],other:"",portion:3,...(S.adults?._prefs||{})});
 // Toddler-style dishes are Ariadne's alone: never shared with Lia and Amir
 const TODDLER_ONLY=/\b(puree|purée)\b/i; // Lia & Amir now eat Ariadne's menu: only purées stay hers
@@ -2020,6 +2020,12 @@ function sideNoAllergen(side){const R=allergyRules();return String(side||"").spl
 // Amir's swap when the dish has fish or seafood: rotates by day so it isn't always chicken
 const AMIR_SWAPS=["Grilled steak with chimichurri","Grilled chicken breast with lemon and oregano","Lamb chops with rosemary","Lean beef burger patty"];
 function swapText(al,k){const i=k?Math.round(parse(k).getTime()/864e5)%AMIR_SWAPS.length:1;return al.includes("fish")||al.includes("seafood")?AMIR_SWAPS[i]:al.includes("chickpeas")?"Lean beef or chicken patties":al.includes("nuts")?"The same dish, made without nuts":`Something without ${al.join(" or ")}`}
+// Amir's swap: first a leftover he can eat (another of her dishes in the fridge that day), only cooking something new if there's none
+function amirLeftover(k,slot,r){const ids=[];const other=slot==="lunch"?"dinner":"lunch";
+  [S.days[k]?.meals?.[other]?.recipeId,...["lunch","dinner"].map(s=>S.days[addDays(k,1)]?.meals?.[s]?.recipeId).filter(id=>id&&madeToday(id,k)),...["lunch","dinner"].map(s=>S.days[addDays(k,-1)]?.meals?.[s]?.recipeId).filter(id=>id&&["lunch","dinner"].some(s2=>S.days[k]?.meals?.[s2]?.recipeId===id))]
+    .forEach(id=>{if(id&&!ids.includes(id))ids.push(id)});
+  for(const id of ids){const rr=recipeById(id);if(!rr||rr.id===r?.id||TODDLER_ONLY.test(rr.title)||allergensOf(rr,"").length)continue;return rr}
+  return null}
 function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
   if(slot==="breakfast"){const b=pl&&pl.title&&pl.locked?{t:pl.title,i:pl.ing||[],method:pl.method||[]}:adultBf(k);const one=who=>{const o=ov[who];return o?.mode==="out"?{mode:"out",text:"Eating out"}:o?.mode==="own"?{mode:"own",text:o.text||"Own breakfast"}:{mode:"same",text:b.t,dish:{title:b.t,ing:b.i,method:b.method||[]}}};return {r:null,bf:b,side:"",al:[],lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
   // a "share" of one of her dishes at another meal (e.g. her lunch moved to their dinner) points straight at that recipe
@@ -2038,7 +2044,7 @@ function adultMeal(k,slot){const ov=S.adults?.[k]?.[slot]||{},pl=ov.plan||null;
       if(who==="amir"&&oal.length)return {mode:"swap",text:swapText(oal,k),side:"",al:oal,dish:null};
       return {mode:"plan",text:own.title,dish:own}}
     if(!r||kid)return {mode:"none",text:"Not planned yet"};
-    if(who==="amir"&&al.length)return {mode:"swap",text:swapText(al,k),side:sideNoAllergen(side),al,dish:r.title};
+    if(who==="amir"&&al.length){const lo=amirLeftover(k,slot,r);if(lo)return {mode:"swap",text:`${adultTitle(lo.title)} leftovers`,leftover:lo.id,side:sideNoAllergen(side),al,dish:r.title};return {mode:"swap",text:swapText(al,k),side:sideNoAllergen(side),al,dish:r.title}}
     return {mode:"same",text:adultTitle(r.title),side,dish:r.title}};
   return {r,side,al,own,kid,locked:!!pl?.locked,lia:one("lia"),amir:one("amir"),eaten:ov.eaten||null}}
 // What Catherine cooks on day k on top of Ariadne's batch: extra recipe for the dishes they share, and chicken for Amir's swaps
@@ -2047,11 +2053,11 @@ const ADULT_COOK_FROM="2026-11-28"; // ...from this week on: 21-27 Nov was alrea
 function adultExtra(k){const dow=parse(k).getDay();if(dow===0||!ADULT_COOK||k<ADULT_COOK_FROM)return {dishes:[],swaps:0,own:[],swapList:[]};const dishes=[],seen=new Set();
   ["lunch","dinner"].forEach(sl=>{const id=S.days[k]?.meals?.[sl]?.recipeId;if(!id||seen.has(id)||!madeToday(id,k))return;seen.add(id);const r=recipeById(id);let n=0;const who=new Set();let swap="";
     let bn=0;for(let i=0;i<3;i++){const d=addDays(k,i),ms=S.days[d]?.meals||{};if(i>0&&!["lunch","dinner"].some(s=>ms[s]?.recipeId===id))break;
-      ["lunch","dinner"].forEach(s=>{const mine=ms[s]?.recipeId===id,moved=!mine&&S.adults?.[d]?.[s]?.plan?.share===id;if(!mine&&!moved)return;if(mine)bn++;const a=adultMeal(d,s);if(a.lia.mode==="same"){n++;who.add("Lia")}if(a.amir.mode==="same"){n++;who.add("Amir")}if(a.amir.mode==="swap"&&!swap)swap=a.amir.text})}
+      ["lunch","dinner"].forEach(s=>{const mine=ms[s]?.recipeId===id,moved=!mine&&S.adults?.[d]?.[s]?.plan?.share===id;if(!mine&&!moved){if(adultMeal(d,s).amir.leftover===id){n++;who.add("Amir")}return}if(mine)bn++;const a=adultMeal(d,s);if(a.lia.mode==="same"){n++;who.add("Lia")}if(a.amir.mode==="same"){n++;who.add("Amir")}if(a.amir.mode==="swap"&&!swap)swap=a.amir.text})}
     // Everyone eating it on every day it's served (Ariadne's leftovers day included) comes out of one pot:
     // cook only what's missing on top of her batch, so her "spare to freeze" portions feed Lia & Amir first.
     if(n||swap){const base=scaleFor(id,k),sv=+r.serves||1,need=bn+n*ADULT_P_(),have=base*sv;let f=n&&need>have?Math.ceil((need-have)/sv*4)/4:0;if(f)f=eggRound(r,base+f)-base;dishes.push({r,n,f,ap:n*ADULT_P_(),who:["Lia","Amir"].filter(x=>who.has(x)),swap})}});
-  const swl=d=>["lunch","dinner"].map(s=>({d,s,a:adultMeal(d,s)})).filter(x=>x.a.amir.mode==="swap").map(x=>({day:x.d,slot:x.s,text:x.a.amir.text,al:x.a.amir.al||[],dish:x.a.r?adultTitle(x.a.r.title):""}));
+  const swl=d=>["lunch","dinner"].map(s=>({d,s,a:adultMeal(d,s)})).filter(x=>x.a.amir.mode==="swap"&&!x.a.amir.leftover).map(x=>({day:x.d,slot:x.s,text:x.a.amir.text,al:x.a.amir.al||[],dish:x.a.r?adultTitle(x.a.r.title):""}));
   const swapList=[...swl(k),...(dow===6?swl(addDays(k,1)):[])];
   const own=[];["lunch","dinner"].forEach(sl=>{const a=adultMeal(k,sl);if(!a.own)return;if(a.lia.mode==="plan"||a.amir.mode==="plan")own.push({slot:sl,title:a.own.title,who:a.lia.mode==="plan"&&a.amir.mode==="plan"?"":a.lia.mode==="plan"?"Lia":"Amir"});if(a.amir.mode==="alt")own.push({slot:sl,title:a.amir.text,who:"Amir"})});
   return {dishes,swaps:swapList.length,swapList,own}}
