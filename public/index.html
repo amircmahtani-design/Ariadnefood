@@ -950,7 +950,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.38";
+const APP_VERSION="14.39";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1334,9 +1334,9 @@ function viewDay(){
 /* My Week */
 /* Bake only what the week needs, so she mostly eats fresh. */
 const COOKIE_WHOLE=new Set(["spanakbreakfastfull"]);
-const COOKIE_OF={spanakbreakfastfull:"carrotcookies",spanakbreakfast:"carrotcookies",spanakbreakfast2:"courgettecookies",carrotsnack:"carrotcookies",courgsnack:"courgettecookies"};
+const COOKIE_OF={spanakbreakfastfull:"carrotoatcookies",spanakbreakfast:"carrotoatcookies",spanakbreakfast2:"courgettecookies",carrotsnack:"carrotoatcookies",courgsnack:"courgettecookies"}; // the carrot & apple cookie is the family favourite
 // How much she has each time. Carrot bites (big, 10 a batch): ½ at breakfast next to the triangles, a whole one as a snack. Courgette cookie: ½.
-const cookieAmt=(id,sl)=>id==="carrotcookies"?(sl==="snack"?1:.5):.5;
+const cookieAmt=(id,sl)=>id==="carrotoatcookies"||id==="carrotcookies"?(sl==="snack"?1:.5):.5;
 function freshDishes(k){const ms=S.days[k]?.meals||{},prev=S.days[addDays(k,-1)]?.meals||{},y=new Set(["lunch","dinner"].map(s=>prev[s]?.recipeId).filter(Boolean));
   return new Set(["lunch","dinner"].map(s=>ms[s]?.recipeId).filter(id=>id&&!y.has(id))).size+(parse(k).getDay()===6?2:0)}
 // Dishes that come for free from another cook (the chicken picked off the broth bones): never on the cooking list
@@ -1344,11 +1344,11 @@ const noCook=id=>id==="brothchicken"||!!recipeById(id)?.nocook;
 const NO_COOK_BF=new Set(["spanakplain","fruitplate","ricottatoast","pbtoast","hummustoast"]);
 // Bread and pitta: a full batch goes in the freezer and is used up over the following weeks, so only bake when the stock runs out.
 const HOME_BAKES=new Set(["homepitta","homebread","homebroth"]);
-const FREEZER_STOCK=["carrotcookies"];
+const FREEZER_STOCK=["carrotoatcookies","carrotcookies"];
 const BROTH=new Set(["homebroth"]);
 /* The freezer: real counts typed in by hand. From the day a count was set, batches ticked off as made are added
    and what the plan used is taken off, so the app knows when to make more. Carrot bites and carrot cookies stand in for each other. */
-const STOCK_POOL={carrotcookies:["carrotcookies","carrotoatcookies"],carrotoatcookies:["carrotcookies","carrotoatcookies"]};
+const STOCK_POOL={carrotcookies:["carrotoatcookies","carrotcookies"],carrotoatcookies:["carrotoatcookies","carrotcookies"]};
 const poolOf=id=>STOCK_POOL[id]||[id];
 function usedBetween(id,from,to){let u=0;for(let w=mondayOf(from);w<=mondayOf(to);w=addDays(w,7)){const x=bakeNeeds(w,from)[id];if(x)u+=x.per.filter(([k])=>k>=from&&k<to).reduce((a,[,n])=>a+n,0)}return u}
 function freezerLeft(id){const t=todayKey(),pool=poolOf(id),es=pool.map(i=>[i,S.freezer?.[i]]).filter(([,e])=>e);if(!es.length)return null;
