@@ -38,13 +38,13 @@ function makeEngine(FOODS, getState){
   ];
   function addItems(tot,items,frac){for(const [k,g] of items||[]){const f=FOODS[k];if(!f)continue;for(const n of NKEYS)tot[n]=(tot[n]||0)+f.per100[n]*g/100*frac}return tot}
   const recipeById=id=>S().recipes.find(r=>r.id===id);
-  function sideParts(text){return String(text||"").split(/\s*(?:\+|,|\bwith\b)\s*/i).map(s=>s.trim()).filter(Boolean).map(s=>{const k=matchFood(s);return {name:cap(s),items:k?[[k,FOODS[k].portion]]:[]}})}
+  function sideParts(text,whole){return String(text||"").split(/\s*(?:\+|,|\bwith\b)\s*/i).map(s=>s.trim()).filter(Boolean).flatMap(s=>{if(whole)return [s];const bits=s.split(/\s+(?:and|&)\s+/i).map(x=>x.trim()).filter(Boolean);return bits.length>1&&bits.every(b=>matchFood(b))?bits:[s]}).map(s=>{const k=matchFood(s);return {name:cap(s),items:k?[[k,FOODS[k].portion]]:[]}})}
   function partsFor(m){
     if(!m)return [];
     const r=m.recipeId&&recipeById(m.recipeId);let parts=[];
     if(r)parts=(r.parts&&r.parts.length?clone(r.parts):[{name:r.title,items:[]}]);
     else if(m.custom)parts=sideParts(m.custom);
-    if(r&&m.side){if(fruitSide(m.side))parts=parts.filter(p=>p.name.trim().toLowerCase()!=="fruit");parts=parts.concat(sideParts(m.side))} // the side names the fruit, so no separate "Fruit" too
+    if(r&&m.side){if(fruitSide(m.side))parts=parts.filter(p=>p.name.trim().toLowerCase()!=="fruit");let sp=sideParts(m.side);if(m.log){const w=sideParts(m.side,true);if(w.some(p=>p.name in m.log))sp=w}parts=parts.concat(sp)} // meals logged before "X and Y" sides were split keep their old rows // the side names the fruit, so no separate "Fruit" too
     const seen={};return parts.map(p=>{let n=p.name;while(seen[n])n+=" ";seen[n]=1;return {...p,name:n}});
   }
   const fruitSide=t=>sideParts(t).some(p=>p.items.some(([k])=>FOODS[k]?.group==="fruit"&&k!=="avocado"));
