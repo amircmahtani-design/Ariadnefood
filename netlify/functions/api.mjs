@@ -62,15 +62,22 @@ async function callAI(system, content, maxTokens) {
   // Models get retired over time: try the configured one, then current ones, so the weekly plan never stalls on a model change
   const models = [...new Set([process.env.AI_MODEL, "claude-sonnet-5-5", "claude-sonnet-5", "claude-opus-4-8", "claude-sonnet-4-5"].filter(Boolean))];
   let upstream;
-  for (const model of models) {
-    upstream = await fetch(`${base}/v1/messages`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model, max_tokens: maxTokens, stream: true, system, messages: [{ role: "user", content }] }),
-    }).catch(() => null);
-    if (upstream?.ok && upstream.body) break;
-    const t = upstream ? await upstream.text().catch(() => "") : "no response";
-    console.log("AI error", model, upstream?.status, t.slice(0, 300));
+  // Newer models think before answering and can spend every token on it, leaving no answer: ask for no thinking
+  // (and if a model refuses that setting, ask again without it, with more room).
+  outer: for (const model of models) {
+    for (const noThink of [true, false]) {
+      const req = { model, max_tokens: noThink ? maxTokens : maxTokens * 3, stream: true, system, messages: [{ role: "user", content }] };
+      if (noThink) req.thinking = { type: "disabled" };
+      upstream = await fetch(`${base}/v1/messages`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify(req),
+      }).catch(() => null);
+      if (upstream?.ok && upstream.body) break outer;
+      const t = upstream ? await upstream.text().catch(() => "") : "no response";
+      console.log("AI error", model, noThink ? "no-thinking" : "default", upstream?.status, t.slice(0, 300));
+      if (upstream?.status !== 400) break; // only a rejected setting is worth retrying on the same model
+    }
   }
   if (!upstream?.ok || !upstream.body) return json({ error: "The AI didn't answer. Try again in a minute." }, 502);
   return new Response(upstream.body, { headers: { "content-type": "text/event-stream", "cache-control": "no-store" } });
