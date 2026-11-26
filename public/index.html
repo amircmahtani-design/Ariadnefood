@@ -950,7 +950,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.39";
+const APP_VERSION="14.40";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1383,6 +1383,8 @@ function bakeNeeds(mon,fromK){
     const seen=new Set();for(const sl of ["lunch","dinner"]){const id=ms[sl]?.recipeId,r=id&&recipeById(id);if(!r||seen.has(id)||!madeToday(id,k))continue;seen.add(id);
       (r.ingredients||[]).forEach(l=>{const m=l.match(/([\d.]+)\s*(ml|litres?|l)\s+(?:hot\s+)?homemade broth/i);if(!m)return;const ml=+m[1]*(/^l/i.test(m[2])?1000:1)*((+r.serves||1)>1?mealScale(id,k):1);
         add("homebroth",k,Math.ceil(ml/250*2)/2,`for ${r.title}`)})}
+    // a cup of broth with her lunch and dinner: half a 250 ml box each
+    ["lunch","dinner"].forEach(sl=>{if(/\bbroth\b/i.test(ms[sl]?.side||""))add("homebroth",k,.5,`cup with ${sl}`)});
     // sides cooked in broth (rice, couscous) go with the dishes cooked that day
     [...new Set(["lunch","dinner"].filter(sl=>seen.has(ms[sl]?.recipeId)).flatMap(sl=>String(ms[sl].side||"").split(/\s*\+\s*/)).map(t=>t&&cookedSide(t)).filter(Boolean))].forEach(r=>(r.ingredients||[]).forEach(l=>{const m=l.match(/([\d.]+)\s*ml\s+(?:hot\s+)?homemade broth/i);if(m)add("homebroth",k,Math.ceil(+m[1]/250*2)/2,`for ${r.title}`)}));
     for(const sl of ["breakfast","snack"]){const id=ms[sl]?.recipeId;if(!id)continue;
