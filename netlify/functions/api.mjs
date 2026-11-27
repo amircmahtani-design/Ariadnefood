@@ -746,6 +746,15 @@ Reply with ONLY JSON, no markdown: {"recipe":${RECIPE_SHAPE}}`;
       return callAI(system, `Lia and Amir's recipe:\n${src}`, 2500);
     }
 
+    if (body.task === "basedish") {
+      const system = `You write ONE new main dish for Ariadne's week. ${ABOUT}
+HOW THE FAMILY PLANS NOW (Lia's decision, 27/11/2026): every week repeats Lia's base week exactly, the same dishes on the same days. That is settled, so don't suggest changes to it. The only new thing each week is ONE new main dish that carries this week's new allergen, so she meets the allergen inside a proper meal. It is eaten at Thursday lunch (her first taste, a small amount of the allergen, then watched for 2 hours) and again at Friday dinner as leftovers.
+ALLERGEN: choose ONE from this list (key: name, how to give it): ${clip(body.allergens, 1500) || "none left to introduce: write a new dish with no new allergen and leave allergen empty"}. Put a small, age-appropriate amount of it in the dish (ground or as a smooth butter for nuts, never whole pieces), named clearly in the ingredients and the method. Already in her diet (fine to use): ${clip(body.inDiet, 400) || "none"}.${body.hold ? ` On hold after a reaction, never use: ${clip(body.hold, 200)}.` : ""}
+THE DISH: a lunch/dinner main built on a protein she eats, in her textures (patties, meatballs, keftedakia, bites, fingers, a firm bake), baby-safe, no salt, no honey, no banana, safe cuts written into the method. Not salmon.${body.other ? ` Use a different protein from the other main on those days (${clip(body.other, 120)}), because lunch and dinner on the same day are never the same protein.` : ""} It must be genuinely new: not the same as, or a small variation of, any dish in the base week, the recent new dishes (${clip(body.recent, 400) || "none yet"}) or this library: ${clip(body.library, 5000)}. Title main ingredient first (e.g. "Chicken & cashew patties"). Sides go in "side", separate from the dish: one vegetable she knows plus "cup of broth", no starchy side (she has one starchy side a day at most).
+Reply with ONLY JSON, no markdown: {"allergen":"key from the list or empty","note":"one short sentence on the dish","side":"vegetable side, cup of broth","recipe":${RECIPE_SHAPE}}`;
+      return callAI(system, `Lia's base week:\n${clip(body.baseWeek, 4000)}`, 3000);
+    }
+
     if (body.task === "dish") {
       const title = clip(body.title, 160), slot = clip(body.slot, 20), side = clip(body.side, 160);
       if (!title) return json({ error: "Type the dish first." }, 400);
