@@ -104,6 +104,13 @@ export default async (req) => {
   const store = getStore({ name: "ari-meals", consistency: "strong" });
   const route = new URL(req.url).pathname.replace(/^\/api\/?/, "");
 
+  // Result of a long AI job run by the aijob background function
+  if (req.method === "GET" && route === "aijob") {
+    const id = String(new URL(req.url).searchParams.get("id") || "").replace(/[^a-z0-9-]/gi, "").slice(0, 60);
+    const j = id ? await store.get("aijob:" + id, { type: "json" }) : null;
+    return new Response(JSON.stringify(j || { done: false }), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+  }
+
   // Profile pictures: GET /api/avatar/<name>
   if (req.method === "GET" && route.startsWith("avatar/")) {
     const name = decodeURIComponent(route.slice(7));

@@ -929,6 +929,7 @@ document.addEventListener("visibilitychange",()=>{if(!PMODE&&!document.hidden&&i
 
 /* ---------- AI streaming ---------- */
 async function streamAI(body,onTick){
+  if(body.task==="plan"||body.task==="balance")return jobAI(body,onTick);
   // The AI can be briefly unavailable (e.g. just after an update): try up to 3 times, a few seconds apart, before showing an error
   let r;for(let t=0;t<3;t++){try{r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})}catch(e){r=null}
     if(r&&(r.ok||r.status<500))break;if(t<2)await new Promise(ok=>setTimeout(ok,4000*(t+1)))}
@@ -942,6 +943,20 @@ async function streamAI(body,onTick){
   const s=text.indexOf("{"),e=text.lastIndexOf("}");if(s<0)throw new Error("Couldn't read the answer. Try again.");
   return JSON.parse(text.slice(s,e+1));
 }
+/* Long AI jobs (a whole week) run in a background function that can take up to 15 minutes, because the normal
+   one stops at 60 seconds. The app starts the job, then checks every few seconds until the answer is saved. */
+async function jobAI(body,onTick){
+  const jobId=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  let r=null;for(let t=0;t<3&&!r?.ok;t++){try{r=await fetch("/bg/aijob",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jobId,payload:body})})}catch(e){r=null}if(!r?.ok&&t<2)await new Promise(ok=>setTimeout(ok,3000))}
+  if(!r?.ok)throw new Error("No connection. Check the internet and try again.");
+  const t0=Date.now();
+  while(Date.now()-t0<10*60*1000){await new Promise(ok=>setTimeout(ok,5000));onTick&&onTick("");
+    let j=null;try{j=await (await fetch("/api/aijob?id="+jobId,{cache:"no-store"})).json()}catch(e){}
+    if(!j?.done)continue;if(j.error)throw new Error(j.error);
+    const text=String(j.text||""),s=text.indexOf("{"),e=text.lastIndexOf("}");if(s<0)throw new Error("Couldn't read the answer. Try again.");
+    return JSON.parse(text.slice(s,e+1))}
+  throw new Error("The AI took too long. Try again in a minute.");
+}
 function cleanRecipe(r,id){
   const meals=(r.meals||[]).filter(m=>SLOT_LABEL[m]);
   const parts=(r.parts||[]).map(p=>({name:String(p.name||"").trim()||"Main",items:(p.items||[]).filter(it=>Array.isArray(it)&&FOODS[it[0]]&&+it[1]>0).map(([k,g])=>[k,Math.round(+g)])})).filter(p=>p.name);
@@ -950,7 +965,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.44";
+const APP_VERSION="14.45";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
