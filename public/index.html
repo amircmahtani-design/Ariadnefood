@@ -950,7 +950,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.40";
+const APP_VERSION="14.41";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1108,8 +1108,11 @@ document.addEventListener("change",e=>{const g=e.target.closest?.("[data-rgroup]
   try{sel.focus();sel.showPicker?.()}catch{}},true);
 // Sides: one box per side with a + to add more; saved as "pasta, broccoli" so each logs on its own row
 function sidesField(val,attr,ph){const list=String(val||"").split(/\s*(?:,|\+)\s*/).map(x=>x.trim()).filter(Boolean);if(!list.length)list.push("");
-  const row=v=>`<span class="siderow"><input ${attr} value="${esc(v)}" placeholder="${esc(ph)}" aria-label="Side"><button type="button" class="iconbtn sm" data-act="rmSide" aria-label="Remove this side">${I.close}</button></span>`;
-  return `<div class="f sidesf"><span>Sides</span>${list.map(row).join("")}<button type="button" class="link addside" data-act="addSide" data-attr="${attr}" data-ph="${esc(ph)}">${I.plus||"+"} Add a side</button></div>`}
+  const row=v=>`<span class="siderow"><input ${attr} list="sidelist" autocomplete="off" value="${esc(v)}" placeholder="${esc(ph)}" aria-label="Side"><button type="button" class="iconbtn sm" data-act="rmSide" aria-label="Remove this side">${I.close}</button></span>`;
+  return `<div class="f sidesf"><span>Sides</span>${list.map(row).join("")}<button type="button" class="link addside" data-act="addSide" data-attr="${attr}" data-ph="${esc(ph)}">${I.plus||"+"} Add a side</button>${sideList()}</div>`}
+/* Sides: type anything, or pick from her side dishes (tap the box to see the list). */
+function sideList(){const t=[...new Set([...S.recipes.filter(r=>(r.meals||[]).includes("side")&&!r.avoid).map(r=>r.title),"cup of broth","pear slices","kiwi","strawberries","halved blueberries","cucumber sticks","soft celery sticks","roast red pepper strips","air-fried broccoli","steamed courgette"])].sort((x,y)=>x.localeCompare(y));
+  return `<datalist id="sidelist">${t.map(x=>`<option value="${esc(x)}"></option>`).join("")}</datalist>`}
 const sidesOf=(box,attr)=>[...box.querySelectorAll(`[${attr}]`)].map(i=>i.value.trim()).filter(Boolean).join(", ")||null;
 const searchField=()=>`<label class="f"><span>Search dishes</span><input type="search" data-msearch placeholder="Type e.g. beef, salmon, chicken" autocomplete="off"></label>`;
 function recipeOptions(slot,selected,custom,group,q){
@@ -2419,7 +2422,7 @@ $("#view").addEventListener("click",async e=>{
   else if(act==="fzDel"){const id=a.dataset.id;if(!a.dataset.sure){ui.fzAsk=id;keepScroll(render);return}
     ui.fzAsk=null;ui.fzExtra=(ui.fzExtra||[]).filter(x=>x!==id);if(S.freezer?.[id])saveFreezer(id,null);keepScroll(render);status("Removed",true)}
   else if(act==="fzKeep"){ui.fzAsk=null;keepScroll(render)}
-  else if(act==="addSide"){const f=a.closest(".sidesf"),r=document.createElement("span");r.className="siderow";r.innerHTML=`<input ${a.dataset.attr} value="" placeholder="${esc(a.dataset.ph||"")}" aria-label="Side"><button type="button" class="iconbtn sm" data-act="rmSide" aria-label="Remove this side">${I.close}</button>`;f.insertBefore(r,a);r.querySelector("input").focus()}
+  else if(act==="addSide"){const f=a.closest(".sidesf"),r=document.createElement("span");r.className="siderow";r.innerHTML=`<input ${a.dataset.attr} list="sidelist" autocomplete="off" value="" placeholder="${esc(a.dataset.ph||"")}" aria-label="Side"><button type="button" class="iconbtn sm" data-act="rmSide" aria-label="Remove this side">${I.close}</button>`;f.insertBefore(r,a);r.querySelector("input").focus()}
   else if(act==="rmSide"){const f=a.closest(".sidesf"),rows=f.querySelectorAll(".siderow"),row=a.closest(".siderow");if(rows.length>1)row.remove();else row.querySelector("input").value="";
     const box=f.closest(".change");if(box){const slot=box.closest("[data-slot]").dataset.slot;setMeal(ui.date,slot,box.querySelector("[data-pick]").value,sidesOf(box,"data-pickside"),box.querySelector("[data-pickcustom]").value.trim())}}
   else if(act==="nut")nutSheet(a.dataset.k);
