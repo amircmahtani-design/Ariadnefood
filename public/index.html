@@ -950,7 +950,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.43";
+const APP_VERSION="14.44";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1182,8 +1182,8 @@ function algChosen(mon){const p=algPickFor(mon);return p&&p.status!=="off"&&p.ke
 function algPlanText(mon){const el=algEligible(),inDiet=ALG.filter(([x])=>algState(x)==="ok").map(([,n])=>n),hold=ALG.filter(([x])=>algState(x)==="reaction").map(([,n])=>n),going=ALG.filter(([x])=>algState(x)==="intro").map(([x])=>x);
   const wd=[...Array(7)].map((_,i)=>addDays(mon,i)).filter(k=>{const d=parse(k).getDay();return d>=1&&d<=5});
   const notYet=Object.keys(ALG_RE).filter(a=>algState(a)!=="ok"),byAlg=notYet.map(a=>{const ids=S.recipes.filter(r=>recipeAllergens(r).includes(a)).map(r=>r.id);return ids.length?`${algName(a)} (${a}): ${ids.join(", ")}`:""}).filter(Boolean);
-  return (going.length?`Still being introduced, finish it before anything new: ${going.map(algName).join(", ")}: give it at lunch on 2 of these weekdays: ${wd.join(", ")}. Put its key in "allergen". `:
-    el.length?`NEW ALLERGEN THIS WEEK: you choose ONE from these (key: name, how to give it): ${el.map(a=>`${a}: ${algName(a)}, ${ALG_HOW[a]}`).join("; ")}. Prefer the one that fits this week's dishes best. It goes INSIDE the week's ONE new dish: that dish is first served at LUNCH on one of these weekdays: ${wd.filter(k=>parse(k).getDay()!==5).join(", ")} (a small amount of the allergen in her portion), and eaten again as the next day's dinner (a normal amount). Peanut, tree nuts and shrimp are made for her only, in their own pan, never shared with Amir (he is allergic). Put the key in "allergen" and those 2 dates in "allergenDays", and name them in "note". `:'No new allergen this week: leave "allergen" empty. ')
+  return (going.length?`Still being introduced, finish it before anything new: ${going.map(algName).join(", ")}: give it in her afternoon SNACK on 2 of these weekdays: ${wd.join(", ")}. Put its key in "allergen". `:
+    el.length?`NEW ALLERGEN THIS WEEK: you choose ONE from these (key: name, how to give it): ${el.map(a=>`${a}: ${algName(a)}, ${ALG_HOW[a]}`).join("; ")}. Prefer the one that fits this week's dishes best. Give it in her afternoon SNACK, never in a lunch or dinner (if she reacts she only misses a snack): on 2 of these weekdays: ${wd.join(", ")}, ideally back to back, day 1 a small amount, day 2 a normal amount, baked into or served with a snack she likes (e.g. half a tahini cookie, then a whole one). Peanut, tree nuts and shrimp are made for her only, in their own pan, never shared with Amir (he is allergic). Put the key in "allergen" and those 2 dates in "allergenDays", and name them in "note". `:'No new allergen this week: leave "allergen" empty. ')
     +`Already in her diet, keep each in her week 2 or 3 times: ${inDiet.join(", ")||"none"}.`+(hold.length?` ON HOLD after a reaction, never use: ${hold.join(", ")}.`:"")
     +(byAlg.length?` RECIPES THAT CONTAIN AN ALLERGEN SHE HASN'T HAD YET: never plan them, except a recipe carrying the one allergen you are introducing, and then only on its introduction days: ${byAlg.join("; ")}.`:"")}
 // Safety net after the AI plans: any meal carrying an allergen she hasn't had (other than this week's, on its days) is swapped for a safe dish
@@ -1193,7 +1193,7 @@ function algSafePlan(mon,allergen,days){let n=0;const ok=a=>algState(a)==="ok"||
     const alt=S.recipes.filter(x=>(x.meals||[]).includes(s)&&!recipeAllergens(x).some(a=>!ok(a)||a===allergen)&&!restingMap()[x.id]&&x.id!==r.id).sort((a,b)=>(b.fav?1:0)-(a.fav?1:0))[0];
     if(alt){patchDay(k,{meals:{[s]:{recipeId:alt.id}}});n++}})}
   return n}
-/* ---------- allergens: one new allergen a week, chosen by Amir on Wednesday, introduced at lunch on weekdays ---------- */
+/* ---------- allergens: one new allergen a week, introduced in her afternoon snack on weekdays (a reaction then costs a snack, not a meal) ---------- */
 const ALG=[["egg","Egg"],["milk","Milk & dairy"],["wheat","Wheat"],["fish","Fish"],["sesame","Sesame"],["soy","Soy"],["peanut","Peanut",1],["almond","Almond",1],["cashew","Cashew",1],["walnut","Walnut",1],["hazelnut","Hazelnut",1],["pistachio","Pistachio",1],["shrimp","Shrimp (shellfish)",1]];
 const ALG_HOW={sesame:"¼ tsp tahini on toast fingers or half a tahini cookie, building to a whole cookie",soy:"a spoon of crumbled firm tofu in her scrambled egg, or silken tofu blended into pancake batter",
   peanut:"¼ tsp smooth peanut butter thinned with warm water, stirred into oats or spread very thin on toast",almond:"¼ tsp ground almonds or smooth almond butter in pancake batter or oats",cashew:"¼ tsp smooth cashew butter in oats or spread very thin",
@@ -1216,23 +1216,23 @@ function allergenBox(mon){const p=algPickFor(mon),waiting=ALG.filter(([a,,d])=>d
   const wait=waiting.length?`<p class="algwait">Waiting for her paediatrician's OK: ${esc(waiting.join(", "))}. <button class="link" data-act="allergens">Mark as cleared</button></p>`:"";
   if(!p)return `<p>Nothing new to introduce right now.</p>${wait}`;
   if(p.status==="off")return `<p>No new allergen next week.</p><div class="flavbtns"><button class="chip" data-act="algPick" data-st="proposed">Introduce one after all</button></div>${wait}`;
-  return `<div class="flavprop"><b>${esc(algName(p.key))}</b><span>How: ${esc(ALG_HOW[p.key]||"a tiny amount mixed into a food she loves")}. At lunch on a weekday when you're home, small first then a bit more two or three days later.</span></div>
+  return `<div class="flavprop"><b>${esc(algName(p.key))}</b><span>How: ${esc(ALG_HOW[p.key]||"a tiny amount mixed into a food she loves")}. In her afternoon snack on a weekday when you're home, small first then a bit more two or three days later.</span></div>
   <div class="flavbtns" role="group" aria-label="Next week's allergen"><button class="chip" data-act="algPick" data-st="yes" aria-pressed="${p.status==="yes"}">Yes, introduce it</button><button class="chip" data-act="algOther">Pick another</button><button class="chip" data-act="algPick" data-st="off">Not this week</button></div>${wait}`}
 function allergenCard(k){const t=todayKey(),dow=parse(t).getDay();if(k!==t||me!=="Amir"||(dow!==3&&dow!==4))return "";
   const nw=nextWk();if(S.days[nw]?.autoplan?.done)return "";
-  return `<div class="balnote flavcard"><p><b>Next week's new allergen</b>The AI writes next week's menu ${dow===3?"tonight from 19:00":"today"} and will build this into her lunches:</p>${allergenBox(nw)}<button class="link" data-act="allergens">All her allergens</button></div>`}
+  return `<div class="balnote flavcard"><p><b>Next week's new allergen</b>The AI writes next week's menu ${dow===3?"tonight from 19:00":"today"} and will build this into her snacks:</p>${allergenBox(nw)}<button class="link" data-act="allergens">All her allergens</button></div>`}
 // Introduction days the plan scheduled: a reminder on the day, and a quick "how did it go"
 function allergenDayNote(k){const w=mondayOf(k),ap=S.days[w]?.autoplan,a=ap?.allergen;if(!a||!(ap.allergenDays||[]).includes(k))return "";
-  const L=S.settings?.allergens?.[a]?.log||{},res=L[k],t=todayKey();if(k>t)return `<div class="balnote algday"><p><b>New allergen: ${esc(algName(a))}</b>At lunch, a small amount. Watch her for 2 hours afterwards.</p></div>`;
-  return `<div class="balnote algday${res==="reaction"?" bad":""}"><p><b>New allergen today: ${esc(algName(a))}</b>${res?res==="fine"?"Logged: no reaction.":"Logged: reaction. Stop giving it and call her paediatrician. If her lips or face swell, she wheezes, struggles to breathe or goes floppy, call 998 straight away.":"At lunch, a small amount. Watch her for 2 hours afterwards (rash, hives, swelling, vomiting, coughing)."}</p>
+  const L=S.settings?.allergens?.[a]?.log||{},res=L[k],t=todayKey();if(k>t)return `<div class="balnote algday"><p><b>New allergen: ${esc(algName(a))}</b>In her snack, a small amount. Watch her for 2 hours afterwards.</p></div>`;
+  return `<div class="balnote algday${res==="reaction"?" bad":""}"><p><b>New allergen today: ${esc(algName(a))}</b>${res?res==="fine"?"Logged: no reaction.":"Logged: reaction. Stop giving it and call her paediatrician. If her lips or face swell, she wheezes, struggles to breathe or goes floppy, call 998 straight away.":"In her snack, a small amount. Watch her for 2 hours afterwards (rash, hives, swelling, vomiting, coughing)."}</p>
   ${res?"":`<div class="flavbtns"><button class="chip" data-act="algLog" data-a="${a}" data-k="${k}" data-r="fine">No reaction</button><button class="chip" data-act="algLog" data-a="${a}" data-k="${k}" data-r="reaction">She reacted</button></div>`}</div>`}
 function algLog(a,k,r){const ap=S.days[mondayOf(k)]?.autoplan,last=(ap?.allergenDays||[]).slice(-1)[0];
   saveAllergen(a,{log:{[k]:r},...(r==="reaction"?{status:"reaction"}:k===last?{status:"ok",at:k}:{status:"intro"})})}
 function allergenSheet(){const row=([a,n,d])=>{const st=algState(a),c=algCleared(a);
   return `<li><span><b>${esc(n)}</b><em>${st==="ok"?"In her diet ✓":st==="intro"?"Being introduced":st==="reaction"?"Reaction: on hold until her doctor says":d&&!c?"Waiting for paediatrician's OK":"Not yet"}</em></span>
   <span class="algacts">${st!=="ok"?`<button class="chip sm" data-act="algMark" data-a="${a}" data-st="ok">Already eats it</button>`:`<button class="chip sm" data-act="algMark" data-a="${a}" data-st="todo">Undo</button>`}${d&&!c&&st==="todo"?`<button class="chip sm" data-act="algClear" data-a="${a}">Doctor OK</button>`:""}</span></li>`};
-  openSheet(`<div id="algSheet" class="sh-h"><div><p class="eyebrow">One at a time, at lunch</p><h2 class="display">Allergens</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
-  <p class="muted">Each Wednesday the AI picks next week's new one and builds it into weekday lunches. Once she's fine with it, the plan keeps it in her week two or three times so it stays safe. Nuts, peanut and shrimp wait for her paediatrician's OK because of Amir's allergies, and they're always made for her only, in their own pan.</p>
+  openSheet(`<div id="algSheet" class="sh-h"><div><p class="eyebrow">One at a time, in a snack</p><h2 class="display">Allergens</h2></div><button class="iconbtn" data-close aria-label="Close">${I.close}</button></div>
+  <p class="muted">Each Wednesday the AI picks next week's new one and builds it into weekday snacks. Once she's fine with it, the plan keeps it in her week two or three times so it stays safe. Nuts, peanut and shrimp wait for her paediatrician's OK because of Amir's allergies, and they're always made for her only, in their own pan.</p>
   <ul class="nutlist alglist">${ALG.map(row).join("")}</ul>`)}
 function freezerCard(k){const t=todayKey();if(parse(k).getDay()!==FZ_DAY||k<t)return ""; // shows on Thursday, including when you look ahead to it
   const cnt=id=>S.freezer?.[id]?.at===t;
