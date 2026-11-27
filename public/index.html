@@ -965,7 +965,7 @@ function cleanRecipe(r,id){
 const newId=t=>String(t||"recipe").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,32)+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 /* ---------- visual layer: icons, food art, photos ---------- */
-const APP_VERSION="14.45";
+const APP_VERSION="14.46";
 const sv=(p,w=1.7)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I={
   snow:sv('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>'),
@@ -1448,8 +1448,8 @@ function fillVegSides(from,to){let n=0,changed=0;const keys=Object.keys(S.days).
       meals[s]={...m,side:[m.side,v].filter(Boolean).join(" + ")};changed++}
     if(Object.keys(meals).length)patchDay(k,{meals})}
   return changed}
-function sideRecipe(t){t=String(t).trim();const hit=SIDE_COOK.find(([re])=>re.test(t));if(hit&&recipeById(hit[1]))return recipeById(hit[1]);
-  return S.recipes.find(r=>(r.meals||[]).includes("side")&&r.title.toLowerCase()===t.toLowerCase())||null}
+function sideRecipe(t){t=String(t).trim();const ex=S.recipes.find(r=>(r.meals||[]).includes("side")&&!r.avoid&&r.title.toLowerCase()===t.toLowerCase());if(ex)return ex; // a side named exactly like a side recipe is that recipe
+  const hit=SIDE_COOK.find(([re])=>re.test(t));return hit&&recipeById(hit[1])?recipeById(hit[1]):null}
 function cookedSide(t){const r=sideRecipe(t);return r&&!/no-cook|fingers|sticks|tzatziki|salad|fruit/i.test(r.title)&&r.id!=="fruitplate"&&r.id!=="avocucumber"?r:null}
 /* How many portions a cook makes, who eats them, and how many go in the freezer. */
 const SL3={breakfast:"breakfast",snack:"snack",lunch:"lunch",dinner:"dinner"};
@@ -1481,7 +1481,7 @@ function cookPlan(k){
   if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>sun[s]?.recipeId&&cookedIds.add(sun[s].recipeId))}
   const sideSrc=[...["lunch","dinner"].map(s=>ms[s]).filter(m=>m&&cookedIds.has(m.recipeId))];
   if(dow===6){const sun=S.days[addDays(k,1)]?.meals||{};["lunch","dinner"].forEach(s=>sun[s]&&sideSrc.push(sun[s]))}
-  sideSrc.forEach(m=>String(m.side||"").split(/\s*\+\s*/).forEach(t=>{const r=t&&cookedSide(t);if(r&&!sides.includes(r))sides.push(r)}));
+  sideSrc.forEach(m=>String(m.side||"").split(/\s*[+,]\s*/).forEach(t=>{const r=t&&cookedSide(t);if(r&&!sides.includes(r))sides.push(r)}));
   return {off:false,cook:cook.filter(Boolean),bake,bakeShort,bakeIds,sides,left:!cook.length&&yIds.size>0};
 }
 /* Check that everything on the day's menu exists by the time she eats it. */
