@@ -1183,7 +1183,7 @@ function algPlanText(mon){const el=algEligible(),inDiet=ALG.filter(([x])=>algSta
   const wd=[...Array(7)].map((_,i)=>addDays(mon,i)).filter(k=>{const d=parse(k).getDay();return d>=1&&d<=5});
   const notYet=Object.keys(ALG_RE).filter(a=>algState(a)!=="ok"),byAlg=notYet.map(a=>{const ids=S.recipes.filter(r=>recipeAllergens(r).includes(a)).map(r=>r.id);return ids.length?`${algName(a)} (${a}): ${ids.join(", ")}`:""}).filter(Boolean);
   return (going.length?`Still being introduced, finish it before anything new: ${going.map(algName).join(", ")}: give it at lunch on 2 of these weekdays: ${wd.join(", ")}. Put its key in "allergen". `:
-    el.length?`NEW ALLERGEN THIS WEEK: you choose ONE from these (key: name, how to give it): ${el.map(a=>`${a}: ${algName(a)}, ${ALG_HOW[a]}`).join("; ")}. Prefer the one that fits this week's dishes best. Introduce it at LUNCH on 3 of these weekdays only: ${wd.join(", ")}, a day or two apart: day 1 a tiny amount, day 2 a bit more, day 3 a normal amount, mixed into a food she already loves. Peanut, tree nuts and shrimp are made for her only, in their own pan, never shared with Amir (he is allergic). Put the key in "allergen" and the 3 dates in "allergenDays", and name them in "note". `:'No new allergen this week: leave "allergen" empty. ')
+    el.length?`NEW ALLERGEN THIS WEEK: you choose ONE from these (key: name, how to give it): ${el.map(a=>`${a}: ${algName(a)}, ${ALG_HOW[a]}`).join("; ")}. Prefer the one that fits this week's dishes best. It goes INSIDE the week's ONE new dish: that dish is first served at LUNCH on one of these weekdays: ${wd.filter(k=>parse(k).getDay()!==5).join(", ")} (a small amount of the allergen in her portion), and eaten again as the next day's dinner (a normal amount). Peanut, tree nuts and shrimp are made for her only, in their own pan, never shared with Amir (he is allergic). Put the key in "allergen" and those 2 dates in "allergenDays", and name them in "note". `:'No new allergen this week: leave "allergen" empty. ')
     +`Already in her diet, keep each in her week 2 or 3 times: ${inDiet.join(", ")||"none"}.`+(hold.length?` ON HOLD after a reaction, never use: ${hold.join(", ")}.`:"")
     +(byAlg.length?` RECIPES THAT CONTAIN AN ALLERGEN SHE HASN'T HAD YET: never plan them, except a recipe carrying the one allergen you are introducing, and then only on its introduction days: ${byAlg.join("; ")}.`:"")}
 // Safety net after the AI plans: any meal carrying an allergen she hasn't had (other than this week's, on its days) is swapped for a safe dish
@@ -1909,7 +1909,6 @@ async function saveInsightRecipe(){
 }
 async function aiPlan(monArg,auto){
   if(busy)return;const mon=monArg||ui.week;
-  if(S.settings?.baseMenu?.week)return basePlan(mon,auto);
   const hasPlan=[...Array(7)].some((_,i)=>Object.keys(S.days[addDays(mon,i)]?.meals||{}).length);
   if(!auto&&hasPlan&&!confirm(`Replace the plan for ${weekRange(mon)} with an AI plan? Meals already logged stay as they are.`))return;
   if(auto){patchDay(mon,{autoplan:{at:todayKey(),started:Date.now(),running:true,failed:false}});status("Planning next week with AI…")}
@@ -1933,37 +1932,6 @@ async function aiPlan(monArg,auto){
     busy=false;render();status(auto?"Next week planned by AI":newR.length?`Planned · ${newR.length} new recipes added`:"Week planned",true);
     if(res.note&&!auto){const l=$("#planlive");if(l)l.innerHTML=`<p class="card box small" style="margin:-8px 0 20px">${esc(res.note)}</p>`}
   }catch(err){if(auto)patchDay(mon,{autoplan:{running:false,failed:true}});busy=false;render();const l=$("#planlive");if(l&&!auto)l.innerHTML=`<div class="errbox" style="margin:-8px 0 20px">${esc(err.message)}</div>`}
-}
-
-/* Lia's base week (from 27/11/2026): every week repeats her menu exactly. The only change is ONE new main carrying the
-   week's new allergen, at Thursday lunch (first taste, watched) and again at Friday dinner. If the AI can't answer, the
-   base week still goes in, with the base dishes in the new-dish slot, and the note says so. */
-async function basePlan(mon,auto){
-  const B=S.settings.baseMenu,W=B.week,NS=B.newSlot||{lunch:4,dinner:5};
-  const hasPlan=[...Array(7)].some((_,i)=>Object.keys(S.days[addDays(mon,i)]?.meals||{}).length);
-  if(!auto&&hasPlan&&!confirm(`Replace the plan for ${weekRange(mon)} with Lia's base week and this week's new allergen dish? Meals already logged stay as they are.`))return;
-  patchDay(mon,{autoplan:{at:todayKey(),started:Date.now(),running:true,failed:false}});busy="plan";render();status("Planning next week…");
-  const put=(k,s,m)=>{const cur=S.days[k]?.meals?.[s];if(cur&&Object.keys(cur.log||{}).length)return;patchDay(k,{meals:{[s]:{recipeId:m.recipeId||null,custom:m.custom||null,side:m.side||null,log:null,like:null}}})};
-  const keys=[...Array(7)].map((_,i)=>addDays(mon,i));
-  keys.forEach(k=>{const w=W[parse(k).getDay()]||{};SLOTS.forEach(([s])=>{if(w[s])put(k,s,w[s])})});
-  const going=ALG.filter(([x])=>algState(x)==="intro").map(([x])=>x),el=algEligible(),pool=going.length?going:el;
-  const thu=keys.find(k=>parse(k).getDay()===NS.lunch),fri=keys.find(k=>parse(k).getDay()===NS.dinner);
-  const recent=[...Array(8)].map((_,i)=>S.days[addDays(mon,-7*(i+1))]?.autoplan?.newDish).filter(Boolean);
-  const baseTxt=keys.map(k=>`${DOW[parse(k).getDay()]}: `+SLOTS.map(([s])=>{const m=(W[parse(k).getDay()]||{})[s];return m?`${s} ${recipeById(m.recipeId)?.title||m.custom||"?"}${m.side?` + ${m.side}`:""}`:""}).filter(Boolean).join("; ")).join("\n");
-  let note="",alg=null,newTitle="";
-  try{
-    const other=recipeById((W[NS.lunch]||{}).dinner?.recipeId)?.title||"";
-    const res=await streamAI({task:"basedish",baseWeek:baseTxt,other,allergens:pool.map(a=>`${a}: ${algName(a)}, ${ALG_HOW[a]}`).join("; "),hold:ALG.filter(([x])=>algState(x)==="reaction").map(([,n])=>n).join(", "),inDiet:ALG.filter(([x])=>algState(x)==="ok").map(([,n])=>n).join(", "),recent:recent.join(", "),library:S.recipes.filter(r=>(r.meals||[]).some(m=>m==="lunch"||m==="dinner")).map(r=>r.title).join("; ")});
-    if(!res?.recipe?.title)throw new Error("The AI didn't send a dish.");
-    const r=cleanRecipe(res.recipe,newId(res.recipe.title));r.meals=["lunch","dinner"];r.newDish=mon;
-    const d=await post("recipes",{recipes:[r]});S.recipes=d.recipes;
-    alg=pool.includes(res.allergen)?res.allergen:null;newTitle=r.title;
-    [[thu,"lunch"],[fri,"dinner"]].forEach(([k,s])=>k&&put(k,s,{recipeId:r.id,side:String(res.side||"cup of broth").slice(0,160)}));
-    note=`Lia's base week, with one new dish: ${r.title}${alg?`, carrying ${algName(alg)} (first taste at Thursday lunch)`:""}.${res.note?" "+String(res.note).slice(0,300):""}`;
-  }catch(err){note=`Lia's base week. The AI couldn't write the new allergen dish (${String(err.message||err).slice(0,120)}), so the base dishes stay in its place this week.`}
-  if(alg)algSafePlan(mon,alg,[thu,fri].filter(Boolean));
-  patchDay(mon,{autoplan:{at:todayKey(),running:false,failed:false,done:true,auto:!!auto,base:true,newDish:newTitle||null,allergen:alg,allergenDays:alg?[thu]:[],note}});
-  busy=false;render();status(auto?"Next week planned":"Week planned from Lia's base",true);
 }
 
 /* Balance the coming week against what she actually ate. Runs by itself once a week, from Thursday (before the kitchen
